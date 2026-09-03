@@ -1,6 +1,7 @@
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "./supabase.js";
-import { DISPLAY_PIN, NTFY_TOPIC, withDisplayPin } from "./config.js";
+import { NTFY_TOPIC } from "./config.js";
+import { DISPLAY_PIN, withDisplayPin } from "./displayPin.js";
 import { asStationId } from "./stationPair.js";
 import { packetLoadHint } from "./packetHint.js";
 import { coatProgress, readCoatRenewed, writeCoatRenewed } from "./coatCycle.js";
@@ -48,6 +49,8 @@ function packetTime(iso) {
   return Number.isFinite(t) ? t : 0;
 }
 
+const PACKET_COLS = "id,station_id,n,t,gps,mq9,a8,a9,v,created_at";
+
 function livePacket(row, stationId) {
   if (!row || typeof row !== "object") return false;
   if (row.id == null || row.station_id !== stationId) return false;
@@ -56,13 +59,23 @@ function livePacket(row, stationId) {
   return true;
 }
 
+function scrubPacket(row) {
+  if (!row || typeof row !== "object") return row;
+  const next = { ...row };
+  delete next.lat;
+  delete next.lon;
+  return withDisplayPin(next);
+}
+
 function mergePacketRows(fetched, live, stationId) {
   const map = new Map();
   for (const row of fetched || []) {
-    if (row?.id != null && row.station_id === stationId) map.set(row.id, row);
+    const clean = scrubPacket(row);
+    if (clean?.id != null && clean.station_id === stationId) map.set(clean.id, clean);
   }
   for (const row of live || []) {
-    if (livePacket(row, stationId)) map.set(row.id, row);
+    const clean = scrubPacket(row);
+    if (livePacket(clean, stationId)) map.set(clean.id, clean);
   }
   return [...map.values()]
     .sort((a, b) => packetTime(b.created_at) - packetTime(a.created_at))
@@ -249,7 +262,7 @@ export function Lookout({ stationId, kicker, lede }) {
       try {
         const { data, error } = await supabase
           .from("packets")
-          .select("*")
+          .select(PACKET_COLS)
           .eq("station_id", scopedId)
           .gte("created_at", sinceIso)
           .order("created_at", { ascending: false })
@@ -278,7 +291,7 @@ export function Lookout({ stationId, kicker, lede }) {
           if (ignore) return;
           const row = payload.new;
           if (!livePacket(row, scopedId)) return;
-          setRows((prev) => mergePacketRows(prev, [row], scopedId));
+          setRows((prev) => mergePacketRows(prev, [scrubPacket(row)], scopedId));
         },
       )
       .subscribe((status) => {

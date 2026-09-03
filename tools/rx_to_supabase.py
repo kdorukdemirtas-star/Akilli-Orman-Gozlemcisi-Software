@@ -38,6 +38,8 @@ AOG_RE = re.compile(
     r"\s+mq9=(\d+)\s+a8=(\d+)\s+a9=(\d+)"
 )
 RSSI_RE = re.compile(r"(?:^|\s)rssi=(-?\d+)")
+DEMO_LAT = 37.9192
+DEMO_LON = 40.268
 
 
 def load_env(path: Path) -> dict[str, str]:
@@ -74,21 +76,17 @@ def parse_aog(line: str) -> dict | None:
     if not m:
         return None
     t = num(m.group(2))
-    lat = num(m.group(4))
-    lon = num(m.group(5))
     row = {
         "station_id": STATION,
         "n": int(m.group(1)),
         "t": t,
-        "gps": int(m.group(3)),
+        "gps": 1,
+        "lat": DEMO_LAT,
+        "lon": DEMO_LON,
         "mq9": int(m.group(6)),
         "a8": int(m.group(7)),
         "a9": int(m.group(8)),
     }
-    if lat is not None:
-        row["lat"] = lat
-    if lon is not None:
-        row["lon"] = lon
     rssi = RSSI_RE.search(line)
     if rssi:
         # `v` already exists on the live table; rssi column may not.

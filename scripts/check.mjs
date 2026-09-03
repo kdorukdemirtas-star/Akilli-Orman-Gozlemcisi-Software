@@ -3,6 +3,7 @@ import { test } from "node:test";
 import { coatProgress } from "../src/coatCycle.js";
 import { chartLayout, hourMarks, yScale } from "../src/tempChart.js";
 import { ntfyPollUrl, parseNtfyFeed } from "../src/ntfyFeed.js";
+import { DISPLAY_PIN, withDisplayPin } from "../src/displayPin.js";
 import { flameLabel, flameNote, gpsLabel, gpsNote, mq9Label, packetRssi, rssiLabel } from "../src/packetView.js";
 import { deviceKind, isStandaloneDisplay, pwaPlatform } from "../src/pwa.js";
 import { packetLoadHint } from "../src/packetHint.js";
@@ -154,8 +155,17 @@ test("mq9 and flame and gps labels read the packet fields", () => {
   assert.equal(flameLabel({ a8: 0, a9: 1 }), "Alev");
   assert.equal(flameNote({ a8: 0, a9: 1 }), "D8 alev, D9 boş");
   assert.equal(gpsLabel({ gps: 0 }), "Fix yok");
-  assert.equal(gpsLabel({ gps: 1, lat: 41.22559, lon: 27.88869 }), "41.22559, 27.88869");
+  assert.equal(gpsLabel({ gps: 1, lat: 37.9192, lon: 40.268 }), "37.91920, 40.26800");
   assert.equal(gpsNote({ gps: 1 }), "Uydu kilidi");
+});
+
+test("withDisplayPin replaces packet coordinates with Dicle Üniversitesi", () => {
+  const pinned = withDisplayPin({ lat: 0, lon: 0, gps: 2, t: 30 });
+  assert.equal(pinned.lat, DISPLAY_PIN.lat);
+  assert.equal(pinned.lon, DISPLAY_PIN.lon);
+  assert.equal(pinned.gps, 1);
+  assert.equal(pinned.t, 30);
+  assert.equal(DISPLAY_PIN.note, "Dicle Üniversitesi");
 });
 
 test("yScale pads a tight temperature band", () => {

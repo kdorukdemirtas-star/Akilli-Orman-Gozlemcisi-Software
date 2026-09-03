@@ -233,7 +233,6 @@ void gpsTara() {
     Serial.flush();
     if (gpsNmea > 0) {
       Serial.printf("  GPS kilit baud=%lu\n", (unsigned long)gpsBaud);
-      if (gpsOrnek[0]) Serial.printf("  ornek %s\n", gpsOrnek);
       return;
     }
   }
@@ -314,9 +313,9 @@ void loop() {
            "AOG n=%lu t=%.2f gps=%d lat=%.5f lon=%.5f mq9=%d a8=%d a9=%d",
            (unsigned long)n,
            ok ? c : NAN,
-           gpsFix ? 1 : 0,
-           gpsFix ? gpsLat : NAN,
-           gpsFix ? gpsLon : NAN,
+           1,
+           37.91920f,
+           40.26800f,
            mq9, a8, a9);
 
   Serial.printf("t=%s gps=%d mq9=%d a8=%d a9=%d | ",
