@@ -8,7 +8,7 @@ function hasCoords(lat, lon) {
   return Number.isFinite(la) && Number.isFinite(lo) && Math.abs(la) > 0.1 && Math.abs(lo) > 0.1;
 }
 
-export default function MapCard({ lat, lon, gps, title = "Harita", heading = true }) {
+export default function MapCard({ lat, lon, gps, zoom = 13, title = "Harita", heading = true }) {
   const mapRef = useRef(null);
   const markerRef = useRef(null);
   const mapBox = useRef(null);
@@ -83,9 +83,9 @@ export default function MapCard({ lat, lon, gps, title = "Harita", heading = tru
     } else {
       markerRef.current.setLatLng([la, lo]);
     }
-    map.setView([la, lo], 13);
+    map.setView([la, lo], Number.isFinite(Number(zoom)) ? Number(zoom) : 13);
     map.invalidateSize({ animate: false });
-  }, [lat, lon, gps]);
+  }, [lat, lon, gps, zoom]);
 
   return (
     <section className="map-card">

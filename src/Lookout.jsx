@@ -1,6 +1,6 @@
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "./supabase.js";
-import { NTFY_TOPIC } from "./config.js";
+import { DISPLAY_PIN, NTFY_TOPIC, withDisplayPin } from "./config.js";
 import { asStationId } from "./stationPair.js";
 import { packetLoadHint } from "./packetHint.js";
 import { coatProgress, readCoatRenewed, writeCoatRenewed } from "./coatCycle.js";
@@ -216,6 +216,7 @@ export function Lookout({ stationId, kicker, lede }) {
   const [lastRssi, setLastRssi] = useState(null);
   const stationRef = useRef(stationId);
   const latest = rows[0] || null;
+  const shown = withDisplayPin(latest);
   const silent = !loading && !err && !latest;
   const alertOn = isAlert(latest);
   const fire = flameOn(latest);
@@ -408,7 +409,12 @@ export function Lookout({ stationId, kicker, lede }) {
         >
           <IcoFlame />
         </Metric>
-        <Metric tone="is-moss" title="GPS" value={loading ? "-" : gpsLabel(latest)} note={loading ? "Konum" : gpsNote(latest)}>
+        <Metric
+          tone="is-moss"
+          title="GPS"
+          value={loading && !DISPLAY_PIN ? "-" : gpsLabel(shown)}
+          note={loading && !DISPLAY_PIN ? "Konum" : DISPLAY_PIN?.note || gpsNote(shown)}
+        >
           <IcoGps />
         </Metric>
         <Metric
@@ -443,7 +449,13 @@ export function Lookout({ stationId, kicker, lede }) {
           </header>
           <div className="ops-map">
             <Suspense fallback={<p className="ops-empty">Harita yükleniyor.</p>}>
-              <MapCard lat={latest?.lat} lon={latest?.lon} gps={latest?.gps} heading={false} />
+              <MapCard
+                lat={shown?.lat}
+                lon={shown?.lon}
+                gps={shown?.gps}
+                zoom={DISPLAY_PIN?.zoom}
+                heading={false}
+              />
             </Suspense>
           </div>
         </article>
