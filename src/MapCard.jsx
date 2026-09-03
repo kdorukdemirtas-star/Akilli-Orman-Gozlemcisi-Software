@@ -42,13 +42,15 @@ export default function MapCard({ lat, lon, gps, title = "Harita", heading = tru
     tiles.addTo(map);
     map.setView([41.0, 29.0], 6);
     mapRef.current = map;
-    const fit = () => map.invalidateSize();
+    const fit = () => map.invalidateSize({ animate: false });
     const ro = new ResizeObserver(fit);
     ro.observe(el);
     map.whenReady(fit);
     const t = window.setTimeout(fit, 80);
+    const t2 = window.setTimeout(fit, 400);
     return () => {
       window.clearTimeout(t);
+      window.clearTimeout(t2);
       ro.disconnect();
       map.remove();
       mapRef.current = null;
@@ -82,6 +84,7 @@ export default function MapCard({ lat, lon, gps, title = "Harita", heading = tru
       markerRef.current.setLatLng([la, lo]);
     }
     map.setView([la, lo], 13);
+    map.invalidateSize({ animate: false });
   }, [lat, lon, gps]);
 
   return (

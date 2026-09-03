@@ -248,6 +248,7 @@ html[data-surface="ha"] {
   height: min(42vh, 320px);
   min-height: 240px;
   border-radius: 12px;
+  background: var(--color-paper-3);
   font-family: var(--font-body);
 }
 
