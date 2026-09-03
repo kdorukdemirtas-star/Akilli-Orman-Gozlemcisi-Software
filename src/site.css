@@ -398,19 +398,17 @@
 }
 .fold-card {
   display: grid;
-  grid-template-columns: minmax(8rem, 0.85fr) minmax(0, 1.15fr);
   gap: var(--space-md);
-  align-items: center;
+  justify-items: center;
+  align-content: start;
   padding: var(--space-md);
   border: 1px solid var(--coat-line, #e4e8e2);
   border-radius: 24px;
   background: var(--coat-card, #fff);
 }
-.fold-card:has(.fold-phone) {
-  grid-template-columns: 10.75rem minmax(0, 1fr);
-}
 .fold-card .media {
   margin: 0;
+  width: 100%;
   padding: 0;
   overflow: hidden;
   border-radius: 16px;
@@ -418,17 +416,30 @@
 }
 .fold-card .media img {
   width: 100%;
-  height: 12rem;
+  height: min(36rem, 62vh);
   object-fit: cover;
   object-position: 50% 50%;
   border-radius: 0;
 }
+.fold-card h2 {
+  margin: 0;
+  color: var(--color-ink);
+  font-size: 1.35rem;
+  line-height: 1.15;
+  text-transform: none;
+  letter-spacing: 0;
+  text-align: center;
+}
+.fold-card .fold-go {
+  margin-top: 0;
+}
 .fold-phone {
   margin: 0;
-  width: 10.75rem;
+  width: 100%;
+  max-height: min(42rem, 78vh);
   aspect-ratio: 2 / 3;
   padding: 0;
-  border-radius: 22px;
+  border-radius: 28px;
   overflow: hidden;
   background: #10180f;
   box-shadow: 0 12px 24px oklch(20% 0.04 145 / 0.28);
@@ -440,47 +451,9 @@
   object-fit: cover;
   object-position: center top;
 }
-.fold-card-copy h2 {
-  margin: 0 0 var(--space-sm);
-  color: var(--color-ink);
-  font-size: 1.35rem;
-  line-height: 1.15;
-  text-transform: none;
-  letter-spacing: 0;
-}
-.fold-card-copy p {
-  margin: 0;
-  color: var(--color-muted);
-  font-size: 0.95rem;
-}
-.fold-ticks {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  display: grid;
-  gap: 8px;
-}
-.fold-ticks li {
-  position: relative;
-  padding-left: 22px;
-  color: var(--color-ink);
-  font-size: 0.9rem;
-  font-weight: 800;
-}
-.fold-ticks li::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 0.45em;
-  width: 8px;
-  height: 8px;
-  border-radius: 999px;
-  background: var(--coat-green, var(--color-moss));
-}
 @media (max-width: 960px) {
   .fold-hero,
   .fold-pair,
-  .fold-card,
   .fold-chips {
     grid-template-columns: 1fr;
   }
@@ -490,16 +463,15 @@
   .fold-shot {
     min-height: 14rem;
   }
-  .fold-card:has(.fold-phone) {
-    grid-template-columns: 1fr;
-    justify-items: center;
+  .fold-card .media img {
+    height: min(26rem, 52vh);
   }
   .fold-phone {
-    justify-self: center;
+    max-width: 22rem;
   }
 }
 @media (max-width: 640px) {
-  .fold-card-copy h2 {
+  .fold-card h2 {
     font-size: 1.2rem;
   }
 }

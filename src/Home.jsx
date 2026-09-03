@@ -121,13 +121,6 @@ const FOLD_CHIPS = [
   },
 ];
 
-const FOLD_TICKS = [
-  "Güneş paneli kapaktadır.",
-  "LoRa 433 MHz. Düğümde Wi-Fi yoktur.",
-  "MAX6675, GPS, MQ-9 ve iki kızılötesi göz.",
-  "Eşik yazılımda: 100 °C ve alev.",
-];
-
 function Hero() {
   return (
     <article className="fold">
@@ -171,7 +164,7 @@ function Hero() {
       </section>
 
       <section className="fold-pair" aria-label="Pano ve donanım">
-        <article className="fold-card">
+        <article className="fold-card is-shot">
           <figure className="fold-phone">
             <img
               src="/fold/phone.jpg"
@@ -180,35 +173,18 @@ function Hero() {
               alt="Pano telefon görünümü."
             />
           </figure>
-          <div className="fold-card-copy">
-            <h2>Pano son 24 saati gösterir</h2>
-            <p>
-              Sıcaklık, alev, MQ-9 ve konum paketten gelir. Alarm AND kuralıdır:
-              100 °C ve alev. TTL 24 saattir.
-            </p>
-            <Link className="fold-go is-ghost" to="/dashboard">
-              Panoyu aç
-            </Link>
-          </div>
         </article>
-        <article className="fold-card">
+        <article className="fold-card is-shot">
           <Photo
             src="/fold/guts.jpg"
             w={798}
             h={551}
             alt="Açık orman kutusu. Kartlar ve kablolar turuncu astarın içinde."
           />
-          <div className="fold-card-copy">
-            <h2>Güneş panelli gövde</h2>
-            <ul className="fold-ticks">
-              {FOLD_TICKS.map((tick) => (
-                <li key={tick}>{tick}</li>
-              ))}
-            </ul>
-            <Link className="fold-go is-ghost" to="/moduller">
-              Modüllere git
-            </Link>
-          </div>
+          <h2>Güneş panelli gövde</h2>
+          <Link className="fold-go is-ghost" to="/moduller">
+            Modüllere git
+          </Link>
         </article>
       </section>
 
