@@ -434,6 +434,15 @@
 .fold-card .fold-go {
   margin-top: 0;
 }
+.fold-card.is-phone {
+  justify-items: stretch;
+}
+.fold-card.is-phone .fold-phone {
+  width: 100%;
+  max-height: none;
+  aspect-ratio: 4 / 3;
+  border-radius: 20px;
+}
 .fold-phone {
   margin: 0;
   width: 100%;
@@ -452,6 +461,32 @@
   object-fit: cover;
   object-position: center top;
 }
+.fold-ticks {
+  margin: 0;
+  padding: 0 var(--space-xs);
+  list-style: none;
+  display: grid;
+  gap: var(--space-xs);
+  width: 100%;
+}
+.fold-ticks li {
+  position: relative;
+  padding-left: 22px;
+  color: var(--color-ink);
+  font-size: 0.95rem;
+  font-weight: 800;
+  line-height: 1.35;
+}
+.fold-ticks li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.5em;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--coat-green, var(--color-moss));
+}
 @media (max-width: 960px) {
   .fold-hero,
   .fold-pair,
@@ -466,6 +501,9 @@
   }
   .fold-phone {
     max-width: 22rem;
+  }
+  .fold-card.is-phone .fold-phone {
+    max-width: none;
   }
 }
 @media (max-width: 640px) {

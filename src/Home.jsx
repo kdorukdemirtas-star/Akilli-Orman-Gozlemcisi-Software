@@ -121,6 +121,13 @@ const FOLD_CHIPS = [
   },
 ];
 
+const PANO_TICKS = [
+  "Pano son 24 saati tutar.",
+  "Sıcaklık, alev, MQ-9 ve konum paketten okunur.",
+  "Alarm 100 °C ve alev birlikteyse çıkar.",
+  "24 saat dolunca eski paket silinir.",
+];
+
 function Hero() {
   return (
     <article className="fold">
@@ -164,7 +171,7 @@ function Hero() {
       </section>
 
       <section className="fold-pair" aria-label="Pano ve donanım">
-        <article className="fold-card is-shot">
+        <article className="fold-card is-shot is-phone">
           <figure className="fold-phone">
             <img
               src="/fold/phone.jpg"
@@ -173,6 +180,11 @@ function Hero() {
               alt="Pano telefon görünümü."
             />
           </figure>
+          <ul className="fold-ticks">
+            {PANO_TICKS.map((tick) => (
+              <li key={tick}>{tick}</li>
+            ))}
+          </ul>
         </article>
         <article className="fold-card is-shot">
           <Photo
