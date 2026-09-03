@@ -409,16 +409,17 @@
 .fold-card .media {
   margin: 0;
   width: 100%;
+  aspect-ratio: 4 / 3;
   padding: 0;
   overflow: hidden;
   border-radius: 16px;
-  background: var(--coat-paper, #eef4ec);
+  background: oklch(18% 0.02 145);
 }
 .fold-card .media img {
   width: 100%;
-  height: min(36rem, 62vh);
+  height: 100%;
   object-fit: cover;
-  object-position: 50% 50%;
+  object-position: 58% 48%;
   border-radius: 0;
 }
 .fold-card h2 {
@@ -462,9 +463,6 @@
   }
   .fold-shot {
     min-height: 14rem;
-  }
-  .fold-card .media img {
-    height: min(26rem, 52vh);
   }
   .fold-phone {
     max-width: 22rem;

@@ -177,9 +177,9 @@ function Hero() {
         <article className="fold-card is-shot">
           <Photo
             src="/fold/guts.jpg"
-            w={798}
-            h={551}
-            alt="Açık orman kutusu. Kartlar ve kablolar turuncu astarın içinde."
+            w={1536}
+            h={1024}
+            alt="Açık orman kutusu. Kartlar turuncu conta yuvasının içinde."
           />
           <h2>Güneş panelli gövde</h2>
           <Link className="fold-go is-ghost" to="/moduller">
