@@ -25,13 +25,21 @@ export default function MapCard({ lat, lon, gps, title = "Harita", heading = tru
       }
       el._leaflet_id = undefined;
     }
-    const map = L.map(el, { scrollWheelZoom: false, attributionControl: true });
-    L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", {
-      attribution: "&copy; OpenStreetMap &copy; CARTO",
-      subdomains: "abcd",
-      maxZoom: 20,
-      referrerPolicy: "strict-origin-when-cross-origin",
-    }).addTo(map);
+    const map = L.map(el, { scrollWheelZoom: false });
+    const tiles = L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: "&copy; OpenStreetMap",
+      maxZoom: 19,
+    });
+    tiles.createTile = function createTile(coords, done) {
+      const tile = document.createElement("img");
+      L.DomEvent.on(tile, "load", L.Util.bind(this._tileOnLoad, this, done, tile));
+      L.DomEvent.on(tile, "error", L.Util.bind(this._tileOnError, this, done, tile));
+      tile.referrerPolicy = "origin";
+      tile.alt = "";
+      tile.src = this.getTileUrl(coords);
+      return tile;
+    };
+    tiles.addTo(map);
     map.setView([41.0, 29.0], 6);
     mapRef.current = map;
     const fit = () => map.invalidateSize();
