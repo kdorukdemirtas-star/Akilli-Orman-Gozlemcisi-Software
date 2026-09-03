@@ -122,10 +122,10 @@ const FOLD_CHIPS = [
 ];
 
 const PANO_TICKS = [
-  "Pano son 24 saati tutar.",
-  "Sıcaklık, alev, MQ-9 ve konum paketten okunur.",
-  "Alarm 100 °C ve alev birlikteyse çıkar.",
-  "24 saat dolunca eski paket silinir.",
+  "Telefonundan ormanı görürsün: sıcaklık, gaz, alev, konum.",
+  "Kutuya Wi-Fi gerekmez. Paket LoRa ile çıkar.",
+  "Kaplama alevi yavaşlatır. Ekip yetişecek zamanı kazanır.",
+  "Son 24 saat elde durur. Sahaya gitmeden bakılır.",
 ];
 
 function Hero() {
