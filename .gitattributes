@@ -1,0 +1,8 @@
+*.jsx linguist-language=JavaScript
+*.js linguist-language=JavaScript
+*.mjs linguist-language=JavaScript
+*.css linguist-language=CSS
+*.ino linguist-language=Arduino
+*.sql linguist-language=SQL
+public/** linguist-vendored
+package-lock.json linguist-generated
