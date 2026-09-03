@@ -14,3 +14,4 @@ native/android/local.properties
 native/ios/build
 native/ios/**/xcuserdata
 *.xcuserstate
+.vercel

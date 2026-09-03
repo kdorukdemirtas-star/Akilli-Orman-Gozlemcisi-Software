@@ -357,7 +357,7 @@ export function Lookout({ stationId, kicker, lede }) {
           {loading
             ? "Paket okunuyor."
             : silent
-              ? "Son 24 saatte paket gelmedi. Kutunun açık olduğunu ve istasyon kodunu kontrol et."
+              ? "Son 24 saatte paket gelmedi. Kutunun açık olduğunu kontrol et."
               : alertOn
                 ? "Eşik: 100 °C ve alev."
                 : fire

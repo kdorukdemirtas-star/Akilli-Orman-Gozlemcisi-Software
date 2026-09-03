@@ -50,8 +50,7 @@ Karışım üç ayda bir yenilenir. Pano bu döngüyü istasyon kaydında tutar.
 Yazılımın jüriye ve operatöre gösterdiği yüz budur.
 
 - **Ana / Modüller / Sistem / Karışım / Analizler** ürünü anlatır. Analizler FTIR, TGA-DSC grafikleri ve xlsx raporlarıdır.
-- **Pano** eşlenen kutunun son 24 saatini gösterir: sıcaklık grafiği, harita, alev, RSSI, kaplama durumu, ntfy listesi.
-- Eşleme QR veya istasyon kodu iledir. Giriş hesabı yoktur.
+- **Pano** kutunun son 24 saatini gösterir: sıcaklık grafiği, harita, alev, RSSI, kaplama durumu, ntfy listesi. Giriş hesabı yoktur.
 - iPhone ve Android aynı siteyi PWA olarak ana ekrana alır. Kotlin veya Swift kabuğu yoktur.
 
 Demo istasyonu `AOG-DEMO-1` ile paylaşılır.

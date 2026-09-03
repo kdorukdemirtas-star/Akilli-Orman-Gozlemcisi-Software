@@ -158,7 +158,7 @@ export function SiteNav({ product = "demo" }) {
           </div>
           <div className="nav-foot">
             <span>
-              {product === "software" ? "Yazılım, QR eşleme" : "Akıllı Orman Gözlemcisi"}
+              {product === "software" ? "Yazılım" : "Akıllı Orman Gözlemcisi"}
             </span>
           </div>
         </div>

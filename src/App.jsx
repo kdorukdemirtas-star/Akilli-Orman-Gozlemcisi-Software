@@ -6,7 +6,6 @@ import { Shell } from "./SiteNav.jsx";
 import "./site.css";
 
 const Dashboard = lazy(() => import("./Dashboard.jsx"));
-const Pair = lazy(() => import("./Pair.jsx"));
 const Sistem = lazy(() => import("./Sistem.jsx"));
 const Karisim = lazy(() => import("./Karisim.jsx"));
 const Analizler = lazy(() => import("./Analizler.jsx"));
@@ -65,14 +64,7 @@ export default function App() {
           </Suspense>
         }
       />
-      <Route
-        path="/pair"
-        element={
-          <Suspense fallback={<BoardFallback product="software" />}>
-            <Pair />
-          </Suspense>
-        }
-      />
+      <Route path="/pair" element={<Navigate to="/dashboard" replace />} />
       <Route path="/cihaz" element={<Device product="software" />} />
       <Route path="/cihaz/:kind" element={<Device product="software" />} />
       <Route path="/yerel/ios" element={<Navigate to="/cihaz/ios" replace />} />
