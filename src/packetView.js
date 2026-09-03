@@ -1,7 +1,13 @@
+function asLoRaRssi(n) {
+  return Number.isFinite(n) && n < 0 && n >= -200 ? n : null;
+}
+
 export function packetRssi(p) {
-  if (!p || p.rssi == null || p.rssi === "") return null;
-  const n = Number(p.rssi);
-  return Number.isFinite(n) ? n : null;
+  if (!p) return null;
+  const named = asLoRaRssi(Number(p.rssi));
+  if (named != null) return named;
+  // Live inserts used the unused `v` column until rssi existed on the table.
+  return asLoRaRssi(Number(p.v));
 }
 
 export function rssiLabel(p) {

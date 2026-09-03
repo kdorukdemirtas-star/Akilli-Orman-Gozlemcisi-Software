@@ -1,29 +1,45 @@
 import { useEffect, useRef } from "react";
 import L from "leaflet";
+import "leaflet/dist/leaflet.css";
 
-function hasFix(gps) {
-  const g = Number(gps);
-  return g === 1 || g === 2;
+function hasCoords(lat, lon) {
+  const la = Number(lat);
+  const lo = Number(lon);
+  return Number.isFinite(la) && Number.isFinite(lo) && Math.abs(la) > 0.1 && Math.abs(lo) > 0.1;
 }
 
 export default function MapCard({ lat, lon, gps, title = "Harita", heading = true }) {
   const mapRef = useRef(null);
   const markerRef = useRef(null);
   const mapBox = useRef(null);
-  const placed = hasFix(gps);
+  const placed = hasCoords(lat, lon);
 
   useEffect(() => {
     const el = mapBox.current;
     if (!el) return undefined;
+    if (el._leaflet_id) {
+      try {
+        mapRef.current?.remove();
+      } catch {
+        /* already gone */
+      }
+      el._leaflet_id = undefined;
+    }
     const map = L.map(el, { scrollWheelZoom: false });
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
       attribution: "&copy; OpenStreetMap",
+      maxZoom: 19,
     }).addTo(map);
     map.setView([41.0, 29.0], 6);
     mapRef.current = map;
-    const raf = requestAnimationFrame(() => map.invalidateSize());
+    const fit = () => map.invalidateSize();
+    const ro = new ResizeObserver(fit);
+    ro.observe(el);
+    map.whenReady(fit);
+    const t = window.setTimeout(fit, 80);
     return () => {
-      cancelAnimationFrame(raf);
+      window.clearTimeout(t);
+      ro.disconnect();
       map.remove();
       mapRef.current = null;
       markerRef.current = null;
@@ -33,16 +49,17 @@ export default function MapCard({ lat, lon, gps, title = "Harita", heading = tru
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
-    if (!hasFix(gps)) {
+    map.invalidateSize();
+    if (!hasCoords(lat, lon)) {
       if (markerRef.current) {
         markerRef.current.remove();
         markerRef.current = null;
       }
+      map.setView([41.0, 29.0], 6);
       return;
     }
     const la = Number(lat);
     const lo = Number(lon);
-    if (Number.isNaN(la) || Number.isNaN(lo)) return;
     if (!markerRef.current) {
       markerRef.current = L.circleMarker([la, lo], {
         radius: 8,
@@ -70,7 +87,9 @@ export default function MapCard({ lat, lon, gps, title = "Harita", heading = tru
         <p className="ops-empty">GPS fix yok. Harita Türkiye genel bakışındadır.</p>
       ) : Number(gps) === 2 ? (
         <p className="ops-empty">Son kayıtlı konum. Uydu kilidi yok.</p>
-      ) : null}
+      ) : Number(gps) === 1 ? null : (
+        <p className="ops-empty">Koordinat pakette, uydu kilidi bitinde değil.</p>
+      )}
     </section>
   );
 }

@@ -237,15 +237,11 @@ html[data-surface="ha"] {
   border: 0;
   background: transparent;
 }
-.ops-map .map {
+.ops-map .map,
+.ops-map .leaflet-container {
+  width: 100%;
   height: min(42vh, 320px);
   min-height: 240px;
-  border-radius: 12px;
-}
-.ops-map .leaflet-container {
-  height: 100%;
-  width: 100%;
-  max-width: 100%;
   border-radius: 12px;
   font-family: var(--font-body);
 }
@@ -378,7 +374,8 @@ html[data-surface="ha"] {
   .ops-card-h .ops-btn {
     width: 100%;
   }
-  .ops-map .map {
+  .ops-map .map,
+  .ops-map .leaflet-container {
     height: min(36vh, 260px);
     min-height: 200px;
   }

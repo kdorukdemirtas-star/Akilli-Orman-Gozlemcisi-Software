@@ -139,9 +139,11 @@ test("ntfyPollUrl encodes the public topic", () => {
 
 test("packetRssi ignores firmware voltage and missing fields", () => {
   assert.equal(packetRssi({ rssi: -72 }), -72);
+  assert.equal(packetRssi({ v: -91 }), -91);
   assert.equal(packetRssi({ v: 3300 }), null);
   assert.equal(packetRssi({}), null);
   assert.equal(rssiLabel({ rssi: -80 }), "-80 dBm");
+  assert.equal(rssiLabel({ v: -77 }), "-77 dBm");
   assert.equal(rssiLabel({}), "Pakette yok");
 });
 

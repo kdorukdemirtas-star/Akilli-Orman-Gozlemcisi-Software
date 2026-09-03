@@ -5,7 +5,7 @@ import { asStationId } from "./stationPair.js";
 import { packetLoadHint } from "./packetHint.js";
 import { coatProgress, readCoatRenewed, writeCoatRenewed } from "./coatCycle.js";
 import { ntfyPollUrl, parseNtfyFeed } from "./ntfyFeed.js";
-import { flameLabel, flameNote, flameOn, gpsLabel, gpsNote, mq9Label, rssiLabel } from "./packetView.js";
+import { flameLabel, flameNote, flameOn, gpsLabel, gpsNote, mq9Label, packetRssi, rssiLabel } from "./packetView.js";
 import { chartLayout, clockLabel } from "./tempChart.js";
 import "./ops.css";
 
@@ -213,6 +213,7 @@ export function Lookout({ stationId, kicker, lede }) {
   const [notes, setNotes] = useState([]);
   const [notesErr, setNotesErr] = useState(false);
   const [renewedAt, setRenewedAt] = useState(readCoatRenewed);
+  const [lastRssi, setLastRssi] = useState(null);
   const stationRef = useRef(stationId);
   const latest = rows[0] || null;
   const silent = !loading && !err && !latest;
@@ -233,7 +234,10 @@ export function Lookout({ stationId, kicker, lede }) {
     stationRef.current = scopedId;
     setLoading(true);
     setErr("");
-    if (stationChanged) setRows([]);
+    if (stationChanged) {
+      setRows([]);
+      setLastRssi(null);
+    }
     if (!scopedId) {
       setLoading(false);
       setErr("Paketler okunamadı.");
@@ -287,6 +291,11 @@ export function Lookout({ stationId, kicker, lede }) {
       supabase.removeChannel(ch);
     };
   }, [stationId, reloadTick]);
+
+  useEffect(() => {
+    const n = packetRssi(latest);
+    if (n != null) setLastRssi(n);
+  }, [latest]);
 
   useEffect(() => {
     let ignore = false;
@@ -408,8 +417,12 @@ export function Lookout({ stationId, kicker, lede }) {
         <Metric
           tone="is-bark"
           title="RSSI"
-          value={loading ? "-" : rssiLabel(latest)}
-          note="Alıcı LoRa ölçümü"
+          value={loading ? "-" : rssiLabel(packetRssi(latest) != null ? latest : lastRssi != null ? { rssi: lastRssi } : latest)}
+          note={
+            packetRssi(latest) != null || lastRssi != null
+              ? "Alıcı LoRa ölçümü"
+              : "USB köprü rssi yazınca düşer"
+          }
         >
           <IcoRssi />
         </Metric>
