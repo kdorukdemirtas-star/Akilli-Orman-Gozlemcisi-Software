@@ -21,8 +21,8 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
-PORT = os.environ.get("AOG_RX_PORT", "/dev/cu.usbmodem11301")
-TX_PORT = os.environ.get("AOG_TX_PORT", "/dev/cu.usbmodem11201")
+PORT = os.environ.get("AOG_RX_PORT", "/dev/cu.usbmodem11201")
+TX_PORT = os.environ.get("AOG_TX_PORT", "/dev/cu.usbmodem11301")
 STATION = os.environ.get("AOG_STATION_ID", "AOG-DEMO-1")
 ENV_PATH = Path(
     os.environ.get(
@@ -64,6 +64,11 @@ def num(s: str | None):
     return v
 
 
+def is_tx_echo(line: str) -> bool:
+    """Transmitter USB repeats the AOG payload; RSSI exists only on the RX board."""
+    return "gitti" in line
+
+
 def parse_aog(line: str) -> dict | None:
     m = AOG_RE.search(line)
     if not m:
@@ -99,23 +104,6 @@ def list_usb_modems() -> list[str]:
     return sorted(f"/dev/{n}" for n in names if n.startswith("cu.usbmodem"))
 
 
-def find_rx_port() -> str | None:
-    wanted = PORT
-    if os.path.exists(wanted):
-        return wanted
-    others = [p for p in list_usb_modems() if p != TX_PORT]
-    return others[0] if others else None
-
-
-def wait_for_rx_port() -> str:
-    while True:
-        path = find_rx_port()
-        if path:
-            return path
-        print("alici USB yok, bekleniyor", flush=True)
-        time.sleep(2)
-
-
 def open_port(path: str) -> int:
     fd = os.open(path, os.O_RDWR | os.O_NOCTTY | os.O_NONBLOCK)
     iflag, oflag, cflag, lflag, ispeed, ospeed, cc = termios.tcgetattr(fd)
@@ -140,6 +128,54 @@ def open_port(path: str) -> int:
     except OSError:
         pass
     return fd
+
+
+def en_pulse(fd: int) -> None:
+    """ESP32-S3 USB-JTAG can sit mute until EN is pulsed with IO0 high."""
+    dtr = getattr(termios, "TIOCM_DTR", 0x002)
+    rts = getattr(termios, "TIOCM_RTS", 0x004)
+    try:
+        mods = array.array("i", [0])
+        fcntl.ioctl(fd, termios.TIOCMGET, mods)
+        mods[0] &= ~dtr
+        mods[0] |= rts
+        fcntl.ioctl(fd, termios.TIOCMSET, mods)
+        time.sleep(0.12)
+        mods[0] &= ~rts
+        fcntl.ioctl(fd, termios.TIOCMSET, mods)
+    except OSError:
+        pass
+
+
+def open_all_ports() -> tuple[dict[int, str], dict[int, bytes]]:
+    fds: dict[int, str] = {}
+    for path in list_usb_modems():
+        try:
+            fd = open_port(path)
+            fds[fd] = path
+            print(f"USB {path}", flush=True)
+        except OSError as e:
+            print(f"acma hatasi {path} {e}", flush=True)
+    if not fds:
+        return fds
+    bufs = {fd: b"" for fd in fds}
+    deadline = time.monotonic() + 0.9
+    while time.monotonic() < deadline:
+        r, _, _ = select.select(list(fds), [], [], max(0.05, deadline - time.monotonic()))
+        for fd in r:
+            try:
+                chunk = os.read(fd, 1024)
+            except (BlockingIOError, OSError):
+                continue
+            if chunk:
+                bufs[fd] += chunk
+    for fd, path in list(fds.items()):
+        if bufs[fd]:
+            continue
+        print(f"sessiz {path}, EN reset", flush=True)
+        en_pulse(fd)
+    leftover = {fd: bufs[fd] for fd in fds}
+    return fds, leftover
 
 
 def post_row(url: str, anon: str, row: dict) -> int:
@@ -171,59 +207,89 @@ def main() -> int:
         raise SystemExit("VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY eksik")
     print(f"hedef {url} station={STATION}", flush=True)
     last_n = None
+    last_rssi = None
     posted = 0
+    pending = None
     try:
         while True:
-            path = wait_for_rx_port()
-            print(f"RX {path}", flush=True)
-            try:
-                fd = open_port(path)
-            except OSError as e:
-                print(f"acma hatasi {e}", flush=True)
+            opened = open_all_ports()
+            fds, leftover = opened
+            if not fds:
+                print("USB yok, bekleniyor", flush=True)
                 time.sleep(2)
                 continue
-            buf = b""
+            bufs = {fd: leftover.get(fd, b"") for fd in fds}
             try:
                 while True:
-                    r, _, _ = select.select([fd], [], [], 1.0)
-                    if not r:
-                        if not os.path.exists(path):
+                    timeout = 0.2
+                    if pending:
+                        timeout = max(0.05, pending[0] - time.monotonic())
+                    r, _, _ = select.select(list(fds), [], [], timeout)
+                    now = time.monotonic()
+                    if pending and now >= pending[0]:
+                        row = pending[1]
+                        pending = None
+                        if row["n"] != last_n:
+                            if last_rssi is not None and "v" not in row:
+                                row["v"] = last_rssi
+                            code = post_row(url, anon, row)
+                            if code in (200, 201):
+                                last_n = row["n"]
+                                posted += 1
+                                print(
+                                    f"yazildi #{posted} n={row['n']} t={row['t']} mq9={row['mq9']} rssi={row.get('v')} a8={row['a8']} a9={row['a9']}",
+                                    flush=True,
+                                )
+                    if r:
+                        for fd in r:
+                            try:
+                                chunk = os.read(fd, 1024)
+                            except BlockingIOError:
+                                continue
+                            except OSError:
+                                raise
+                            if chunk:
+                                bufs[fd] += chunk
+                    else:
+                        missing = [p for p in fds.values() if not os.path.exists(p)]
+                        if missing:
                             raise OSError(6, "Device not configured")
-                        continue
-                    try:
-                        chunk = os.read(fd, 1024)
-                    except BlockingIOError:
-                        continue
-                    except OSError:
-                        raise
-                    if not chunk:
-                        time.sleep(0.05)
-                        continue
-                    buf += chunk
-                    while b"\n" in buf:
-                        raw, buf = buf.split(b"\n", 1)
-                        line = raw.decode("utf-8", "replace").strip()
-                        row = parse_aog(line)
-                        if not row:
-                            continue
-                        if row["n"] == last_n:
-                            continue
-                        last_n = row["n"]
-                        code = post_row(url, anon, row)
-                        if code in (200, 201):
-                            posted += 1
-                            print(
-                                f"yazildi #{posted} n={row['n']} t={row['t']} mq9={row['mq9']} rssi={row.get('v')} a8={row['a8']} a9={row['a9']}",
-                                flush=True,
-                            )
+                    for fd, path in fds.items():
+                        while b"\n" in bufs[fd]:
+                            raw, bufs[fd] = bufs[fd].split(b"\n", 1)
+                            line = raw.decode("utf-8", "replace").strip()
+                            rssi_m = RSSI_RE.search(line)
+                            if rssi_m:
+                                last_rssi = int(rssi_m.group(1))
+                            row = parse_aog(line)
+                            if not row:
+                                continue
+                            if last_rssi is not None and "v" not in row:
+                                row["v"] = last_rssi
+                            if is_tx_echo(line):
+                                if row["n"] != last_n:
+                                    pending = (time.monotonic() + 0.45, row)
+                                continue
+                            pending = None
+                            if row["n"] == last_n:
+                                continue
+                            code = post_row(url, anon, row)
+                            if code in (200, 201):
+                                last_n = row["n"]
+                                posted += 1
+                                print(
+                                    f"yazildi #{posted} n={row['n']} t={row['t']} mq9={row['mq9']} rssi={row.get('v')} src={path} a8={row['a8']} a9={row['a9']}",
+                                    flush=True,
+                                )
             except OSError as e:
                 print(f"kopuk {e}, yeniden denenecek", flush=True)
                 time.sleep(1)
             finally:
-                try:
-                    os.close(fd)
-                except OSError:
-                    pass
+                for fd in list(fds):
+                    try:
+                        os.close(fd)
+                    except OSError:
+                        pass
     except KeyboardInterrupt:
         print(f"durdu posted={posted}", flush=True)
         return 0

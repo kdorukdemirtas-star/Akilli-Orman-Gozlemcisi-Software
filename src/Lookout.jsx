@@ -101,8 +101,7 @@ function useNarrow() {
 
 function TempChart({ rows, loading }) {
   const narrow = useNarrow();
-  // A 640-wide viewBox scaled into a ~280px card renders 8px axis text; a 360 box keeps it ~14px.
-  const chart = chartLayout(rows, Date.now(), narrow ? { w: 360, h: 240 } : { w: 640, h: 240 });
+  const chart = chartLayout(rows, Date.now(), narrow ? { w: 360, h: 260 } : { w: 640, h: 260 });
   if (chart.empty) {
     return (
       <p className="ops-empty">
@@ -110,17 +109,17 @@ function TempChart({ rows, loading }) {
       </p>
     );
   }
-  const peakRight = chart.peak.x > chart.w - 180;
-  const peakX = peakRight ? chart.peak.x - 8 : chart.peak.x + 8;
+  const peakRight = chart.peak.x > chart.w - 160;
+  const peakX = peakRight ? chart.peak.x - 10 : chart.peak.x + 10;
   const peakAnchor = peakRight ? "end" : "start";
   return (
     <div className="ops-chart">
       <svg
         viewBox={`0 0 ${chart.w} ${chart.h}`}
         width="100%"
-        height="240"
+        height="260"
         role="img"
-        aria-label={`Sıcaklık ${fmt(chart.min, 1)} ile ${fmt(chart.max, 1)} derece arasında. Tepe ${fmt(chart.peak.t, 1)} °C, ${clockLabel(chart.peak.ts)}.`}
+        aria-label={`Sıcaklık ${fmt(chart.min, 1)} ile ${fmt(chart.max, 1)} derece arasında. Tepe ${fmt(chart.peak.t, 1)} °C, ${clockLabel(chart.peak.ts, chart.span)}.`}
       >
         {chart.yTicks.map((tick) => (
           <g key={`y-${tick.v}`}>
@@ -133,17 +132,18 @@ function TempChart({ rows, loading }) {
         {chart.xTicks.map((tick) => (
           <g key={`x-${tick.ts}`}>
             <line className="ops-grid is-x" x1={tick.x} y1={chart.pad.t} x2={tick.x} y2={chart.baseY} />
-            <text className="ops-axis" x={tick.x} y={chart.h - 8} textAnchor="middle">
+            <text className="ops-axis" x={tick.x} y={chart.h - 10} textAnchor="middle">
               {tick.label}
             </text>
           </g>
         ))}
         <line className="ops-axis-line" x1={chart.pad.l} y1={chart.baseY} x2={chart.w - chart.pad.r} y2={chart.baseY} />
         <path className="ops-area" d={chart.area} />
-        <polyline className="ops-line" points={chart.line} />
-        <circle className="ops-peak-dot" cx={chart.peak.x} cy={chart.peak.y} r="4.5" />
-        <text className="ops-peak-label" x={peakX} y={chart.peak.y - 10} textAnchor={peakAnchor}>
-          {clockLabel(chart.peak.ts)} · {fmt(chart.peak.t, 1)} °C
+        <path className="ops-line" d={chart.path} />
+        <circle className="ops-peak-dot" cx={chart.peak.x} cy={chart.peak.y} r="4" />
+        <circle className="ops-now-dot" cx={chart.last.x} cy={chart.last.y} r="5" />
+        <text className="ops-peak-label" x={peakX} y={Math.max(18, chart.peak.y - 12)} textAnchor={peakAnchor}>
+          {clockLabel(chart.peak.ts, chart.span)} · {fmt(chart.peak.t, 1)} °C
         </text>
       </svg>
     </div>
@@ -333,6 +333,8 @@ export function Lookout({ stationId, kicker, lede }) {
 
   const tempLabel = loading || latest?.t == null ? "-" : `${fmt(latest.t, 1)} °C`;
   const ageLabel = loading ? "-" : since(latest?.created_at);
+  const tempChartMeta = chartLayout(rows, Date.now());
+  const tempCaption = tempChartMeta.empty ? "Gelen paketler" : tempChartMeta.caption;
   const warnCount = notes.length ? notes.length : packetAlerts.length;
   const coatNote =
     coat.elapsedDays == null
@@ -395,12 +397,7 @@ export function Lookout({ stationId, kicker, lede }) {
         <Metric tone="is-blue" title="Sıcaklık" value={tempLabel} note={loading ? "Okunuyor" : ageLabel}>
           <IcoTemp />
         </Metric>
-        <Metric
-          tone="is-warn"
-          title="MQ-9"
-          value={loading ? "-" : mq9Label(latest)}
-          note="Ham ADC, ppm değil"
-        >
+        <Metric tone="is-warn" title="MQ-9" value={loading ? "-" : mq9Label(latest)} note={loading ? "Okunuyor" : ageLabel}>
           <IcoGas />
         </Metric>
         <Metric
@@ -420,8 +417,10 @@ export function Lookout({ stationId, kicker, lede }) {
           value={loading ? "-" : rssiLabel(packetRssi(latest) != null ? latest : lastRssi != null ? { rssi: lastRssi } : latest)}
           note={
             packetRssi(latest) != null || lastRssi != null
-              ? "Alıcı LoRa ölçümü"
-              : "USB köprü rssi yazınca düşer"
+              ? "Alıcı LoRa"
+              : loading
+                ? "Okunuyor"
+                : "Paket bekleniyor"
           }
         >
           <IcoRssi />
@@ -433,7 +432,7 @@ export function Lookout({ stationId, kicker, lede }) {
           <header className="ops-card-h">
             <div>
               <h2>Sıcaklık grafiği</h2>
-              <p>Son 24 saatlik sıcaklık değişimi</p>
+              <p>{tempCaption}</p>
             </div>
           </header>
           <TempChart rows={rows} loading={loading} />

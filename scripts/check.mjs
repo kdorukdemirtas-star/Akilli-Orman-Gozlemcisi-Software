@@ -195,6 +195,21 @@ test("chartLayout maps the peak to the hottest packet", () => {
   assert.ok(chart.yTicks.length >= 3);
   assert.ok(chart.xTicks.length >= 3);
   assert.match(chart.line, /,/);
+  assert.match(chart.path, /^M /);
+});
+
+test("chartLayout stretches recent packets across the plot", () => {
+  const now = Date.parse("2026-09-02T20:00:00+03:00");
+  const rows = Array.from({ length: 10 }, (_, i) => ({
+    t: 30 + i * 0.08,
+    created_at: new Date(now - (9 - i) * 2000).toISOString(),
+  }));
+  const chart = chartLayout(rows, now, { w: 640, h: 260 });
+  const first = chart.coords[0].x;
+  const last = chart.coords[chart.coords.length - 1].x;
+  assert.ok(last - first > 400);
+  assert.ok(first > 40 && first < 90);
+  assert.ok(last > 520);
 });
 
 test("chartLayout is empty without temperatures", () => {

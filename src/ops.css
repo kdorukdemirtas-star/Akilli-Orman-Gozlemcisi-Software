@@ -203,19 +203,24 @@ html[data-surface="ha"] {
   font-size: 18px;
 }
 .ops-area {
-  fill: color-mix(in oklch, var(--color-moss) 16%, transparent);
+  fill: color-mix(in oklch, var(--color-moss) 18%, transparent);
 }
 .ops-line {
   fill: none;
   stroke: currentColor;
-  stroke-width: 2.4;
+  stroke-width: 2.8;
   stroke-linejoin: round;
   stroke-linecap: round;
 }
 .ops-peak-dot {
-  fill: currentColor;
+  fill: color-mix(in oklch, var(--color-moss) 55%, white);
   stroke: var(--color-paper-2);
   stroke-width: 2;
+}
+.ops-now-dot {
+  fill: currentColor;
+  stroke: var(--color-paper-2);
+  stroke-width: 2.4;
 }
 .ops-peak-label {
   fill: var(--color-ink);
