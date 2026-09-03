@@ -1,4 +1,4 @@
-const CACHE = "aog-shell-v3";
+const CACHE = "aog-shell-v4";
 const SHELL = [
   "/",
   "/cihaz",
@@ -28,13 +28,13 @@ self.addEventListener("activate", (event) => {
 
 self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return;
+  const url = new URL(event.request.url);
+  if (url.origin !== self.location.origin) return;
   event.respondWith(
     fetch(event.request)
       .then((res) => {
         const copy = res.clone();
-        if (res.ok && new URL(event.request.url).origin === self.location.origin) {
-          caches.open(CACHE).then((cache) => cache.put(event.request, copy)).catch(() => {});
-        }
+        if (res.ok) caches.open(CACHE).then((cache) => cache.put(event.request, copy)).catch(() => {});
         return res;
       })
       .catch(() => caches.match(event.request)),

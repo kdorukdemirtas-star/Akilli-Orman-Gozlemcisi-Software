@@ -25,10 +25,12 @@ export default function MapCard({ lat, lon, gps, title = "Harita", heading = tru
       }
       el._leaflet_id = undefined;
     }
-    const map = L.map(el, { scrollWheelZoom: false });
-    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution: "&copy; OpenStreetMap",
-      maxZoom: 19,
+    const map = L.map(el, { scrollWheelZoom: false, attributionControl: true });
+    L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", {
+      attribution: "&copy; OpenStreetMap &copy; CARTO",
+      subdomains: "abcd",
+      maxZoom: 20,
+      referrerPolicy: "strict-origin-when-cross-origin",
     }).addTo(map);
     map.setView([41.0, 29.0], 6);
     mapRef.current = map;
