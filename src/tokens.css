@@ -1,0 +1,147 @@
+/* Hallmark · pre-emit critique: P5 H5 E4 S5 R4 V5
+ * Hallmark · route: custom (bespoke) · structure: photographic product fold + overlay menu
+ * idea: "one forest box on frost-moss, Marvis HUD, glass only on the lookout board"
+ * theme: studied-DNA (source: https://www.marvis.com/turkey/tr/ + user screenshots)
+ * paper: oklch(96.5% 0.018 145) · accent: oklch(42% 0.07 52)
+ * display: Big Shoulders Display · body: Figtree · outlier: IBM Plex Mono
+ * axes: light / display-condensed / warm · enrichment: E5 SVG box
+ * studied: yes · DNA-source: url+image · Audience: juri + ormanci
+ * Use: tanitim then pano · Tone: luxury
+ */
+:root {
+  --color-paper: oklch(96.5% 0.018 145);
+  --color-paper-2: oklch(93% 0.022 145);
+  --color-paper-3: oklch(88% 0.03 145);
+  --color-ink: oklch(16% 0.03 145);
+  --color-muted: oklch(28% 0.03 145);
+  --color-accent: oklch(42% 0.07 52);
+  --color-accent-ink: oklch(97% 0.012 80);
+  --color-moss: oklch(48% 0.08 145);
+  --color-sprout: oklch(52% 0.11 145);
+  --color-ember: oklch(52% 0.18 28);
+  --color-frost: oklch(99% 0.01 145 / 0.42);
+  --color-rule: oklch(72% 0.03 145);
+  --color-focus: oklch(48% 0.1 52);
+  --color-ok-bg: oklch(90% 0.04 145);
+  --color-ok-ink: oklch(28% 0.05 145);
+  --color-hex: oklch(16% 0.03 145);
+  --color-hex-ink: oklch(97% 0.01 145);
+  --font-display: "Big Shoulders Display", "Arial Narrow", sans-serif;
+  --font-body: "Figtree", ui-sans-serif, sans-serif;
+  --font-data: "IBM Plex Mono", ui-monospace, monospace;
+  --space-2xs: 4px;
+  --space-xs: 8px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --space-2xl: 48px;
+  --space-3xl: 64px;
+  --page-gutter: clamp(16px, 4vw, 48px);
+  --text-label: 0.75rem;
+  --text-body: 1.0625rem;
+  --text-heading: 2rem;
+  --text-display: clamp(2.75rem, 12vw, 7.5rem);
+  --radius-pill: 999px;
+  --radius-card: 0;
+  --rule-hair: 1px;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in: cubic-bezier(0.7, 0, 0.84, 0);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --dur-fast: 120ms;
+  --dur: 220ms;
+  --dur-long: 420ms;
+  --hud-h: 76px;
+  --wood: var(--color-paper);
+  --panel: var(--color-paper-2);
+  --paper: var(--color-ink);
+  --muted: var(--color-muted);
+  --kerosene: var(--color-accent-ink);
+  --ember: var(--color-ember);
+  --alert: var(--color-ember);
+  --flag-ok-bg: var(--color-ok-bg);
+  --flag-ok-ink: var(--color-ok-ink);
+  --line: var(--color-rule);
+  --radius-in: 0;
+  --radius-out: 0;
+  --space: 8px;
+  --z-hud: 40;
+  --z-menu: 50;
+}
+
+html[data-chrome="tabs"],
+html[data-chrome="tabs"] body,
+html[data-chrome="tabs"] #root {
+  height: 100svh;
+  height: 100dvh;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+html[data-surface="market"] {
+  --radius-card: 0;
+}
+
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: clip;
+}
+html,
+body,
+#root {
+  width: 100%;
+  max-width: 100%;
+  min-height: 100%;
+  margin: 0;
+  overflow-x: clip;
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  font-size: var(--text-body);
+  line-height: 1.55;
+}
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  font-style: normal;
+  font-weight: 800;
+  text-wrap: balance;
+  overflow-wrap: anywhere;
+  min-width: 0;
+  letter-spacing: 0.02em;
+  line-height: 0.92;
+  text-transform: uppercase;
+}
+p {
+  text-wrap: pretty;
+}
+code,
+.data {
+  font-family: var(--font-data);
+  font-variant-numeric: tabular-nums;
+}
+a {
+  color: inherit;
+}
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+summary:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 3px;
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition-duration: 0.01ms !important;
+  }
+}

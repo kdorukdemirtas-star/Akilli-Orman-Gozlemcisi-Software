@@ -1,0 +1,45 @@
+export const MODULES = [
+  {
+    id: "govde",
+    name: "IP-67 Alüminyum kutu",
+    src: "/hardware/rx-case.png",
+    alt: "Fırçalanmış alüminyum endüstriyel kutu, kapaklı.",
+    body: "IP-67 alüminyum kutu. Vida aralığı, conta yuvası ve kablo rakoru hazır gelir. Güneş paneli ve anten bu kabuğa oturur. Satılan ürün Akıllı Orman Gözlemcisi'dir.",
+  },
+  {
+    id: "max6675",
+    name: "MAX6675",
+    src: "/hardware/mod-max6675.jpg",
+    cutout: false,
+    alt: "MAX6675 K-tipi termokupl dönüştürücü ve çelik problu kablo.",
+    body: "K-tipi termokupl, orman yangınında plastik gövdeli bir sıcaklık çipinin dayanamayacağı ısılara çıkar. MAX6675 soğuk bağlantı telafisiyle analog gerilimi SPI üzerinden sayıya çevirir. Paketteki t= alanı buradan gelir. Pano eşiği 100 °C'dir. Alarm ancak sıcaklık bu çizginin üstünde ve alev de varsa yazılır.",
+  },
+  {
+    id: "gps",
+    name: "GY-GPSV3-NEO",
+    src: "/hardware/mod-gps.png",
+    alt: "u-blox NEO GPS kartı ve seramik yama anten.",
+    body: "u-blox NEO, UART ile Deneyap karta konuşur. Seramik yama anten ağaç altında zayıf kalır. Fix yoksa paket gps=0 yazar; harita işaret koymaz. Fix geldiğinde lat ve lon beş ondalığa kadar panoya düşer. Yedek düğme pili sıcak başlangıcı kısaltır. Ormanda ilk açılış yine soğuk başlatma olabilir.",
+  },
+  {
+    id: "mq9",
+    name: "MQ-9",
+    src: "/hardware/mod-mq9.png",
+    alt: "MQ-9 karbonmonoksit ve yanıcı gaz sensörü.",
+    body: "MQ-9 karbonmonoksit ve yanıcı gazlara duyarlı bir yarıiletken kafestir. Analog çıkış Deneyap'ın A3 pinine gider. Paket mq9= ham ADC değeridir; ppm iddiası yoktur. Isıtıcı eleman birkaç dakikada ısınır. Potansiyometre dijital eşiği ayarlar. Yazılım alarmı gazdan değil, sıcaklık ve alevden kurar.",
+  },
+  {
+    id: "flame",
+    name: "Kızılötesi alev",
+    src: "/hardware/mod-flame.png",
+    alt: "Kızılötesi alev modülü, LM393 karşılaştırıcı ve ayar trimeri.",
+    body: "Modül alevin kızılötesi ışımasını fototransistörle görür. LM393 karşılaştırıcı dijital çıkar. Kutuda iki kızılötesi göz vardır. Pano bunları ayrı ürün gibi göstermez; tek ateş kararı verir. Eşik 100 °C ve alev birlikte sağlanınca ntfy gider.",
+  },
+  {
+    id: "lora",
+    name: "Ra-02 LoRa",
+    src: "/hardware/mod-lora.png",
+    alt: "Ai-Thinker Ra-02 LoRa kırılım kartı, U.FL anten ve başlıklar.",
+    body: "Ai-Thinker Ra-02, SX1278 tabanlı 410-525 MHz LoRa alıcı-vericisidir. PA çıkışı +18 dBm'dir. SPI (NSS, MOSI, MISO, SCK) ve DIO0 kesmesi Deneyap'a bağlıdır. Orman kutusu Wi-Fi taşımaz. Paket 433 MHz'den çıkar. Anten U.FL'den gider. Kalkanlı kablo ormanda gürültüyü keser.",
+  },
+];
