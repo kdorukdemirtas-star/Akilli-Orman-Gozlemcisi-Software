@@ -177,8 +177,8 @@ function Hero() {
         <article className="fold-card is-shot">
           <Photo
             src="/fold/guts.jpg"
-            w={1536}
-            h={1024}
+            w={1200}
+            h={800}
             alt="Açık orman kutusu. Kartlar turuncu conta yuvasının içinde."
           />
           <h2>Güneş panelli gövde</h2>
