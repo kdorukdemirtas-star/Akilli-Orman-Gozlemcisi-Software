@@ -5,7 +5,7 @@ import { asStationId } from "./stationPair.js";
 import { packetLoadHint } from "./packetHint.js";
 import { coatProgress, readCoatRenewed, writeCoatRenewed } from "./coatCycle.js";
 import { ntfyPollUrl, parseNtfyFeed } from "./ntfyFeed.js";
-import { rssiLabel } from "./packetView.js";
+import { flameLabel, flameNote, flameOn, gpsLabel, gpsNote, mq9Label, rssiLabel } from "./packetView.js";
 import { chartLayout, clockLabel } from "./tempChart.js";
 import "./ops.css";
 
@@ -13,10 +13,7 @@ const MapCard = lazy(() => import("./MapCard.jsx"));
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-export function flameOn(p) {
-  if (!p) return false;
-  return Number(p.a8) === 0 || Number(p.a9) === 0;
-}
+export { flameOn } from "./packetView.js";
 
 export function isAlert(p) {
   if (!p || p.t == null) return false;
@@ -153,14 +150,6 @@ function TempChart({ rows, loading }) {
   );
 }
 
-function IcoPhone() {
-  return (
-    <svg viewBox="0 0 24 24" width="18" height="18">
-      <rect x="7" y="3" width="10" height="18" rx="2" fill="none" stroke="currentColor" strokeWidth="1.8" />
-      <path d="M11 18h2" stroke="currentColor" strokeWidth="1.8" />
-    </svg>
-  );
-}
 function IcoTemp() {
   return (
     <svg viewBox="0 0 24 24" width="18" height="18">
@@ -173,18 +162,36 @@ function IcoTemp() {
     </svg>
   );
 }
-function IcoWarn() {
+function IcoGas() {
   return (
     <svg viewBox="0 0 24 24" width="18" height="18">
-      <path d="M12 4l9 16H3z" fill="none" stroke="currentColor" strokeWidth="1.8" />
-      <path d="M12 10v4M12 16.5h.01" stroke="currentColor" strokeWidth="1.8" />
+      <path
+        d="M8 10c0-3 2-6 4-7 2 1 4 4 4 7v6a4 4 0 0 1-8 0z"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+      />
+      <path d="M10 16h4" stroke="currentColor" strokeWidth="1.8" />
     </svg>
   );
 }
-function IcoShield() {
+function IcoFlame() {
   return (
     <svg viewBox="0 0 24 24" width="18" height="18">
-      <path d="M12 3l8 3v6c0 5-3.2 8.2-8 10-4.8-1.8-8-5-8-10V6z" fill="none" stroke="currentColor" strokeWidth="1.8" />
+      <path
+        d="M12 3s4 4.2 4 8a4 4 0 1 1-8 0c0-2.4 1.4-4.6 4-8z"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+      />
+    </svg>
+  );
+}
+function IcoGps() {
+  return (
+    <svg viewBox="0 0 24 24" width="18" height="18">
+      <circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" strokeWidth="1.8" />
+      <path d="M12 3v2M12 19v2M3 12h2M19 12h2" stroke="currentColor" strokeWidth="1.8" />
     </svg>
   );
 }
@@ -375,25 +382,35 @@ export function Lookout({ stationId, kicker, lede }) {
         </div>
       ) : null}
 
-      <section className="ops-metrics" aria-label="Özet">
-        <Metric tone="is-moss" title="Aktif cihaz" value="2" note="Orman kutusu ve alıcı">
-          <IcoPhone />
-        </Metric>
+      <section className="ops-metrics" aria-label="Sensörler">
         <Metric tone="is-blue" title="Sıcaklık" value={tempLabel} note={loading ? "Okunuyor" : ageLabel}>
           <IcoTemp />
         </Metric>
         <Metric
-          tone={warnCount ? "is-warn" : "is-moss"}
-          title="Uyarılar"
-          value={String(warnCount)}
-          note={notes.length ? "Gönderilen bildirim" : "Eşik geçen paket"}
+          tone="is-warn"
+          title="MQ-9"
+          value={loading ? "-" : mq9Label(latest)}
+          note="Ham ADC, ppm değil"
         >
-          <IcoWarn />
+          <IcoGas />
         </Metric>
-        <Metric tone="is-moss" title="Kaplama durumu" value={`%${coat.pct}`} note={coatNote}>
-          <IcoShield />
+        <Metric
+          tone={fire ? "is-warn" : "is-moss"}
+          title="Alev"
+          value={loading ? "-" : flameLabel(latest)}
+          note={loading ? "D8 ve D9" : flameNote(latest)}
+        >
+          <IcoFlame />
         </Metric>
-        <Metric tone="is-bark" title="RSSI değeri" value={loading ? "-" : rssiLabel(latest)} note="LoRa paket alanı">
+        <Metric tone="is-moss" title="GPS" value={loading ? "-" : gpsLabel(latest)} note={loading ? "Konum" : gpsNote(latest)}>
+          <IcoGps />
+        </Metric>
+        <Metric
+          tone="is-bark"
+          title="RSSI"
+          value={loading ? "-" : rssiLabel(latest)}
+          note="Alıcı LoRa ölçümü"
+        >
           <IcoRssi />
         </Metric>
       </section>

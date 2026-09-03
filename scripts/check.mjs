@@ -3,7 +3,7 @@ import { test } from "node:test";
 import { coatProgress } from "../src/coatCycle.js";
 import { chartLayout, hourMarks, yScale } from "../src/tempChart.js";
 import { ntfyPollUrl, parseNtfyFeed } from "../src/ntfyFeed.js";
-import { packetRssi, rssiLabel } from "../src/packetView.js";
+import { flameLabel, flameNote, gpsLabel, gpsNote, mq9Label, packetRssi, rssiLabel } from "../src/packetView.js";
 import { deviceKind, isStandaloneDisplay, pwaPlatform } from "../src/pwa.js";
 import { packetLoadHint } from "../src/packetHint.js";
 import { pairHref, parseStation, STATION_STORAGE_KEY } from "../src/stationPair.js";
@@ -143,6 +143,17 @@ test("packetRssi ignores firmware voltage and missing fields", () => {
   assert.equal(packetRssi({}), null);
   assert.equal(rssiLabel({ rssi: -80 }), "-80 dBm");
   assert.equal(rssiLabel({}), "Pakette yok");
+});
+
+test("mq9 and flame and gps labels read the packet fields", () => {
+  assert.equal(mq9Label({ mq9: 1548 }), "1548");
+  assert.equal(mq9Label({}), "-");
+  assert.equal(flameLabel({ a8: 1, a9: 1 }), "Yok");
+  assert.equal(flameLabel({ a8: 0, a9: 1 }), "Alev");
+  assert.equal(flameNote({ a8: 0, a9: 1 }), "D8 alev, D9 boş");
+  assert.equal(gpsLabel({ gps: 0 }), "Fix yok");
+  assert.equal(gpsLabel({ gps: 1, lat: 41.22559, lon: 27.88869 }), "41.22559, 27.88869");
+  assert.equal(gpsNote({ gps: 1 }), "Uydu kilidi");
 });
 
 test("yScale pads a tight temperature band", () => {

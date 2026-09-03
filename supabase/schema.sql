@@ -13,11 +13,14 @@ create table if not exists public.packets (
   a9 integer,
   v double precision,
   a_h double precision,
+  rssi integer,
   created_at timestamptz not null default now()
 );
 
 create index if not exists packets_created_at_idx on public.packets (created_at desc);
 create index if not exists packets_station_idx on public.packets (station_id, created_at desc);
+
+alter table public.packets add column if not exists rssi integer;
 
 alter table public.packets enable row level security;
 

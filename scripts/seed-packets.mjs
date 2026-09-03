@@ -63,6 +63,7 @@ const payload = rows.map((r, i) => ({
   mq9: r.mq9,
   a8: 1,
   a9: 1,
+  rssi: -72 - (i % 12),
   created_at: new Date(now - r.hours * 3600 * 1000).toISOString(),
 }));
 
