@@ -8,7 +8,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "seed": "node scripts/seed-packets.mjs",
-    "test": "node --test scripts/check.mjs"
+    "test": "node --test scripts/check.mjs && python3 scripts/test_chat_proxy.py"
   },
   "dependencies": {
     "@clerk/react": "^6.15.1",

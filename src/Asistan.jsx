@@ -8,13 +8,14 @@ import {
   newThreadId,
   readKip,
   readThreads,
-  stripThink,
+  cleanReply,
   systemPrompt,
   titleFromQuestion,
   writeKip,
   writeThreads,
 } from "./chatStore.js";
 import { chatLoadHint } from "./chatHint.js";
+import { INJECTION_HINT, looksLikeInjection } from "./chatGuard.js";
 import "./site.css";
 import "./asistan.css";
 
@@ -55,7 +56,7 @@ async function askPi(question, kip, signal) {
   }
   const data = await res.json();
   const msg = data?.choices?.[0]?.message || {};
-  return stripThink(msg.content) || stripThink(msg.reasoning_content);
+  return cleanReply(msg.content, question);
 }
 
 function isAbort(err) {
@@ -164,6 +165,12 @@ export default function Asistan({ product = "software" }) {
         ),
       );
     });
+    if (looksLikeInjection(text)) {
+      inflight.current.delete(id);
+      setBusyId((cur) => (cur === id ? "" : cur));
+      setErr({ id, text: chatLoadHint(400, INJECTION_HINT) });
+      return;
+    }
     try {
       const raw = await askPi(text, kip, ac.signal);
       const reply =
