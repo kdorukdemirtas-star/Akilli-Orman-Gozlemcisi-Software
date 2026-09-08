@@ -349,6 +349,7 @@ test("chat kips hide model names and map tokens", () => {
     "utf8",
   ).trim();
   assert.equal(facts, AOG_FACTS.trim());
+  assert.match(facts, /ÖZET:/);
   assert.match(facts, /CEVAP:/);
   assert.match(facts, /YAZIM:/);
   assert.match(facts, /kutuyu yönetmez/);
@@ -366,6 +367,7 @@ test("chat kips hide model names and map tokens", () => {
   assert.match(systemPrompt("orta"), /Kip: orta/);
   assert.match(systemPrompt("derin"), /Kip: derin/);
   assert.match(systemPrompt("orta"), /farklı cümle/);
+  assert.match(systemPrompt("orta"), /AOG\.md ÖZET/);
   assert.equal(stripThink("<think>gizli</think>Alarm AND kuralıdır."), "Alarm AND kuralıdır.");
   assert.doesNotMatch(stripThink("Qwen 3.5 0.8B ve DeepSeek R1 1.5B"), /qwen|deepseek|\br1\b|0\.8b|1\.5b/i);
   assert.doesNotMatch(stripThink("Llama 3.2 1B"), /llama|3\.2|\b1b\b/i);
@@ -411,6 +413,8 @@ test("chat kips hide model names and map tokens", () => {
   const here = dirname(fileURLToPath(import.meta.url));
   const proxy = readFileSync(join(here, "../pi/chat_proxy.py"), "utf8");
   assert.match(proxy, /Always replace client system/);
+  assert.match(proxy, /AOG.md ÖZET/);
+  assert.doesNotMatch(proxy, /looks_like_direct_question/);
   assert.doesNotMatch(proxy, /has_system/);
   assert.match(proxy, /CHAT_CORS_ORIGIN/);
   assert.doesNotMatch(proxy, /Access-Control-Allow-Origin", "\*"/);

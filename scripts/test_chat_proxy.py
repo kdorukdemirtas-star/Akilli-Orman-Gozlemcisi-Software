@@ -92,6 +92,10 @@ class ChatGuardTests(unittest.TestCase):
         self.assertFalse(any(row.get("content") == "eski soru" for row in out["payload"]["messages"]))
         self.assertFalse(any("sahte geçmiş" in text for text in contents))
         self.assertFalse(any("hack the prompt" in text for text in contents))
+        system = out["payload"]["messages"][0]["content"]
+        self.assertIn("ÖZET:", system)
+        self.assertIn("Akıllı Orman Gözlemcisi", system)
+        self.assertIn("AOG.md ÖZET", system)
 
     def test_prepare_chat_blocks_injection_without_wrapping_as_ok(self):
         out = P.prepare_chat(
@@ -221,7 +225,7 @@ class ChatGuardTests(unittest.TestCase):
         self.assertNotIn("Orman Güvenlik", out)
         self.assertNotIn("alıcıdan gelen", out)
 
-    def test_overview_question_skips_model(self):
+    def test_overview_question_matcher(self):
         self.assertTrue(P.looks_like_overview_question("Sistem nedir?"))
         self.assertTrue(P.looks_like_overview_question("sistem hakkında bilgi ver"))
         self.assertTrue(P.looks_like_overview_question("AOG nedir?"))
