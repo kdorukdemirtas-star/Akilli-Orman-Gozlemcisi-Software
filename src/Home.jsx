@@ -20,7 +20,7 @@ const MOD_GAINS = [
   },
   {
     title: "Alarm AND kuralı",
-    body: "Pano eşiği 100 °C'dir. Alarm ancak sıcaklık bu çizginin üstünde ve alev de varsa yazılır.",
+    body: "Sıcaklık 100 °C ve üstü ve alev birlikte olunca yazılır. Biri tek başına yetmez.",
     icon: "alert",
   },
   {
@@ -106,17 +106,17 @@ function ModIcon({ name }) {
 const FOLD_CHIPS = [
   {
     title: "LoRa izleme",
-    body: "Orman kutusu Wi-Fi taşımaz. Paket Ra-02 433 MHz ile alıcıya çıkar.",
+    body: "Kutu ormanı eve bağlar. Paket Ra-02 433 MHz ile alıcıya çıkar.",
     icon: "radio",
   },
   {
-    title: "100 °C ve alev",
-    body: "Alarm ancak sıcaklık bu çizginin üstünde ve alev de varsa yazılır.",
+    title: "Güvenilir alarm",
+    body: "Ekip gerçek yangında çağrılır. Güneş ısısı yangın sayılmaz.",
     icon: "alert",
   },
   {
     title: "Pasif kaplama",
-    body: "Karışım yangını söndürmez. Alevin yüzeye oturmasını yavaşlatır.",
+    body: "Alevin yüzeye oturmasını yavaşlatır. Ekip yetişecek zamanı kazanır.",
     icon: "leaf",
   },
 ];

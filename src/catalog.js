@@ -12,7 +12,7 @@ export const MODULES = [
     src: "/hardware/mod-max6675.jpg",
     cutout: false,
     alt: "MAX6675 K-tipi termokupl dönüştürücü ve çelik problu kablo.",
-    body: "K-tipi termokupl, orman yangınında plastik gövdeli bir sıcaklık çipinin dayanamayacağı ısılara çıkar. MAX6675 soğuk bağlantı telafisiyle analog gerilimi SPI üzerinden sayıya çevirir. Paketteki t= alanı buradan gelir. Pano eşiği 100 °C'dir. Alarm ancak sıcaklık bu çizginin üstünde ve alev de varsa yazılır.",
+    body: "K-tipi termokupl, orman yangınında plastik gövdeli bir sıcaklık çipinin dayanamayacağı ısılara çıkar. MAX6675 soğuk bağlantı telafisiyle analog gerilimi SPI üzerinden sayıya çevirir. Paketteki t= alanı buradan gelir. Pano eşiği: 100 °C ve alev. Sıcaklık tek başına, alev tek başına alarm yazmaz.",
   },
   {
     id: "gps",
