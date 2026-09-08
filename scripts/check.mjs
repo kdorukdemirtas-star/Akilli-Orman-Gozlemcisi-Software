@@ -378,6 +378,18 @@ test("chat kips hide model names and map tokens", () => {
   );
   assert.match(cleanReply(intern, "sistem hakkında bilgi ver"), /LoRa/);
   assert.doesNotMatch(cleanReply(intern, "sistem hakkında bilgi ver"), /Alright|PDF|the user/i);
+  const soup =
+    "Sistem, bir sistemden diğerine geçiş ve işleme process'inin oluşturduğu genel bir概念dür. " +
+    'Sistem management veya system administration. required processes. Bu_processes ทำงานreten. running mantener.';
+  assert.equal(looksLikeScratch(soup, "Sistem nedir?"), true);
+  assert.match(cleanReply(soup, "Sistem nedir?"), /LoRa/);
+  assert.doesNotMatch(cleanReply(soup, "Sistem nedir?"), /概念|mantener|system management|required/i);
+  const grounded = "AOG, LoRa 433 MHz ile ormanı izleyen kutudur. Kaplama alevi yavaşlatır.";
+  assert.equal(cleanReply(grounded, "Sistem nedir?"), grounded);
+  assert.equal(
+    cleanReply("GPS fix yoksa harita işaret koymaz.", "GPS ne işe yarar?"),
+    "GPS fix yoksa harita işaret koymaz.",
+  );
   assert.equal(cleanReply("Kaplama alevi yavaşlatır.", "kaplama"), "Kaplama alevi yavaşlatır.");
   assert.doesNotMatch(
     PLUGIN_CATALOG.map((item) => item.title + item.body).join(" "),

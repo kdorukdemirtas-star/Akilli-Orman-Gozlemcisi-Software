@@ -2,7 +2,7 @@
 // Product questions pass. Only clear jailbreaks are blocked.
 
 const PRODUCT_RE =
-  /lora|alarm|kaplama|kutu|yangın|alev|gps|mesh|mq-?9|pano|orman|gözlem|\baog\b|sıcaklık|ntfy|karışım|asistan|sistem nedir|sistem hakkında|sistem nasıl|nasıl çalış|ne işe yarar|hakkında bilgi|wi-?fi|eşik|paket/i;
+  /lora|alarm|kaplama|kutu|yangın|yangin|alev|gps|mesh|mq-?9|pano|orman|gözlem|\baog\b|sıcaklık|ntfy|karışım|karisim|asistan|sistem|kural|\bhop\b|verici|alıcı|alici|nasıl çalış|ne işe yarar|hakkında bilgi|wi-?fi|eşik|paket|istasyon|cihaz|eklenti|deneyap|sklearn|standardscaler|\bnss\b|\bgpio\b|\bdio0\b|\bpin\b|max6675|\bskor\b|clerk|firmware|termokupl|öğrenmesi/i;
 
 const HARD_INJECT_RE =
   /ignore\s+(all\s+|any\s+)?(previous|prior|above)\s+(instructions|rules|prompts)|jailbreak|dan\s+mode|developer\s+mode|new\s+system\s+prompt|reveal\s+.{0,40}(system\s+prompt|hidden\s+prompt)|print\s+.{0,30}(system|hidden)\s+prompt|önceki\s+(talimat|kural|komut).{0,40}(unut|yoksay|görmezden|geçersiz)|sistem\s+prompt|system\s+prompt|<\/?system>|\[INST\]|<<SYS>>|\[system\]|role\s*[:=]\s*system/i;

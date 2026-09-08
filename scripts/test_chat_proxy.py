@@ -146,6 +146,63 @@ class ChatGuardTests(unittest.TestCase):
         keep = P.finalize_reply(dump, "", "NSS hangi pin?")
         self.assertIn("NSS D4", keep)
 
+    def test_finalize_drops_multilingual_system_essay(self):
+        soup = (
+            "Sistem, bir sistemden diğerine geçiş ve işleme process'inin oluşturduğu genel bir概念dür. "
+            "Sistemler, bilgisayarlar, motorlar, ulaştırma systemleri, enerji sistemeleri, avyon sistemleri, "
+            "gibi farklı dallarda ortaya çıkabilir. Sistemi yönetmek için kullanılan teknikler, algoritmalar "
+            've programlar genellikle "sistem management" veya "system administration" adlariyle tanımlanır. '
+            "Sistem management, bir sistemdeki tüm processeminin ve işlemini kontrolü altına almak için kullanılır. "
+            "Örneğin, bir bilgisayarın çalışması için required processes, algoritma ve programlar oluşturulur. "
+            "Bu_processes, algoritmalar ve programlar sistemindeทำงานreten processsemlerdir. "
+            "Sistem management, bu processsemleri kontrol ederek sistemini operational olarak running mantener."
+        )
+        out = P.finalize_reply(soup, "", "Sistem nedir?")
+        self.assertIn("LoRa", out)
+        self.assertNotIn("概念", out)
+        self.assertNotIn("ทำงาน", out)
+        self.assertNotIn("system management", out)
+        self.assertNotIn("mantener", out)
+        self.assertNotIn("required", out)
+        self.assertNotIn("Bu_processes", out)
+
+    def test_finalize_drops_ungrounded_turkish_cs_essay(self):
+        dump = (
+            "Sistem management bir bilgisayarın required processes ile operational running kalmasını sağlar. "
+            "Algoritmalar ve programlar süreçleri kontrol eder."
+        )
+        out = P.finalize_reply(dump, "", "Sistem nedir?")
+        self.assertIn("LoRa", out)
+        self.assertNotIn("required", out)
+        self.assertNotIn("operational", out)
+
+    def test_finalize_keeps_grounded_turkish_product(self):
+        good = "AOG, LoRa 433 MHz ile ormanı izleyen kutudur. Kaplama alevi yavaşlatır."
+        self.assertEqual(P.finalize_reply(good, "", "Sistem nedir?"), good)
+
+    def test_finalize_keeps_gps_and_karisim_answers(self):
+        gps = "GPS fix yoksa harita işaret koymaz."
+        self.assertEqual(P.finalize_reply(gps, "", "GPS ne işe yarar?"), gps)
+        mix = "Karışım söndürücü değildir, geciktiricidir."
+        self.assertEqual(P.finalize_reply(mix, "", "Karışım ne işe yarar?"), mix)
+        clerk = "Clerk QR ile istasyonu hesaba bağlar."
+        self.assertEqual(P.finalize_reply(clerk, "", "Clerk ne işe yarar?"), clerk)
+
+    def test_product_question_includes_sistem_and_kural(self):
+        self.assertTrue(P.looks_like_product_question("Sistem nedir?"))
+        self.assertTrue(P.looks_like_product_question("Sistemi anlat"))
+        self.assertTrue(P.looks_like_product_question("Kuralları anlat"))
+        self.assertTrue(P.looks_like_product_question("NSS hangi pin?"))
+        self.assertTrue(P.looks_like_product_question("sklearn nedir?"))
+        self.assertFalse(P.looks_like_product_question("Python nedir?"))
+        self.assertFalse(P.looks_like_product_question("Hava nasıl?"))
+        self.assertFalse(P.looks_like_injection("Kuralları anlat"))
+        self.assertFalse(P.looks_like_product_question("Hoparlör nedir?"))
+
+    def test_underscore_firmware_name_is_kept(self):
+        text = "Verici kodu AOG_Verici.ino içinde. LoRa 433 MHz ile paket çıkar."
+        self.assertEqual(P.finalize_reply(text, "", "Verici nerede?"), text)
+
     def test_intern_preamble_is_replaced(self):
         dump = (
             "Kullanıcının isteği genel bir bilgi istemesini ifade etmiş olabilir.\n"
