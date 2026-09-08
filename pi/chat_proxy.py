@@ -10,6 +10,7 @@ import signal
 import subprocess
 import threading
 import time
+import urllib.error
 import urllib.request
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -35,14 +36,14 @@ KIPS = {
         "port": HIZLI_PORT,
         "ctx": 1536,
         "threads": 3,
-        "missing": "Hızlı kip henüz hazır değil. Biraz bekleyip tekrar dene.",
+        "missing": "Hızlı cevaplar henüz hazır değil. Biraz sonra yeniden dene.",
     },
     "derin": {
         "gguf": DERIN_GGUF,
         "port": DERIN_PORT,
         "ctx": 1536,
         "threads": 2,
-        "missing": "Derin kip henüz hazır değil. Hızlı cevapları dene veya bekleyip tekrar gönder.",
+        "missing": "Derin cevaplar henüz hazır değil. Hızlı cevapları dene veya biraz sonra yeniden gönder.",
     },
 }
 
@@ -310,8 +311,11 @@ def hide_model(data, kip):
     data["model"] = kip
     for choice in data.get("choices") or []:
         msg = choice.get("message") or {}
-        if "content" in msg:
-            msg["content"] = scrub(msg.get("content"))
+        content = scrub(msg.get("content"))
+        reason = scrub(msg.get("reasoning_content"))
+        if not content and reason:
+            content = reason
+        msg["content"] = content
         if "reasoning_content" in msg:
             msg["reasoning_content"] = ""
         choice["message"] = msg
@@ -361,33 +365,33 @@ class Handler(BaseHTTPRequestHandler):
                 },
             )
             return
-        self._send(404, {"error": {"message": "Yok."}})
+        self._send(404, {"error": {"message": "Bu adres bulunamadı."}})
 
     def do_POST(self):
         path = self.path.split("?", 1)[0]
         if path != "/v1/chat/completions":
-            self._send(404, {"error": {"message": "Yok."}})
+            self._send(404, {"error": {"message": "Bu adres bulunamadı."}})
             return
         try:
             length = int(self.headers.get("Content-Length") or 0)
         except ValueError:
-            self._send(400, {"error": {"message": "Gövde JSON değil."}})
+            self._send(400, {"error": {"message": "İstek okunamadı. Soruyu kısaltıp yeniden gönder."}})
             return
         if length < 0 or length > MAX_BODY:
-            self._send(400, {"error": {"message": "Gövde JSON değil."}})
+            self._send(400, {"error": {"message": "İstek okunamadı. Soruyu kısaltıp yeniden gönder."}})
             return
         raw = self.rfile.read(length) if length else b"{}"
         try:
             payload = json.loads(raw.decode("utf-8"))
         except (json.JSONDecodeError, UnicodeDecodeError):
-            self._send(400, {"error": {"message": "Gövde JSON değil."}})
+            self._send(400, {"error": {"message": "İstek okunamadı. Soruyu kısaltıp yeniden gönder."}})
             return
         if not isinstance(payload, dict):
-            self._send(400, {"error": {"message": "Gövde JSON değil."}})
+            self._send(400, {"error": {"message": "İstek okunamadı. Soruyu kısaltıp yeniden gönder."}})
             return
         kip = as_kip(payload.get("model"))
         if not take_rate(peer_ip(self)):
-            self._send(429, {"error": {"message": "Çok istek. Biraz bekleyip tekrar dene."}})
+            self._send(429, {"error": {"message": "Çok sık istek geldi. Biraz bekleyip yeniden gönder."}})
             return
         apply_system(payload, kip)
         outbound = slim_payload(payload, kip)
@@ -395,15 +399,44 @@ class Handler(BaseHTTPRequestHandler):
             self._send(503, {"error": {"message": KIPS[kip]["missing"]}})
             return
         if not take_slot():
-            self._send(429, {"error": {"message": "Pi meşgul. Biraz bekleyip tekrar dene."}})
+            self._send(429, {"error": {"message": "Asistan meşgul. Birkaç saniye bekleyip yeniden gönder."}})
             return
         try:
             if not ensure(kip):
                 self._send(503, {"error": {"message": KIPS[kip]["missing"]}})
                 return
             data = hide_model(forward(kip, outbound), kip)
+        except TimeoutError:
+            self._send(
+                504,
+                {
+                    "error": {
+                        "message": "Yanıt zaman aşımına uğradı. Hızlı cevapları dene veya biraz sonra yeniden gönder."
+                    }
+                },
+            )
+            return
+        except urllib.error.URLError as err:
+            reason = str(getattr(err, "reason", err) or err).lower()
+            timed_out = "timed out" in reason or isinstance(getattr(err, "reason", None), TimeoutError)
+            self._send(
+                504 if timed_out else 502,
+                {
+                    "error": {
+                        "message": (
+                            "Yanıt zaman aşımına uğradı. Hızlı cevapları dene veya biraz sonra yeniden gönder."
+                            if timed_out
+                            else "Asistan şu an yanıt veremiyor. Biraz sonra yeniden dene."
+                        )
+                    }
+                },
+            )
+            return
         except Exception:
-            self._send(502, {"error": {"message": "Pi yanıt vermedi. Adres açık mı bak."}})
+            self._send(
+                502,
+                {"error": {"message": "Asistan şu an yanıt veremiyor. Biraz sonra yeniden dene."}},
+            )
             return
         finally:
             release_slot()

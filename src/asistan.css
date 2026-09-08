@@ -223,13 +223,22 @@ html[data-chat="owui"] .owui {
   overflow-wrap: anywhere;
   text-wrap: balance;
 }
-.owui-empty p,
-.owui-err {
+.owui-empty p {
   margin: 0;
   color: var(--color-muted);
+  font-size: 0.95rem;
+  line-height: 1.45;
 }
-.owui-err {
-  padding: 0 var(--page-gutter) var(--space-xs);
+.owui-alert {
+  margin: 0 var(--page-gutter) var(--space-sm);
+  padding: 12px 14px;
+  border: var(--rule-hair) solid var(--color-ember);
+  border-radius: 12px;
+  background: var(--color-paper-2);
+  color: var(--color-ember);
+  font-size: 0.9rem;
+  font-weight: 650;
+  line-height: 1.4;
 }
 .owui-composer {
   display: grid;

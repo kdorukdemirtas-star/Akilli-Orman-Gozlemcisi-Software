@@ -18,8 +18,8 @@ export class ErrorBoundary extends Component {
     if (this.state.error) {
       return (
         <main className="board">
-          <h1>Sayfa açılamadı</h1>
-          <p role="alert">Bir hata oluştu.</p>
+          <h1>Sayfa yüklenemedi</h1>
+          <p role="alert">Görünüm çöktü. Sayfayı yenile.</p>
           <button type="button" className="hit" onClick={() => location.reload()}>
             Yeniden dene
           </button>

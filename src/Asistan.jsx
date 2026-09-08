@@ -14,24 +14,33 @@ import {
   writeKip,
   writeThreads,
 } from "./chatStore.js";
+import { chatLoadHint } from "./chatHint.js";
 import "./site.css";
 import "./asistan.css";
 
 async function askPi(question, kip, signal) {
-  const res = await fetch("/v1/chat/completions", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    signal,
-    body: JSON.stringify({
-      model: chatModel(kip),
-      messages: [
-        { role: "system", content: systemPrompt(kip) },
-        { role: "user", content: question },
-      ],
-      max_tokens: kipTokens(kip),
-      temperature: kip === "derin" ? 0.4 : 0.2,
-    }),
-  });
+  let res;
+  try {
+    res = await fetch("/v1/chat/completions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      signal,
+      body: JSON.stringify({
+        model: chatModel(kip),
+        messages: [
+          { role: "system", content: systemPrompt(kip) },
+          { role: "user", content: question },
+        ],
+        max_tokens: kipTokens(kip),
+        temperature: kip === "derin" ? 0.4 : 0.2,
+      }),
+    });
+  } catch (err) {
+    if (isAbort(err)) throw err;
+    const fail = new Error(err?.message || "Failed to fetch");
+    fail.status = 0;
+    throw fail;
+  }
   if (!res.ok) {
     let detail = "";
     try {
@@ -40,11 +49,13 @@ async function askPi(question, kip, signal) {
     } catch {
       /* not json */
     }
-    throw new Error(detail || "pi");
+    const fail = new Error(detail || "Failed to fetch");
+    fail.status = res.status;
+    throw fail;
   }
   const data = await res.json();
   const msg = data?.choices?.[0]?.message || {};
-  return stripThink(msg.content || msg.reasoning_content);
+  return stripThink(msg.content) || stripThink(msg.reasoning_content);
 }
 
 function isAbort(err) {
@@ -113,7 +124,7 @@ export default function Asistan({ product = "software" }) {
   }
 
   function dropThread(id) {
-    if (!window.confirm("Sohbet silinsin mi?")) return;
+    if (!window.confirm("Bu sohbet silinsin mi?")) return;
     inflight.current.get(id)?.abort();
     inflight.current.delete(id);
     if (busyId === id) setBusyId("");
@@ -155,7 +166,9 @@ export default function Asistan({ product = "software" }) {
     });
     try {
       const raw = await askPi(text, kip, ac.signal);
-      const reply = String(raw || "").trim() || "Yanıt boş geldi. Hızlı cevaplar kipini dene.";
+      const reply =
+        String(raw || "").trim() ||
+        "Asistan boş yanıt döndürdü. Hızlı cevapları dene.";
       saveThreads(
         readThreads().map((row) =>
           row.id === id ? { ...row, lines: [...row.lines, { who: "pi", text: reply }] } : row,
@@ -163,11 +176,10 @@ export default function Asistan({ product = "software" }) {
       );
     } catch (e) {
       if (isAbort(e)) return;
-      const textErr =
-        e instanceof Error && e.message && e.message !== "pi"
-          ? e.message
-          : "Asistan yanıt vermedi. Pi açık mı bak.";
-      setErr({ id, text: textErr });
+      setErr({
+        id,
+        text: chatLoadHint(e.status, e instanceof Error ? e.message : ""),
+      });
     } finally {
       if (inflight.current.get(id) === ac) inflight.current.delete(id);
       setBusyId((cur) => (cur === id ? "" : cur));
@@ -215,7 +227,7 @@ export default function Asistan({ product = "software" }) {
                 </div>
               ))
             ) : (
-              <p className="owui-muted">Henüz sohbet yok.</p>
+              <p className="owui-muted">Kayıtlı sohbet yok.</p>
             )}
           </nav>
         </aside>
@@ -257,20 +269,24 @@ export default function Asistan({ product = "software" }) {
                 {waiting ? (
                   <li className="owui-msg is-bot is-wait" aria-live="polite">
                     <span className="owui-who">Asistan</span>
-                    <p>Yazıyor…</p>
+                    <p>Yanıt hazırlanıyor…</p>
                   </li>
                 ) : null}
               </ul>
             ) : (
               <div className="owui-empty">
                 <h1>Asistan</h1>
+                <p>
+                  Kutunun ölçümleri, alarm kuralı ve kaplama hakkında soru
+                  sorabilirsin. Asistan alarm yazmaz.
+                </p>
               </div>
             )}
             <div ref={endRef} />
           </div>
 
           {shownErr ? (
-            <p className="err owui-err" role="alert">
+            <p className="owui-alert" role="alert">
               {shownErr}
             </p>
           ) : null}
@@ -286,7 +302,7 @@ export default function Asistan({ product = "software" }) {
               value={q}
               onChange={(e) => setQ(e.target.value)}
               onKeyDown={onComposerKey}
-              placeholder="Bir şey sor…"
+              placeholder="Sorunu yaz"
               autoComplete="off"
               disabled={waiting}
             />

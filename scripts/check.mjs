@@ -14,6 +14,7 @@ import { blendWeights, decideAlert, dynamicAlert, fixedAlert, monthsSince, tempP
 import { stationFromUser } from "../src/stationBind.js";
 import { deviceKind, isStandaloneDisplay, pwaPlatform } from "../src/pwa.js";
 import { packetLoadHint } from "../src/packetHint.js";
+import { chatLoadHint } from "../src/chatHint.js";
 import { pairHref, parseStation, STATION_STORAGE_KEY } from "../src/stationPair.js";
 import { NAV_PACKS, DESKTOP_TABS } from "../src/navPacks.js";
 
@@ -79,6 +80,20 @@ test("packetLoadHint maps a dead supabase host", () => {
   const hint = packetLoadHint("Failed to fetch");
   assert.match(hint, /bağlanılamadı/);
   assert.doesNotMatch(hint, /Failed to fetch|\.env\.local/);
+});
+
+test("chatLoadHint hides intern Pi copy", () => {
+  const hint = chatLoadHint(502, "Asistan yanıt vermedi. Pi açık mı bak.");
+  assert.match(hint, /yanıt veremiyor/);
+  assert.doesNotMatch(hint, /Pi açık|bak\.|llama|gguf|8080/i);
+});
+
+test("chatLoadHint maps busy and not-ready statuses", () => {
+  assert.match(chatLoadHint(429, "Pi meşgul. Biraz bekleyip tekrar dene."), /meşgul/);
+  assert.doesNotMatch(chatLoadHint(429, "Pi meşgul. Biraz bekleyip tekrar dene."), /\bPi\b/);
+  assert.match(chatLoadHint(503, "Derin kip henüz hazır değil. Hızlı cevapları dene veya bekleyip tekrar gönder."), /Derin cevaplar henüz hazır değil/);
+  assert.match(chatLoadHint(0, "Failed to fetch"), /ulaşılamadı/);
+  assert.doesNotMatch(chatLoadHint(0, "Failed to fetch"), /Failed to fetch/);
 });
 
 test("isStandaloneDisplay is true for installed PWA", () => {
@@ -293,7 +308,7 @@ test("chat kips hide model names and map tokens", () => {
     PLUGIN_CATALOG.map((item) => item.title + item.body).join(" "),
     /Qwen|DeepSeek|0\.8B|1\.5B|https?:\/\//i,
   );
-  assert.match(PLUGIN_CATALOG.find((item) => item.id === "pi").body, /Adres yazılmaz/);
+  assert.match(PLUGIN_CATALOG.find((item) => item.id === "pi").body, /Asistan alarm yazmaz/);
   assert.match(PLUGIN_CATALOG.find((item) => item.id === "ml").body, /100 °C ve alev/);
   assert.doesNotMatch(PLUGIN_CATALOG.find((item) => item.id === "ml").body, /sklearn|LogReg/i);
   assert.equal(titleFromQuestion("alarm kuralı nedir acaba burada"), "alarm kuralı nedir acaba burada");
@@ -303,6 +318,8 @@ test("chat kips hide model names and map tokens", () => {
   assert.doesNotMatch(proxy, /has_system/);
   assert.match(proxy, /CHAT_CORS_ORIGIN/);
   assert.doesNotMatch(proxy, /Access-Control-Allow-Origin", "\*"/);
+  assert.doesNotMatch(proxy, /Pi açık|Adres açık mı bak|Pi meşgul|"Yok\."/);
+  assert.match(proxy, /if not content and reason:/);
   const lookout = readFileSync(join(here, "../src/Lookout.jsx"), "utf8");
   assert.match(lookout, /title="Skor"/);
   assert.doesNotMatch(lookout, /title="sklearn"/);

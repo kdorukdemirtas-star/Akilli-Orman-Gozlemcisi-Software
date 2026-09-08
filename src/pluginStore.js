@@ -11,12 +11,12 @@ export const PLUGIN_CATALOG = [
   {
     id: "pi",
     title: "Asistan",
-    body: "Üst menüden Asistan. Adres yazılmaz. Alarm açmaz.",
+    body: "Sorular Asistan sayfasından gider. Asistan alarm yazmaz.",
   },
   {
     id: "ml",
     title: "Makine öğrenmesi",
-    body: "Etiket: 100 °C ve alev. Ayar /makine.",
+    body: "Etiket: 100 °C ve alev. Kip ayarı Öğrenme sayfasında.",
   },
 ];
 
