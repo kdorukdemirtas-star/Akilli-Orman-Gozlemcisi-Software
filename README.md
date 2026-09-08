@@ -1,18 +1,22 @@
 # Akıllı Orman Gözlemcisi
 
+[![MIT License](https://img.shields.io/github/license/kdorukdemirtas-star/Akilli-Orman-Gozlemcisi-Software)](LICENSE)
+[![GitHub release](https://img.shields.io/github/v/release/kdorukdemirtas-star/Akilli-Orman-Gozlemcisi-Software)](https://github.com/kdorukdemirtas-star/Akilli-Orman-Gozlemcisi-Software/releases)
+[![Canlı PWA](https://img.shields.io/badge/PWA-Vercel-000000)](https://akilli-orman-gozlemcisi-software.vercel.app)
+
 **Kül Olmaya Mahkum Değil, AOG ile Korumaya Alınmış Yeşil Bir Gelecek.**
 
 Akıllı Orman Gözlemcisi (AOG) orman yangınına karşı hibrit bir üründür. Güneş panelli kutu ormanı izler ve haber verir. Gövdeye sürülen doğal kaplama alevin yüzeye oturmasını yavaşlatır. İkisi birlikte satılır; biri diğerinin yerine geçmez.
 
 Bu depo o ürünün yazılımıdır: tanıtım sitesi, canlı pano, asistan, kutu firmware'i ve Pi vekili. Canlı PWA: [akilli-orman-gozlemcisi-software.vercel.app](https://akilli-orman-gozlemcisi-software.vercel.app). Ekip: **Defenders Of Green**. Yarışma: **TEKNOFEST 2026**.
 
-Sürüm: [v1.0.0](https://github.com/kdorukdemirtas-star/Akilli-Orman-Gozlemcisi-Software/releases/tag/v1.0.0).
+Sürüm: [v1.0.0](https://github.com/kdorukdemirtas-star/Akilli-Orman-Gozlemcisi-Software/releases/tag/v1.0.0). Depo: [github.com/kdorukdemirtas-star/Akilli-Orman-Gozlemcisi-Software](https://github.com/kdorukdemirtas-star/Akilli-Orman-Gozlemcisi-Software).
 
-Depo: [github.com/kdorukdemirtas-star/Akilli-Orman-Gozlemcisi-Software](https://github.com/kdorukdemirtas-star/Akilli-Orman-Gozlemcisi-Software).
+Kaynak indir: [main.zip](https://github.com/kdorukdemirtas-star/Akilli-Orman-Gozlemcisi-Software/archive/refs/heads/main.zip) · [Sürümler](https://github.com/kdorukdemirtas-star/Akilli-Orman-Gozlemcisi-Software/releases) · tüm yöntemler [INDIRME.md](INDIRME.md). Katkı: [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## İndirme
 
-Yazılım, firmware ve Pi vekili bu depodadır. Asistan ağırlık dosyaları GitHub'da yoktur; onları Pi'ye `pi/README.md` içindeki adreslerden çekersin.
+Yazılım, firmware ve Pi vekili bu depodadır. Asistan ağırlık dosyaları GitHub'da yoktur; onları Pi'ye `pi/README.md` içindeki adreslerden çekersin. Git, zip, wget, PowerShell, sparse checkout, tek dosya ve GitHub Desktop: [INDIRME.md](INDIRME.md).
 
 ### Git (önerilen)
 

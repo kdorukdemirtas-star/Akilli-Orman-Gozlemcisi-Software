@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Canlı PWA
+    url: https://akilli-orman-gozlemcisi-software.vercel.app
+    about: Kurulu site. Kaynak indirmek için INDIRME.md.
+  - name: İndirme rehberi
+    url: https://github.com/kdorukdemirtas-star/Akilli-Orman-Gozlemcisi-Software/blob/main/INDIRME.md
+    about: Clone, zip, wget, PowerShell, sparse checkout, tek dosya.

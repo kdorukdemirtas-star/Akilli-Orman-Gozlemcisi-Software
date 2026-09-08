@@ -18,7 +18,7 @@ Operatör GGUF yolları (PWA’da geçmez):
 - orta: `models/Llama-3.2-1B-Instruct-Q4_K_M.gguf`
 - derin: `models/DeepSeek-R1-Distill-Qwen-1.5B-Q4_K_M.gguf`
 
-Bu üç dosya GitHub’da yoktur. Pi’de `~/aog-pi/models` altına çek:
+Bu üç dosya GitHub’da yoktur. Yazılım deposunu indirmek [INDIRME.md](../INDIRME.md). Ağırlıkları Pi’de `~/aog-pi/models` altına çek:
 
 ```bash
 mkdir -p /home/demir/aog-pi/models
