@@ -1909,24 +1909,6 @@ html[data-surface="ha"] .qr-mark {
 .coat-stage-log ul {
   padding: 0;
 }
-.coat-swatch {
-  display: flex;
-  gap: 8px;
-  margin: 0;
-}
-.coat-swatch i {
-  display: block;
-  width: 10px;
-  height: 10px;
-  border-radius: 999px;
-}
-.coat-swatch .is-green {
-  background: var(--coat-green);
-}
-.coat-swatch .is-white {
-  background: #fff;
-  box-shadow: 0 0 0 1px var(--coat-line);
-}
 .coat-stage-log li {
   padding-left: 0;
 }

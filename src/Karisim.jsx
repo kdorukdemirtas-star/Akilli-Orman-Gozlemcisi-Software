@@ -188,7 +188,7 @@ export default function Karisim({ product = "demo" }) {
               Karışım yangını söndürmez. AOG'nin pasif kaplaması doğal bir yangın
               geciktiricidir: alevin yüzeye oturmasını yavaşlatır, tahliye ve müdahale
               için süre kazandırır. Formülasyon TEKNOFEST 2026 sunumundaki sıfır atık
-              tarifidir. Oran yüzde olarak yazılmadı.
+              tarifidir.
             </p>
           </div>
           <figure className="coat-stage coat-stage-log" aria-label="Kaplama bandı ve dört bileşen.">
@@ -200,10 +200,6 @@ export default function Karisim({ product = "demo" }) {
               alt="Çam gövdesinde açık renk pasif kaplama bandı."
             />
             <div className="coat-log-side">
-              <p className="coat-swatch" aria-hidden="true">
-                <i className="is-green" />
-                <i className="is-white" />
-              </p>
               <ul>
                 {PARTS.map((part) => (
                   <li key={part.short}>{part.short}</li>
