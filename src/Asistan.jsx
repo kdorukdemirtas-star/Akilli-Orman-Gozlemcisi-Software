@@ -14,7 +14,8 @@ async function askPi(base, question) {
       messages: [
         {
           role: "system",
-          content: "AOG.md dosyasına uy. Bilmediğin şeyi bilmiyorum de. Alarm kararı verme.",
+          content:
+            "AOG.md: orman kutusunda Wi-Fi yok. Paket Ra-02 ile 433 MHz LoRa gider. Sabit alarm: sıcaklık 100 °C ve üzeri VE alev (a8 veya a9 sıfır). Tek başına 60 °C alarm değildir. Asistan alarm açmaz. Bilmediğini bilmiyorum de. Kısa cevap.",
         },
         { role: "user", content: question },
       ],
@@ -24,7 +25,8 @@ async function askPi(base, question) {
   });
   if (!res.ok) throw new Error("pi");
   const data = await res.json();
-  const text = data?.choices?.[0]?.message?.content;
+  const msg = data?.choices?.[0]?.message || {};
+  const text = msg.content || msg.reasoning_content;
   return String(text || "").trim();
 }
 
