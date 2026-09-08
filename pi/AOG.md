@@ -20,4 +20,4 @@ ML: sklearn Pipeline (StandardScaler + LogisticRegression, class_weight balanced
 
 KAPLAMA: Yangını söndürmez; alevin yüzeye oturmasını yavaşlatır. Aloe vera jeli, pirinç kabuğu külü (ince ve kalın), yumurta kabuğu tozu, ksantan gam. Kimyasal geciktirici iddiası yoktur. YTÜ TGA-DSC pik: kaplamasız 399 °C, taze 424 °C, 3,5 ay 438 °C. Analizler FTIR ve TGA-DSC. Yenileme üç ay; pano 60–90 gün bandı gösterir.
 
-ASİSTAN: İki kip, etiket Hızlı cevaplar / Derin cevaplar. İstek aynı siteden /v1/chat/completions. Adres yazılmaz.
+ASİSTAN: Üç kip, etiket Hızlı cevaplar / Orta cevaplar / Derin cevaplar. İstek aynı siteden /v1/chat/completions. Adres yazılmaz.

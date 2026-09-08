@@ -9,7 +9,7 @@ import { addPlugin, alarmModeFor, asHttpUrl, defaultPlugins, pluginAdded, PLUGIN
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { asChatKip, AOG_FACTS, chatModel, cleanReply, kipLabel, kipTokens, looksLikeScratch, stripThink, systemPrompt, titleFromQuestion } from "../src/chatStore.js";
+import { asChatKip, AOG_FACTS, CHAT_KIPS, chatModel, cleanReply, kipLabel, kipTemp, kipTokens, looksLikeScratch, stripThink, systemPrompt, titleFromQuestion } from "../src/chatStore.js";
 import { blendWeights, decideAlert, dynamicAlert, fixedAlert, monthsSince, tempP90 } from "../src/alertBlend.js";
 import { stationFromUser } from "../src/stationBind.js";
 import { deviceKind, isStandaloneDisplay, pwaPlatform } from "../src/pwa.js";
@@ -93,6 +93,7 @@ test("chatLoadHint maps busy and not-ready statuses", () => {
   assert.match(chatLoadHint(429, "Pi meşgul. Biraz bekleyip tekrar dene."), /meşgul/);
   assert.doesNotMatch(chatLoadHint(429, "Pi meşgul. Biraz bekleyip tekrar dene."), /\bPi\b/);
   assert.match(chatLoadHint(503, "Derin kip henüz hazır değil. Hızlı cevapları dene veya bekleyip tekrar gönder."), /Derin cevaplar henüz hazır değil/);
+  assert.match(chatLoadHint(503, "Orta cevaplar henüz hazır değil. Hızlı cevapları dene veya biraz sonra yeniden gönder."), /Orta cevaplar henüz hazır değil/);
   assert.match(chatLoadHint(0, "Failed to fetch"), /ulaşılamadı/);
   assert.doesNotMatch(chatLoadHint(0, "Failed to fetch"), /Failed to fetch/);
   assert.match(chatLoadHint(400, "Bu istek asistan kapsamı dışında. Ürün, alarm veya kaplama sor."), /kapsam/);
@@ -288,14 +289,23 @@ test("pluginStore writes alarm mode and hop note", () => {
 });
 
 test("chat kips hide model names and map tokens", () => {
+  assert.deepEqual(CHAT_KIPS, ["hizli", "orta", "derin"]);
   assert.equal(asChatKip("derin"), "derin");
+  assert.equal(asChatKip("orta"), "orta");
   assert.equal(asChatKip("qwen"), "hizli");
-  assert.equal(chatModel("derin"), "derin");
+  assert.equal(asChatKip("llama"), "hizli");
+  assert.equal(chatModel("orta"), "orta");
   assert.equal(kipLabel("hizli"), "Hızlı cevaplar");
+  assert.equal(kipLabel("orta"), "Orta cevaplar");
   assert.equal(kipLabel("derin"), "Derin cevaplar");
-  assert.doesNotMatch(kipLabel("hizli") + kipLabel("derin"), /qwen|deepseek|r1|0\.8b|1\.5b/i);
+  assert.doesNotMatch(
+    CHAT_KIPS.map(kipLabel).join(" "),
+    /qwen|deepseek|r1|llama|0\.8b|1\.5b|3\.2|1b/i,
+  );
   assert.equal(kipTokens("hizli"), 192);
+  assert.equal(kipTokens("orta"), 256);
   assert.equal(kipTokens("derin"), 320);
+  assert.equal(kipTemp("orta"), 0.25);
   const facts = readFileSync(
     join(dirname(fileURLToPath(import.meta.url)), "../pi/AOG.md"),
     "utf8",
@@ -303,9 +313,9 @@ test("chat kips hide model names and map tokens", () => {
   assert.equal(facts, AOG_FACTS.trim());
   assert.match(facts, /CEVAP:/);
   assert.match(facts, /kutuyu yönetmez/);
-  assert.match(facts, /24 saat panodur/);
-  const blob = systemPrompt("hizli") + systemPrompt("derin");
-  assert.doesNotMatch(blob, /Qwen|DeepSeek/);
+  assert.match(facts, /Orta cevaplar/);
+  const blob = systemPrompt("hizli") + systemPrompt("orta") + systemPrompt("derin");
+  assert.doesNotMatch(blob, /Qwen|DeepSeek|Llama/);
   assert.match(blob, /sklearn/);
   assert.match(blob, /100 °C/);
   assert.match(blob, /LoRa/);
@@ -314,9 +324,11 @@ test("chat kips hide model names and map tokens", () => {
   assert.match(blob, /Clerk/);
   assert.match(blob, /StandardScaler/);
   assert.match(systemPrompt("hizli"), /Kip: hızlı/);
+  assert.match(systemPrompt("orta"), /Kip: orta/);
   assert.match(systemPrompt("derin"), /Kip: derin/);
   assert.equal(stripThink("<think>gizli</think>Alarm AND kuralıdır."), "Alarm AND kuralıdır.");
   assert.doesNotMatch(stripThink("Qwen 3.5 0.8B ve DeepSeek R1 1.5B"), /qwen|deepseek|\br1\b|0\.8b|1\.5b/i);
+  assert.doesNotMatch(stripThink("Llama 3.2 1B"), /llama|3\.2|\b1b\b/i);
   const intern =
     "Alright, let's tackle this query. The user has been discussing an application where Sen AOG (Asistan) is an assistant. I should generate the PDF with system architecture.";
   assert.equal(looksLikeScratch(intern), true);
@@ -347,7 +359,9 @@ test("chat kips hide model names and map tokens", () => {
   assert.match(proxy, /finalize_reply/);
   assert.doesNotMatch(proxy, /if not content and reason:/);
   const unit = readFileSync(join(here, "../pi/aog-chat.service"), "utf8");
-  assert.doesNotMatch(unit, /DeepSeek/);
+  assert.match(unit, /ORTA_GGUF/);
+  assert.match(unit, /Llama-3.2-1B-Instruct-Q4_K_M/);
+  assert.match(unit, /DeepSeek-R1-Distill-Qwen-1.5B-Q4_K_M/);
   const lookout = readFileSync(join(here, "../src/Lookout.jsx"), "utf8");
   assert.match(lookout, /title="Skor"/);
   assert.doesNotMatch(lookout, /title="sklearn"/);

@@ -28,6 +28,13 @@ class ChatGuardTests(unittest.TestCase):
         P.LIMITS.reset()
         P.in_flight = 0
 
+    def test_as_kip_maps_three_slots(self):
+        self.assertEqual(P.as_kip("orta"), "orta")
+        self.assertEqual(P.as_kip("derin"), "derin")
+        self.assertEqual(P.as_kip("hizli"), "hizli")
+        self.assertEqual(P.as_kip("llama"), "hizli")
+        self.assertEqual(P.as_kip("qwen"), "hizli")
+
     def test_product_questions_are_not_injection(self):
         for q in (
             "Sistem nedir?",
@@ -92,6 +99,12 @@ class ChatGuardTests(unittest.TestCase):
         self.assertFalse(out["ok"])
         self.assertEqual(out["code"], 400)
         self.assertIn("kapsam", out["message"])
+
+    def test_finalize_drops_english_reasoning(self):
+        intern = "Alright, let's tackle this query. The user has been discussing"
+        out = P.finalize_reply("", intern, "sistem hakkında bilgi ver")
+        self.assertIn("LoRa", out)
+        self.assertNotIn("Alright", out)
 
     def test_burst_then_ban(self):
         now = 1_000_000.0

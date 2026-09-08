@@ -15,6 +15,9 @@ export function chatLoadHint(status, message) {
     if (/derin/i.test(raw)) {
       return "Derin cevaplar henüz hazır değil. Hızlı cevapları dene veya biraz sonra yeniden gönder.";
     }
+    if (/orta/i.test(raw)) {
+      return "Orta cevaplar henüz hazır değil. Hızlı cevapları dene veya biraz sonra yeniden gönder.";
+    }
     return "Bu yanıt kipi henüz hazır değil. Biraz sonra yeniden dene.";
   }
   if (code === 504 || /zaman aşımı/i.test(raw)) {

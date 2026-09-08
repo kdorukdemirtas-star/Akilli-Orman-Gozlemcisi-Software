@@ -3,7 +3,10 @@ import { useSearchParams } from "react-router-dom";
 import { Shell } from "./SiteNav.jsx";
 import {
   asChatKip,
+  CHAT_KIPS,
   chatModel,
+  kipLabel,
+  kipTemp,
   kipTokens,
   newThreadId,
   readKip,
@@ -33,7 +36,7 @@ async function askPi(question, kip, signal) {
           { role: "user", content: question },
         ],
         max_tokens: kipTokens(kip),
-        temperature: kip === "derin" ? 0.4 : 0.2,
+        temperature: kipTemp(kip),
       }),
     });
   } catch (err) {
@@ -242,22 +245,17 @@ export default function Asistan({ product = "software" }) {
         <section className="owui-main">
           <header className="owui-bar">
             <div className="owui-models" role="group" aria-label="Yanıt kipi">
-              <button
-                type="button"
-                className={kip === "hizli" ? "is-on" : undefined}
-                aria-pressed={kip === "hizli"}
-                onClick={() => pickKip("hizli")}
-              >
-                Hızlı cevaplar
-              </button>
-              <button
-                type="button"
-                className={kip === "derin" ? "is-on" : undefined}
-                aria-pressed={kip === "derin"}
-                onClick={() => pickKip("derin")}
-              >
-                Derin cevaplar
-              </button>
+              {CHAT_KIPS.map((id) => (
+                <button
+                  key={id}
+                  type="button"
+                  className={kip === id ? "is-on" : undefined}
+                  aria-pressed={kip === id}
+                  onClick={() => pickKip(id)}
+                >
+                  {kipLabel(id)}
+                </button>
+              ))}
             </div>
           </header>
 

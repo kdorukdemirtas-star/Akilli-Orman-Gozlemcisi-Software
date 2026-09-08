@@ -51,7 +51,7 @@ Yazılımın jüriye ve operatöre gösterdiği yüz budur.
 
 - **Ana / Modüller / Sistem / Karışım / Analizler** ürünü anlatır. Analizler FTIR, TGA-DSC grafikleri ve xlsx raporlarıdır.
 - **Pano** kutunun son 24 saatini gösterir: sıcaklık grafiği, harita, alev, RSSI, kaplama durumu, ntfy listesi.
-- **Asistan** (`/asistan`) aynı sitededir. Adres yazılmaz. Kip: Hızlı cevaplar / Derin cevaplar. Model adı yoktur. Alarm açmaz.
+- **Asistan** (`/asistan`) aynı sitededir. Adres yazılmaz. Kip: Hızlı cevaplar / Orta cevaplar / Derin cevaplar. Model adı yoktur. Alarm açmaz.
 - **Öğrenme** (`/makine`) alarm kipini ayarlar: Sabit, Takvim, Yalnız skor. Panoda tek tuşla kip değişmez.
 - **Eklenti** Mesh sistemi, Asistan ve makine öğrenmesi katalogudur.
 - **Cihaz** PWA kurulumunu ve istasyon eşlemeyi anlatır.
