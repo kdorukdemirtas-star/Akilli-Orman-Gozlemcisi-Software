@@ -126,6 +126,14 @@ REPLY_COATS = (
     "Karışım doğal geciktiricidir: alevin yüzeye yapışmasını yavaşlatır, yangını bitirmez.",
     "Kaplama ekip yetişene kadar zaman kazandırır. Söndürücü değildir.",
 )
+REPLY_INGREDIENTS = (
+    "Karışımda aloe vera jeli, pirinç kabuğu külü (ince ve kalın), yumurta kabuğu tozu ve ksantan gam vardır. Yangını söndürmez; alevi yavaşlatır.",
+    "Dört malzeme: aloe vera jeli, pirinç kabuğu külü, yumurta kabuğu tozu, ksantan gam. Kimyasal geciktirici iddiası yoktur.",
+)
+REPLY_SHORT = (
+    "LoRa kutu, kaplama.",
+    "Kutu, LoRa, kaplama.",
+)
 REPLY_SCOPE = (
     "Bu asistan AOG ürününü anlatır. Kutu, alarm, kaplama veya pano sor."
 )
@@ -160,12 +168,19 @@ FALSE_RE = re.compile(
     r"alıcıdan gelen|"
     r"sistem sorulsa|"
     r"operatörleri için|"
-    r"aog.{0,48}(güvenlik|sıkış|lojistik)"
+    r"aog.{0,48}(güvenlik|sıkış|lojistik)|"
+    r"100 derecede çalış|"
+    r"yoksa bir sistem|"
+    r"100 dereceden daha az"
 )
 OVERVIEW_RE = re.compile(
-    r"(?i)sistem\s+nedir|sistem\s+hakkında|sistemi\s+anlat|sistem\s+nasıl|"
+    r"(?i)sistem\s+nedir|sistem\s+hakkında|sistemi.{0,40}anlat|sistem\s+nasıl|"
     r"aog\s+nedir|ürün\s+nedir|sistem\s+ne\s+işe"
 )
+INGREDIENT_Q_RE = re.compile(
+    r"(?i)içeri|malzeme|bileşen|nelerden oluş|hangi malzeme|aloe|ksantan|pirinç kabuğu|yumurta kabuğu"
+)
+SHORT_Q_RE = re.compile(r"(?i)3\s*kelime|üç\s*kelime|kısaca|özetle|tek cümle")
 OVERVIEW_DETAIL_RE = re.compile(
     r"(?i)alarm|kaplama|karışım|karisim|pin|nss|gpio|sklearn|gps|mesh|clerk|\bhop\b|mq-?9"
 )
@@ -186,7 +201,7 @@ PRODUCT_RE = re.compile(
     r"sıcaklık|ntfy|karışım|karisim|asistan|sistem|kural|\bhop\b|verici|alıcı|alici|"
     r"nasıl çalış|ne işe yarar|hakkında bilgi|wi-?fi|eşik|paket|istasyon|cihaz|eklenti|"
     r"deneyap|sklearn|standardscaler|\bnss\b|\bgpio\b|\bdio0\b|\bpin\b|max6675|"
-    r"\bskor\b|clerk|firmware|termokupl|öğrenmesi"
+    r"\bskor\b|clerk|firmware|termokupl|öğrenmesi|malzeme|içeri|bileşen"
 )
 INJECTION_RE = re.compile(
     r"(?i)"
@@ -329,6 +344,24 @@ def release_slot():
     global in_flight
     with rate_lock:
         in_flight = max(0, in_flight - 1)
+
+
+def looks_like_ingredient_question(text):
+    blob = sanitize_user(text, cap=MAX_USER_CHARS * 2)
+    return bool(blob and INGREDIENT_Q_RE.search(blob))
+
+
+def looks_like_short_question(text):
+    blob = sanitize_user(text, cap=MAX_USER_CHARS * 2)
+    return bool(blob and SHORT_Q_RE.search(blob))
+
+
+def looks_like_direct_question(text):
+    return (
+        looks_like_overview_question(text)
+        or looks_like_ingredient_question(text)
+        or looks_like_short_question(text)
+    )
 
 
 def looks_like_overview_question(text):
@@ -496,6 +529,10 @@ def fallback_for(question):
     q = str(question or "").casefold()
     if "kullanıcı" in q or "kac kullan" in q or "kaç kullan" in q:
         return secrets.choice(REPLY_USER_N)
+    if INGREDIENT_Q_RE.search(q):
+        return secrets.choice(REPLY_INGREDIENTS)
+    if SHORT_Q_RE.search(q):
+        return secrets.choice(REPLY_SHORT)
     if "alarm" in q or "ntfy" in q or "eşik" in q or "esik" in q:
         return secrets.choice(REPLY_ALARMS)
     if "kaplama" in q or "karışım" in q or "karisim" in q:
@@ -753,7 +790,7 @@ class Handler(BaseHTTPRequestHandler):
             }
             self._send(200, hide_model(scoped, kip, prepared["question"]))
             return
-        if looks_like_overview_question(prepared["question"]):
+        if looks_like_direct_question(prepared["question"]):
             scoped = {
                 "model": kip,
                 "choices": [

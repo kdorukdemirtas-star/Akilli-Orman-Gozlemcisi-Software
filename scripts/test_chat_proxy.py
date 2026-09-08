@@ -225,9 +225,31 @@ class ChatGuardTests(unittest.TestCase):
         self.assertTrue(P.looks_like_overview_question("Sistem nedir?"))
         self.assertTrue(P.looks_like_overview_question("sistem hakkında bilgi ver"))
         self.assertTrue(P.looks_like_overview_question("AOG nedir?"))
+        self.assertTrue(P.looks_like_overview_question("sistemi 3 kelime ile anlat"))
         self.assertFalse(P.looks_like_overview_question("Alarm ne zaman çalar?"))
         self.assertFalse(P.looks_like_overview_question("Kaplama ne işe yarar?"))
         self.assertFalse(P.looks_like_overview_question("NSS hangi pin?"))
+
+    def test_ingredient_and_short_questions_use_real_facts(self):
+        self.assertTrue(P.looks_like_product_question("hangi malzemeler kullanılıyor"))
+        self.assertTrue(P.looks_like_product_question("karışımın içeriği hakkında bilgi verir misin"))
+        mix = P.fallback_for("karışımın içeriği hakkında bilgi verir misin")
+        self.assertIn("aloe", mix.casefold())
+        self.assertIn("ksantan", mix.casefold())
+        self.assertIn("pirinç", mix.casefold())
+        stuff = P.fallback_for("hangi malzemeler kullanılıyor")
+        self.assertIn("aloe", stuff.casefold())
+        short = P.fallback_for("sistemi 3 kelime ile anlat")
+        self.assertRegex(short, r"LoRa|kutu|kaplama")
+        self.assertNotIn("100", short)
+        self.assertLessEqual(len(short.split()), 8)
+
+    def test_finalize_drops_100c_as_system_operating_temp(self):
+        dump = "Yoksa bir sistem 100 derecede çalışır, yoksa 100 dereceden daha azdır."
+        out = P.finalize_reply(dump, "", "sistemi 3 kelime ile anlat")
+        self.assertNotIn("çalışır", out)
+        self.assertNotIn("Yoksa bir sistem", out)
+        self.assertRegex(out, r"LoRa|kutu|kaplama")
 
     def test_intern_preamble_is_replaced(self):
         dump = (

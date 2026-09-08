@@ -395,6 +395,10 @@ test("chat kips hide model names and map tokens", () => {
     cleanReply("GPS fix yoksa harita işaret koymaz.", "GPS ne işe yarar?"),
     "GPS fix yoksa harita işaret koymaz.",
   );
+  assert.match(cleanReply("", "hangi malzemeler kullanılıyor"), /aloe/i);
+  const badTemp = "Yoksa bir sistem 100 derecede çalışır, yoksa 100 dereceden daha azdır.";
+  assert.doesNotMatch(cleanReply(badTemp, "sistemi 3 kelime ile anlat"), /Yoksa bir sistem|çalışır/);
+  assert.match(cleanReply(badTemp, "sistemi 3 kelime ile anlat"), /LoRa|kutu|kaplama/);
   assert.equal(cleanReply("Kaplama alevi yavaşlatır.", "kaplama"), "Kaplama alevi yavaşlatır.");
   assert.doesNotMatch(
     PLUGIN_CATALOG.map((item) => item.title + item.body).join(" "),
