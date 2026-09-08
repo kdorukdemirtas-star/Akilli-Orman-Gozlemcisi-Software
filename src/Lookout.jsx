@@ -4,9 +4,11 @@ import { NTFY_TOPIC } from "./config.js";
 import { DISPLAY_PIN, withDisplayPin } from "./displayPin.js";
 import { asStationId } from "./stationPair.js";
 import { packetLoadHint } from "./packetHint.js";
+import { readPlugins } from "./pluginStore.js";
+import { decideAlert, monthsSince, tempP90 } from "./alertBlend.js";
 import { coatProgress, readCoatRenewed, writeCoatRenewed } from "./coatCycle.js";
 import { ntfyPollUrl, parseNtfyFeed } from "./ntfyFeed.js";
-import { flameLabel, flameNote, flameOn, gpsLabel, gpsNote, mq9Label, packetRssi, rssiLabel } from "./packetView.js";
+import { flameLabel, flameNote, flameOn, gpsLabel, gpsNote, hopLabel, mq9Label, packetHop, packetRssi, rssiLabel } from "./packetView.js";
 import { chartLayout, clockLabel } from "./tempChart.js";
 import "./ops.css";
 
@@ -217,6 +219,25 @@ function IcoRssi() {
   );
 }
 
+function alertCopy({ loading, silent, alertOn, fire, mode }) {
+  if (loading) return "Paket okunuyor.";
+  if (silent) return "Son 24 saatte paket gelmedi. Kutunun açık olduğunu kontrol et.";
+  if (mode === "yalniz_ml" && !alertOn) return "ML skoru yok.";
+  if (alertOn) {
+    if (mode === "takvim") return "Takvim eşiği.";
+    if (mode === "yalniz_ml") return "ML eşiği.";
+    return "Eşik: 100 °C ve alev.";
+  }
+  if (fire) return "Alev var, sıcaklık eşiğin altındadır.";
+  return "Eşik yok.";
+}
+
+function alertTitle(mode) {
+  if (mode === "takvim") return "Takvim eşiği";
+  if (mode === "yalniz_ml") return "ML eşiği";
+  return "Eşik: 100 °C ve alev";
+}
+
 export function Lookout({ stationId, kicker, lede }) {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -230,11 +251,33 @@ export function Lookout({ stationId, kicker, lede }) {
   const stationRef = useRef(stationId);
   const latest = rows[0] || null;
   const shown = withDisplayPin(latest);
+  const plugins = readPlugins();
+  const stats = useMemo(() => ({ p90: tempP90(rows) }), [rows]);
   const silent = !loading && !err && !latest;
-  const alertOn = isAlert(latest);
+  const alertOn = decideAlert({
+    packet: latest,
+    mode: plugins.alarmMode,
+    months: monthsSince(plugins.commissionedAt),
+    mlScore: 0,
+    stats,
+  });
   const fire = flameOn(latest);
   const coat = useMemo(() => coatProgress(renewedAt, Date.now()), [renewedAt, nowTick]);
-  const packetAlerts = useMemo(() => rows.filter(isAlert).slice(0, 8), [rows]);
+  const packetAlerts = useMemo(
+    () =>
+      rows
+        .filter((row) =>
+          decideAlert({
+            packet: row,
+            mode: plugins.alarmMode,
+            months: monthsSince(plugins.commissionedAt),
+            mlScore: 0,
+            stats,
+          }),
+        )
+        .slice(0, 8),
+    [rows, plugins.alarmMode, plugins.commissionedAt, stats],
+  );
 
   useEffect(() => {
     const id = window.setInterval(() => setNowTick((n) => n + 1), 1000);
@@ -367,7 +410,7 @@ export function Lookout({ stationId, kicker, lede }) {
       }))
     : packetAlerts.map((p) => ({
         id: p.id,
-        title: "Eşik: 100 °C ve alev",
+        title: alertTitle(plugins.alarmMode),
         body: `Sıcaklık ${fmt(p.t, 0)} °C. Sayaç ${p.n ?? "-"}.`,
         when: since(p.created_at),
         hot: true,
@@ -386,15 +429,13 @@ export function Lookout({ stationId, kicker, lede }) {
           role="status"
           aria-live={alertOn ? "assertive" : "polite"}
         >
-          {loading
-            ? "Paket okunuyor."
-            : silent
-              ? "Son 24 saatte paket gelmedi. Kutunun açık olduğunu kontrol et."
-              : alertOn
-                ? "Eşik: 100 °C ve alev."
-                : fire
-                  ? "Alev var, sıcaklık eşiğin altındadır."
-                  : "Eşik yok."}
+          {alertCopy({
+            loading,
+            silent,
+            alertOn,
+            fire,
+            mode: plugins.alarmMode,
+          })}
         </p>
       </header>
 
@@ -444,6 +485,20 @@ export function Lookout({ stationId, kicker, lede }) {
         >
           <IcoRssi />
         </Metric>
+        {plugins.hopOn ? (
+          <Metric
+            tone="is-bark"
+            title="Hop"
+            value={loading ? "-" : hopLabel(latest)}
+            note={
+              packetHop(latest) != null
+                ? plugins.hopNote || "S3 tekrar"
+                : plugins.hopNote || "Tek hop"
+            }
+          >
+            <IcoRssi />
+          </Metric>
+        ) : null}
       </section>
 
       <section className="ops-mid">

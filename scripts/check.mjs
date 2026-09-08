@@ -4,7 +4,10 @@ import { coatProgress } from "../src/coatCycle.js";
 import { chartLayout, hourMarks, yScale } from "../src/tempChart.js";
 import { ntfyPollUrl, parseNtfyFeed } from "../src/ntfyFeed.js";
 import { DISPLAY_PIN, withDisplayPin } from "../src/displayPin.js";
-import { flameLabel, flameNote, gpsLabel, gpsNote, mq9Label, packetRssi, rssiLabel } from "../src/packetView.js";
+import { flameLabel, flameNote, gpsLabel, gpsNote, hopLabel, mq9Label, packetHop, packetRssi, rssiLabel } from "../src/packetView.js";
+import { asHttpUrl, defaultPlugins, readPlugins, writePlugins } from "../src/pluginStore.js";
+import { blendWeights, decideAlert, dynamicAlert, fixedAlert, monthsSince, tempP90 } from "../src/alertBlend.js";
+import { stationFromUser } from "../src/stationBind.js";
 import { deviceKind, isStandaloneDisplay, pwaPlatform } from "../src/pwa.js";
 import { packetLoadHint } from "../src/packetHint.js";
 import { pairHref, parseStation, STATION_STORAGE_KEY } from "../src/stationPair.js";
@@ -228,4 +231,81 @@ test("chartLayout is empty without temperatures", () => {
     chartLayout([{ n: 1, created_at: new Date().toISOString() }], Date.now()).empty,
     true,
   );
+});
+
+test("asHttpUrl keeps host and rejects credentials", () => {
+  assert.equal(asHttpUrl("http://aog-pi.local:8080/v1"), "http://aog-pi.local:8080");
+  assert.equal(asHttpUrl("http://u:p@aog-pi.local:8080"), "");
+  assert.equal(asHttpUrl("javascript:alert(1)"), "");
+});
+
+test("pluginStore writes alarm mode and hop note", () => {
+  const mem = new Map();
+  globalThis.localStorage = {
+    getItem: (k) => (mem.has(k) ? mem.get(k) : null),
+    setItem: (k, v) => {
+      mem.set(k, String(v));
+    },
+  };
+  assert.equal(readPlugins().alarmMode, defaultPlugins().alarmMode);
+  writePlugins({ hopOn: true, hopNote: "3C:0F:02:DA:30:9C", alarmMode: "takvim" });
+  const next = readPlugins();
+  assert.equal(next.hopOn, true);
+  assert.equal(next.hopNote, "3C:0F:02:DA:30:9C");
+  assert.equal(next.alarmMode, "takvim");
+});
+
+test("blendWeights follow the 2 / 6 / 10 / 12 month table", () => {
+  assert.deepEqual(blendWeights(0), { fixed: 1, dynamic: 0, ml: 0 });
+  assert.deepEqual(blendWeights(3), { fixed: 0.75, dynamic: 0.2, ml: 0.05 });
+  assert.deepEqual(blendWeights(7), { fixed: 0, dynamic: 0.55, ml: 0.45 });
+  assert.deepEqual(blendWeights(10.5), { fixed: 0, dynamic: 0.5, ml: 0.5 });
+  assert.deepEqual(blendWeights(12), { fixed: 0, dynamic: 0, ml: 1 });
+});
+
+test("fixedAlert is 100 C and flame", () => {
+  assert.equal(fixedAlert({ t: 100, a8: 0, a9: 1 }), true);
+  assert.equal(fixedAlert({ t: 99, a8: 0, a9: 1 }), false);
+  assert.equal(fixedAlert({ t: 120, a8: 1, a9: 1 }), false);
+});
+
+test("dynamicAlert needs flame and a high temperature for the box", () => {
+  assert.equal(dynamicAlert({ t: 85, a8: 0 }, { p90: 80 }), true);
+  assert.equal(dynamicAlert({ t: 70, a8: 0 }, { p90: 80 }), false);
+  assert.equal(dynamicAlert({ t: 90, a8: 1, a9: 1 }, { p90: 80 }), false);
+});
+
+test("decideAlert stays on the fixed rule in sabit mode", () => {
+  const packet = { t: 100, a8: 0, a9: 1 };
+  assert.equal(decideAlert({ packet, mode: "sabit", months: 12, mlScore: 0 }), true);
+  assert.equal(
+    decideAlert({ packet: { t: 40, a8: 0 }, mode: "sabit", months: 12, mlScore: 1 }),
+    false,
+  );
+});
+
+test("decideAlert at month 12 in takvim needs the ML score", () => {
+  const packet = { t: 100, a8: 0, a9: 1 };
+  assert.equal(decideAlert({ packet, mode: "takvim", months: 12, mlScore: 0 }), false);
+  assert.equal(decideAlert({ packet, mode: "takvim", months: 12, mlScore: 0.6 }), true);
+  assert.equal(decideAlert({ packet, mode: "yalniz_ml", months: 0, mlScore: 0.6 }), true);
+  assert.equal(decideAlert({ packet, mode: "yalniz_ml", months: 0, mlScore: 0.2 }), false);
+});
+
+test("monthsSince and tempP90", () => {
+  const now = Date.parse("2026-09-08T00:00:00Z");
+  assert.ok(monthsSince("2026-03-08T00:00:00Z", now) > 5);
+  assert.equal(tempP90([{ t: 1 }, { t: 2 }, { t: 3 }, { t: 4 }]), null);
+  assert.equal(tempP90([{ t: 10 }, { t: 20 }, { t: 30 }, { t: 40 }, { t: 50 }]), 40);
+});
+
+test("hopLabel marks a repeated packet", () => {
+  assert.equal(packetHop({ hop: 1 }), 1);
+  assert.equal(hopLabel({ hop: 1 }), "hop=1");
+  assert.equal(hopLabel({}), "Doğrudan");
+});
+
+test("stationFromUser reads Clerk unsafe metadata", () => {
+  assert.equal(stationFromUser({ unsafeMetadata: { stationId: "AOG-DEMO-1" } }), "AOG-DEMO-1");
+  assert.equal(stationFromUser({ unsafeMetadata: { stationId: "x" } }), "");
 });

@@ -2011,6 +2011,26 @@ html[data-surface="ha"] .qr-mark {
 .coat-parts li {
   justify-items: center;
 }
+.plug-list {
+  grid-template-columns: 1fr;
+  text-align: left;
+  margin-bottom: var(--space-xl);
+}
+.plug-list li {
+  justify-items: start;
+}
+.plug-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  align-items: center;
+  width: 100%;
+  margin-top: var(--space-xs);
+}
+.plug-list .lab-tabs {
+  width: 100%;
+  justify-content: flex-start;
+}
 .coat-orb {
   display: grid;
   place-items: center;

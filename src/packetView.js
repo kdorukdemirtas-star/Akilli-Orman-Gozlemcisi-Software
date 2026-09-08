@@ -16,6 +16,18 @@ export function rssiLabel(p) {
   return `${n} dBm`;
 }
 
+export function packetHop(p) {
+  if (!p) return null;
+  const n = Number(p.hop);
+  return Number.isFinite(n) && n >= 1 ? n : null;
+}
+
+export function hopLabel(p) {
+  const n = packetHop(p);
+  if (n == null) return "Doğrudan";
+  return `hop=${n}`;
+}
+
 export function mq9Label(p) {
   if (!p || p.mq9 == null || p.mq9 === "") return "-";
   const n = Number(p.mq9);

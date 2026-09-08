@@ -21,6 +21,18 @@ create index if not exists packets_created_at_idx on public.packets (created_at 
 create index if not exists packets_station_idx on public.packets (station_id, created_at desc);
 
 alter table public.packets add column if not exists rssi integer;
+alter table public.packets add column if not exists hop integer;
+
+-- Clerk JWT bağlanınca authenticated kendi istasyonunu okur.
+-- Şimdilik anon ve authenticated yalnız AOG-DEMO-1 görür.
+create table if not exists public.user_stations (
+  clerk_user_id text primary key,
+  station_id text not null,
+  updated_at timestamptz not null default now()
+);
+
+alter table public.user_stations enable row level security;
+revoke all on public.user_stations from anon, authenticated;
 
 alter table public.packets enable row level security;
 

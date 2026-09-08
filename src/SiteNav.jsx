@@ -1,6 +1,8 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
+import { SignInButton, UserButton, useUser } from "@clerk/react";
 import { isStandaloneDisplay } from "./pwa.js";
+import { useClerkFlag } from "./clerkFlag.js";
 
 const SPECS = [
   { href: "/moduller#govde", label: "IP-67 Alüminyum kutu" },
@@ -18,6 +20,7 @@ export const DESKTOP_TABS = [
   { to: "/karisim", label: "Karışım" },
   { to: "/analizler", label: "Analizler" },
   { to: "/dashboard", label: "Pano" },
+  { to: "/eklentiler", label: "Eklenti" },
   { to: "/cihaz", label: "Cihaz" },
 ];
 
@@ -28,6 +31,7 @@ const OVERLAY_LINKS = [
   { to: "/karisim", label: "Karışım", tone: "tone-mix" },
   { to: "/analizler", label: "Analizler", tone: "tone-lab" },
   { to: "/dashboard", label: "Pano", tone: "tone-pan" },
+  { to: "/eklentiler", label: "Eklenti", tone: "tone-sys" },
   { to: "/cihaz", label: "Cihaz", tone: "tone-dev" },
 ];
 
@@ -43,6 +47,24 @@ function TabLinks({ tabs, onPick }) {
       {tab.label}
     </NavLink>
   ));
+}
+
+function ClerkButtons() {
+  const { isLoaded, isSignedIn } = useUser();
+  if (!isLoaded) return <span>Hesap</span>;
+  if (isSignedIn) return <UserButton afterSignOutUrl="/" />;
+  return (
+    <SignInButton mode="modal">
+      <button type="button" className="hit ghost">
+        Giriş
+      </button>
+    </SignInButton>
+  );
+}
+
+function ClerkAuth() {
+  if (!useClerkFlag()) return null;
+  return <ClerkButtons />;
 }
 
 export function SiteNav({ product = "demo" }) {
@@ -105,6 +127,7 @@ export function SiteNav({ product = "demo" }) {
           <TabLinks tabs={tabs} />
         </nav>
         <div className="hud-end">
+          <ClerkAuth />
           <button
             type="button"
             className="hex"

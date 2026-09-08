@@ -9,6 +9,9 @@ const Dashboard = lazy(() => import("./Dashboard.jsx"));
 const Sistem = lazy(() => import("./Sistem.jsx"));
 const Karisim = lazy(() => import("./Karisim.jsx"));
 const Analizler = lazy(() => import("./Analizler.jsx"));
+const Eklentiler = lazy(() => import("./Eklentiler.jsx"));
+const Asistan = lazy(() => import("./Asistan.jsx"));
+const Pair = lazy(() => import("./Pair.jsx"));
 
 function BoardFallback({ product }) {
   return (
@@ -64,7 +67,30 @@ export default function App() {
           </Suspense>
         }
       />
-      <Route path="/pair" element={<Navigate to="/dashboard" replace />} />
+      <Route
+        path="/eklentiler"
+        element={
+          <Suspense fallback={<PageFallback product="software" />}>
+            <Eklentiler product="software" />
+          </Suspense>
+        }
+      />
+      <Route
+        path="/asistan"
+        element={
+          <Suspense fallback={<PageFallback product="software" />}>
+            <Asistan product="software" />
+          </Suspense>
+        }
+      />
+      <Route
+        path="/pair"
+        element={
+          <Suspense fallback={<PageFallback product="software" />}>
+            <Pair product="software" />
+          </Suspense>
+        }
+      />
       <Route path="/cihaz" element={<Device product="software" />} />
       <Route path="/cihaz/:kind" element={<Device product="software" />} />
       <Route path="/yerel/ios" element={<Navigate to="/cihaz/ios" replace />} />
