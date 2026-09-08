@@ -34,14 +34,14 @@ KIPS = {
     "hizli": {
         "gguf": HIZLI_GGUF,
         "port": HIZLI_PORT,
-        "ctx": 1536,
+        "ctx": 2048,
         "threads": 3,
         "missing": "Hızlı cevaplar henüz hazır değil. Biraz sonra yeniden dene.",
     },
     "derin": {
         "gguf": DERIN_GGUF,
         "port": DERIN_PORT,
-        "ctx": 1536,
+        "ctx": 2048,
         "threads": 2,
         "missing": "Derin cevaplar henüz hazır değil. Hızlı cevapları dene veya biraz sonra yeniden gönder.",
     },
@@ -73,10 +73,47 @@ def as_kip(raw):
     return "derin" if str(raw or "").strip().lower() == "derin" else "hizli"
 
 
+STYLE_SHOT = (
+    {
+        "role": "user",
+        "content": "Sistem nedir?",
+    },
+    {
+        "role": "assistant",
+        "content": (
+            "AOG, LoRa 433 MHz ile ormanı izleyen kutudur. Alıcı panoya yazar. "
+            "Kaplama alevi yavaşlatır. Mesh sistemi kutuyu yönetmez; isteğe bağlı hop'tur. "
+            "Ormanda Wi-Fi yoktur."
+        ),
+    },
+    {
+        "role": "user",
+        "content": "Alarm ne zaman çalar?",
+    },
+    {
+        "role": "assistant",
+        "content": (
+            "Alarm, sıcaklık en az 100 °C ve alev birlikteyse açılır. "
+            "Yalnız sıcaklık veya yalnız alev yetmez. Asistan alarm yazmaz."
+        ),
+    },
+    {
+        "role": "user",
+        "content": "Kaç kullanıcı var?",
+    },
+    {
+        "role": "assistant",
+        "content": (
+            "Kullanıcı sayısı bu kaynakta yok. 24 saat, panonun tuttuğu süredir; kişi sayısı değildir."
+        ),
+    },
+)
+
+
 def kip_rule(kip):
     if kip == "derin":
-        return "Kip: derin. Gerekirse adım adım yaz. Yalnız bu kaynaktan. Model adı söyleme."
-    return "Kip: hızlı. Kısa cevap. Yalnız bu kaynaktan. Model adı söyleme."
+        return "Kip: derin. Düz cümle. Spek listesi yok. Pin ve sklearn yalnız sorulursa. Model adı söyleme."
+    return "Kip: hızlı. 2–5 düz cümle. Spek listesi yok. Model adı söyleme."
 
 
 def read_facts():
@@ -160,7 +197,7 @@ def apply_system(payload, kip):
     rest = rest[-MAX_MSGS:]
     facts = read_facts()
     system = f"{facts}\n\n{kip_rule(kip)}" if facts else kip_rule(kip)
-    payload["messages"] = [{"role": "system", "content": system}, *rest]
+    payload["messages"] = [{"role": "system", "content": system}, *STYLE_SHOT, *rest]
     cap = 320 if kip == "derin" else 192
     try:
         n = int(payload.get("max_tokens"))

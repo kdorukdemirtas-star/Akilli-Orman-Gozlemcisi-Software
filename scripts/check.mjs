@@ -291,6 +291,9 @@ test("chat kips hide model names and map tokens", () => {
     "utf8",
   ).trim();
   assert.equal(facts, AOG_FACTS.trim());
+  assert.match(facts, /CEVAP:/);
+  assert.match(facts, /kutuyu yönetmez/);
+  assert.match(facts, /24 saat panodur/);
   const blob = systemPrompt("hizli") + systemPrompt("derin");
   assert.doesNotMatch(blob, /Qwen|DeepSeek/);
   assert.match(blob, /sklearn/);
