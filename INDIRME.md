@@ -49,10 +49,10 @@ Yalnız son commit:
 git clone --depth 1 https://github.com/kdorukdemirtas-star/Akilli-Orman-Gozlemcisi-Software.git
 ```
 
-Sürüm etiketi (örnek `v1.0.0`):
+Sürüm etiketi (örnek `v1.0.1`):
 
 ```bash
-git clone --branch v1.0.0 --depth 1 https://github.com/kdorukdemirtas-star/Akilli-Orman-Gozlemcisi-Software.git
+git clone --branch v1.0.1 --depth 1 https://github.com/kdorukdemirtas-star/Akilli-Orman-Gozlemcisi-Software.git
 ```
 
 Tarihsiz büyük nesneleri atlayan clone (sonra `git sparse-checkout`):
@@ -79,6 +79,8 @@ git pull origin main
 | --- | --- |
 | `main` zip | https://github.com/kdorukdemirtas-star/Akilli-Orman-Gozlemcisi-Software/archive/refs/heads/main.zip |
 | `main` tar.gz | https://github.com/kdorukdemirtas-star/Akilli-Orman-Gozlemcisi-Software/archive/refs/heads/main.tar.gz |
+| `v1.0.1` zip | https://github.com/kdorukdemirtas-star/Akilli-Orman-Gozlemcisi-Software/archive/refs/tags/v1.0.1.zip |
+| `v1.0.1` tar.gz | https://github.com/kdorukdemirtas-star/Akilli-Orman-Gozlemcisi-Software/archive/refs/tags/v1.0.1.tar.gz |
 | `v1.0.0` zip | https://github.com/kdorukdemirtas-star/Akilli-Orman-Gozlemcisi-Software/archive/refs/tags/v1.0.0.zip |
 | `v1.0.0` tar.gz | https://github.com/kdorukdemirtas-star/Akilli-Orman-Gozlemcisi-Software/archive/refs/tags/v1.0.0.tar.gz |
 | Sürüm sayfası | https://github.com/kdorukdemirtas-star/Akilli-Orman-Gozlemcisi-Software/releases |
@@ -110,7 +112,7 @@ cd Akilli-Orman-Gozlemcisi-Software-main
 GitHub CLI ile sürüm arşivi:
 
 ```bash
-gh release download v1.0.0 -R kdorukdemirtas-star/Akilli-Orman-Gozlemcisi-Software --archive=zip
+gh release download v1.0.1 -R kdorukdemirtas-star/Akilli-Orman-Gozlemcisi-Software --archive=zip
 ```
 
 `--archive=tar.gz` aynı komutta zip yerine tar alır.

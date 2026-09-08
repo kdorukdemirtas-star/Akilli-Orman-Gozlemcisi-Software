@@ -10,7 +10,7 @@ Akıllı Orman Gözlemcisi (AOG) orman yangınına karşı hibrit bir üründür
 
 Bu depo o ürünün yazılımıdır: tanıtım sitesi, canlı pano, asistan, kutu firmware'i ve Pi vekili. Canlı PWA: [akilli-orman-gozlemcisi-software.vercel.app](https://akilli-orman-gozlemcisi-software.vercel.app). Ekip: **Defenders Of Green**. Yarışma: **TEKNOFEST 2026**.
 
-Sürüm: [v1.0.0](https://github.com/kdorukdemirtas-star/Akilli-Orman-Gozlemcisi-Software/releases/tag/v1.0.0). Depo: [github.com/kdorukdemirtas-star/Akilli-Orman-Gozlemcisi-Software](https://github.com/kdorukdemirtas-star/Akilli-Orman-Gozlemcisi-Software).
+Sürüm: [v1.0.1](https://github.com/kdorukdemirtas-star/Akilli-Orman-Gozlemcisi-Software/releases/tag/v1.0.1) ([v1.0.0](https://github.com/kdorukdemirtas-star/Akilli-Orman-Gozlemcisi-Software/releases/tag/v1.0.0)). Depo: [github.com/kdorukdemirtas-star/Akilli-Orman-Gozlemcisi-Software](https://github.com/kdorukdemirtas-star/Akilli-Orman-Gozlemcisi-Software).
 
 Kaynak indir: [main.zip](https://github.com/kdorukdemirtas-star/Akilli-Orman-Gozlemcisi-Software/archive/refs/heads/main.zip) · [Sürümler](https://github.com/kdorukdemirtas-star/Akilli-Orman-Gozlemcisi-Software/releases) · tüm yöntemler [INDIRME.md](INDIRME.md). Katkı: [CONTRIBUTING.md](CONTRIBUTING.md).
 
@@ -59,6 +59,8 @@ git pull origin main
 | --- | --- |
 | `main` zip | https://github.com/kdorukdemirtas-star/Akilli-Orman-Gozlemcisi-Software/archive/refs/heads/main.zip |
 | `main` tar.gz | https://github.com/kdorukdemirtas-star/Akilli-Orman-Gozlemcisi-Software/archive/refs/heads/main.tar.gz |
+| `v1.0.1` zip | https://github.com/kdorukdemirtas-star/Akilli-Orman-Gozlemcisi-Software/archive/refs/tags/v1.0.1.zip |
+| `v1.0.1` tar.gz | https://github.com/kdorukdemirtas-star/Akilli-Orman-Gozlemcisi-Software/archive/refs/tags/v1.0.1.tar.gz |
 | `v1.0.0` zip | https://github.com/kdorukdemirtas-star/Akilli-Orman-Gozlemcisi-Software/archive/refs/tags/v1.0.0.zip |
 | `v1.0.0` tar.gz | https://github.com/kdorukdemirtas-star/Akilli-Orman-Gozlemcisi-Software/archive/refs/tags/v1.0.0.tar.gz |
 | Sürüm sayfası | https://github.com/kdorukdemirtas-star/Akilli-Orman-Gozlemcisi-Software/releases |
