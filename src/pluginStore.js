@@ -16,7 +16,7 @@ export const PLUGIN_CATALOG = [
   {
     id: "ml",
     title: "Makine öğrenmesi",
-    body: "sklearn LogReg. Etiket: 100 °C ve alev. Ayar ayrı sayfada.",
+    body: "Etiket: 100 °C ve alev. Ayar /makine.",
   },
 ];
 

@@ -12,6 +12,7 @@ import threading
 import time
 import urllib.request
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from pathlib import Path
 
 LISTEN = os.environ.get("LISTEN", "0.0.0.0")
 PORT = int(os.environ.get("PORT", "8080"))
@@ -32,14 +33,14 @@ KIPS = {
     "hizli": {
         "gguf": HIZLI_GGUF,
         "port": HIZLI_PORT,
-        "ctx": 1024,
+        "ctx": 1536,
         "threads": 3,
         "missing": "Hızlı kip henüz hazır değil. Biraz bekleyip tekrar dene.",
     },
     "derin": {
         "gguf": DERIN_GGUF,
         "port": DERIN_PORT,
-        "ctx": 768,
+        "ctx": 1536,
         "threads": 2,
         "missing": "Derin kip henüz hazır değil. Hızlı cevapları dene veya bekleyip tekrar gönder.",
     },
@@ -49,14 +50,140 @@ NAME_RE = re.compile(r"(?i)qwen[\w.\-]*|deepseek[\w.\-]*|llama[\w.\-]*|\.gguf")
 THINK_RE = re.compile(r"<think>[\s\S]*?</think>", re.I)
 PATH_RE = re.compile(r"(?i)(?:/home|/opt|/usr|models/)[^\s\"']+")
 MAX_BODY = 65536
+MAX_MSGS = 24
+RATE_WINDOW = 60
+RATE_MAX = 60
+IN_FLIGHT_MAX = 2
+DEFAULT_CORS = (
+    "https://akilli-orman-gozlemcisi-software.vercel.app",
+    "http://127.0.0.1:5173",
+    "http://localhost:5173",
+)
 
 lock = threading.Lock()
+rate_lock = threading.Lock()
+rate_hits = {}
+in_flight = 0
 current = ""
 child = None
 
 
 def as_kip(raw):
     return "derin" if str(raw or "").strip().lower() == "derin" else "hizli"
+
+
+def kip_rule(kip):
+    if kip == "derin":
+        return "Kip: derin. Gerekirse adım adım yaz. Yalnız bu kaynaktan. Model adı söyleme."
+    return "Kip: hızlı. Kısa cevap. Yalnız bu kaynaktan. Model adı söyleme."
+
+
+def read_facts():
+    try:
+        text = Path(AOG_MD).read_text(encoding="utf-8").strip()
+    except OSError:
+        return ""
+    if len(text) > 8000:
+        return text[:8000]
+    return text
+
+
+def cors_origins():
+    raw = os.environ.get("CHAT_CORS_ORIGIN", "").strip()
+    if raw:
+        return tuple(part.strip() for part in raw.split(",") if part.strip())
+    return DEFAULT_CORS
+
+
+def allowed_origin(origin):
+    origin = (origin or "").strip()
+    if origin in cors_origins():
+        return origin
+    return ""
+
+
+def peer_ip(handler):
+    cf = (handler.headers.get("CF-Connecting-IP") or "").strip()
+    if cf:
+        return cf[:64]
+    return handler.client_address[0]
+
+
+def take_rate(ip):
+    now = time.time()
+    with rate_lock:
+        hits = [stamp for stamp in rate_hits.get(ip, []) if now - stamp < RATE_WINDOW]
+        if len(hits) >= RATE_MAX:
+            rate_hits[ip] = hits
+            return False
+        hits.append(now)
+        rate_hits[ip] = hits
+        if len(rate_hits) > 512:
+            stale = [key for key, stamps in rate_hits.items() if not stamps or now - stamps[-1] >= RATE_WINDOW]
+            for key in stale:
+                rate_hits.pop(key, None)
+        return True
+
+
+def take_slot():
+    global in_flight
+    with rate_lock:
+        if in_flight >= IN_FLIGHT_MAX:
+            return False
+        in_flight += 1
+        return True
+
+
+def release_slot():
+    global in_flight
+    with rate_lock:
+        in_flight = max(0, in_flight - 1)
+
+
+def apply_system(payload, kip):
+    # Always replace client system with AOG.md + kip rule.
+    msgs = payload.get("messages")
+    if not isinstance(msgs, list):
+        msgs = []
+    rest = []
+    for row in msgs:
+        if not isinstance(row, dict):
+            continue
+        role = row.get("role")
+        if role not in ("user", "assistant"):
+            continue
+        content = str(row.get("content") or "")[:4000]
+        if not content.strip():
+            continue
+        rest.append({"role": role, "content": content})
+    rest = rest[-MAX_MSGS:]
+    facts = read_facts()
+    system = f"{facts}\n\n{kip_rule(kip)}" if facts else kip_rule(kip)
+    payload["messages"] = [{"role": "system", "content": system}, *rest]
+    cap = 320 if kip == "derin" else 192
+    try:
+        n = int(payload.get("max_tokens"))
+    except (TypeError, ValueError):
+        n = cap
+    payload["max_tokens"] = max(32, min(n, cap))
+    return payload
+
+
+def slim_payload(payload, kip):
+    slim = {
+        "model": kip,
+        "messages": payload["messages"],
+        "max_tokens": payload["max_tokens"],
+        "temperature": 0.4 if kip == "derin" else 0.2,
+        "stream": False,
+    }
+    try:
+        temp = float(payload.get("temperature"))
+    except (TypeError, ValueError):
+        temp = slim["temperature"]
+    if 0 <= temp <= 1.5:
+        slim["temperature"] = temp
+    return slim
 
 
 def scrub(text):
@@ -196,7 +323,10 @@ class Handler(BaseHTTPRequestHandler):
         return
 
     def _cors(self):
-        self.send_header("Access-Control-Allow-Origin", "*")
+        origin = allowed_origin(self.headers.get("Origin"))
+        if origin:
+            self.send_header("Access-Control-Allow-Origin", origin)
+            self.send_header("Vary", "Origin")
         self.send_header("Access-Control-Allow-Headers", "content-type, authorization")
         self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
 
@@ -256,18 +386,27 @@ class Handler(BaseHTTPRequestHandler):
             self._send(400, {"error": {"message": "Gövde JSON değil."}})
             return
         kip = as_kip(payload.get("model"))
-        payload["model"] = kip
+        if not take_rate(peer_ip(self)):
+            self._send(429, {"error": {"message": "Çok istek. Biraz bekleyip tekrar dene."}})
+            return
+        apply_system(payload, kip)
+        outbound = slim_payload(payload, kip)
         if not os.path.isfile(KIPS[kip]["gguf"]):
             self._send(503, {"error": {"message": KIPS[kip]["missing"]}})
             return
-        if not ensure(kip):
-            self._send(503, {"error": {"message": KIPS[kip]["missing"]}})
+        if not take_slot():
+            self._send(429, {"error": {"message": "Pi meşgul. Biraz bekleyip tekrar dene."}})
             return
         try:
-            data = hide_model(forward(kip, payload), kip)
+            if not ensure(kip):
+                self._send(503, {"error": {"message": KIPS[kip]["missing"]}})
+                return
+            data = hide_model(forward(kip, outbound), kip)
         except Exception:
             self._send(502, {"error": {"message": "Pi yanıt vermedi. Adres açık mı bak."}})
             return
+        finally:
+            release_slot()
         self._send(200, data)
 
 

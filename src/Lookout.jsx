@@ -231,10 +231,10 @@ function IcoMl() {
 function alertCopy({ loading, silent, alertOn, fire, mode }) {
   if (loading) return "Paket okunuyor.";
   if (silent) return "Son 24 saatte paket gelmedi. Kutunun açık olduğunu kontrol et.";
-  if (mode === "yalniz_ml" && !alertOn) return "sklearn skor 0,5 altında.";
+  if (mode === "yalniz_ml" && !alertOn) return "Skor 0,5 altında.";
   if (alertOn) {
     if (mode === "takvim") return "Takvim eşiği.";
-    if (mode === "yalniz_ml") return "sklearn skor ≥ 0,5.";
+    if (mode === "yalniz_ml") return "Skor ≥ 0,5.";
     return "Eşik: 100 °C ve alev.";
   }
   if (fire) return "Alev var, sıcaklık eşiğin altındadır.";
@@ -349,7 +349,7 @@ export function Lookout({ stationId, kicker, lede }) {
           .limit(1);
         if (ignore || gen !== loadGen) return;
         if (scored.error) {
-          /* keep last sklearn row */
+          /* keep last score row */
         } else if (scored.data?.[0]) {
           const n = Number(scored.data[0].score);
           setMlScore(Number.isFinite(n) ? n : 0);
@@ -521,14 +521,14 @@ export function Lookout({ stationId, kicker, lede }) {
         {pluginAdded(plug, "ml") ? (
           <Metric
             tone="is-moss"
-            title="sklearn"
+            title="Skor"
             value={loading ? "-" : mlModel ? fmt(mlScore, 3) : "—"}
             note={
               mlModel === "logreg-wait"
-                ? "LogReg bekliyor"
+                ? "bekliyor"
                 : mlModel === "logreg"
-                  ? "LogReg skor"
-                  : "scores tablosu"
+                  ? "eğitildi"
+                  : "yok"
             }
           >
             <IcoMl />

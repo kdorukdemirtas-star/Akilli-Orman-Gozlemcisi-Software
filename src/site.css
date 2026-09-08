@@ -135,10 +135,25 @@
 }
 .nav-body {
   display: grid;
-  grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: var(--space-xl);
-  align-items: center;
+  align-items: start;
   padding-block: var(--space-lg);
+}
+.nav-pack {
+  min-width: 0;
+  padding-left: 12px;
+  border-left: 4px solid currentColor;
+}
+.nav-pack h3 {
+  margin: 0 0 var(--space-sm);
+  font-family: var(--font-data);
+  font-size: var(--text-label);
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  line-height: 1;
+  text-transform: uppercase;
+  color: inherit;
 }
 .nav-primary {
   display: flex;
@@ -153,11 +168,12 @@
   display: block;
   width: fit-content;
   max-width: 100%;
+  min-height: 44px;
   padding: 0;
   border: 0;
   background: none;
   font-family: var(--font-display);
-  font-size: clamp(1.6rem, 7vw, 3.25rem);
+  font-size: clamp(1.45rem, 4.2vw, 2.6rem);
   font-weight: 800;
   letter-spacing: -0.02em;
   line-height: 0.92;
@@ -169,33 +185,41 @@
 .nav-primary button.linkish:hover {
   opacity: 0.72;
 }
+.nav-primary a.is-on {
+  text-decoration: underline;
+  text-decoration-thickness: 0.08em;
+  text-underline-offset: 0.16em;
+}
+.nav-pack.tone-box,
 .tone-box {
   color: var(--color-accent);
 }
+.nav-pack.tone-sys,
 .tone-sys {
   color: var(--color-moss);
 }
 .tone-mix {
-  color: oklch(42% 0.1 95);
+  color: oklch(40% 0.11 85);
 }
 .tone-lab {
   color: oklch(38% 0.08 250);
 }
+.nav-pack.tone-pan,
 .tone-pan {
   color: var(--color-sprout);
 }
+.nav-pack.tone-dev,
 .tone-dev {
-  color: oklch(38% 0.06 145);
+  color: var(--color-ember);
 }
 .nav-specs {
-  margin: 0;
+  margin: var(--space-md) 0 0;
   padding: 0;
   list-style: none;
   display: flex;
   flex-direction: column;
-  gap: var(--space-sm);
-  justify-self: end;
-  text-align: right;
+  gap: var(--space-2xs);
+  text-align: left;
 }
 .nav-specs a,
 .nav-specs span {
@@ -207,7 +231,7 @@
   letter-spacing: 0.16em;
   text-transform: uppercase;
   text-decoration: none;
-  color: var(--color-ink);
+  color: inherit;
 }
 .nav-foot {
   display: flex;
@@ -1196,12 +1220,13 @@
 
 @media (max-width: 720px) {
   .nav-body {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-lg);
     align-items: start;
   }
   .nav-specs {
     justify-self: stretch;
-    padding-top: var(--space-md);
+    padding-top: 0;
     text-align: left;
   }
 }
@@ -1227,11 +1252,26 @@
   display: none;
   flex: 1 1 auto;
   justify-content: center;
+  align-items: center;
   flex-wrap: nowrap;
-  gap: clamp(var(--space-xs), 1.2vw, 18px);
+  gap: 0;
   min-width: 0;
   overflow-x: auto;
   overscroll-behavior-x: contain;
+}
+.hud-pack {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: clamp(2px, 0.8vw, 10px);
+}
+.hud-gap {
+  width: 1px;
+  height: 22px;
+  margin: 0 clamp(8px, 1.2vw, 16px);
+  background: var(--color-rule);
+  flex: 0 0 auto;
+  align-self: center;
 }
 .hud-tabs a {
   display: grid;
@@ -1248,9 +1288,28 @@
   line-height: 1;
   white-space: nowrap;
 }
+.hud-tabs a.tone-box {
+  color: var(--color-accent);
+}
+.hud-tabs a.tone-mix {
+  color: oklch(42% 0.1 95);
+}
+.hud-tabs a.tone-sys {
+  color: var(--color-moss);
+}
+.hud-tabs a.tone-pan {
+  color: var(--color-sprout);
+}
+.hud-tabs a.tone-dev {
+  color: var(--color-ember);
+}
 .hud-tabs a.is-on {
-  background: var(--color-paper-2);
-  box-shadow: 0 1px 0 oklch(100% 0 0 / 0.4) inset;
+  background: color-mix(in oklch, currentColor 16%, var(--color-paper));
+  box-shadow: inset 0 0 0 var(--rule-hair) color-mix(in oklch, currentColor 35%, transparent);
+}
+.hud-tabs a:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
 }
 @media (max-width: 879px) {
   .hud,

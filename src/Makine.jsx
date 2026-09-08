@@ -20,15 +20,6 @@ const MODE_LABEL = {
   yalniz_ml: "Yalnız skor",
 };
 
-const SPECS = [
-  ["Kütüphane", "sklearn"],
-  ["Sınıflandırıcı", "LogisticRegression"],
-  ["Etiket", "100 °C ve alev"],
-  ["Özellikler", "t, mq9, a8, a9, RSSI"],
-  ["Eşik", "0,5"],
-  ["Dosya", "logreg.joblib"],
-];
-
 function scoreLabel(live) {
   if (live.score == null) return "—";
   return live.score.toLocaleString("tr-TR", {
@@ -88,15 +79,6 @@ export default function Makine({ product = "software" }) {
         <header className="ml-head">
           <h1>Makine öğrenmesi</h1>
         </header>
-
-        <dl className="ml-spec">
-          {SPECS.map(([k, v]) => (
-            <div key={k}>
-              <dt>{k}</dt>
-              <dd translate="no">{v}</dd>
-            </div>
-          ))}
-        </dl>
 
         <section className="ml-set" aria-labelledby="ml-set-title">
           <h2 id="ml-set-title">Ayar</h2>

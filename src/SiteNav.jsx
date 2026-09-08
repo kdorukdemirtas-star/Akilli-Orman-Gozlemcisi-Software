@@ -1,42 +1,11 @@
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
 import { SignInButton, UserButton, useUser } from "@clerk/react";
 import { isStandaloneDisplay } from "./pwa.js";
 import { useClerkFlag } from "./clerkFlag.js";
+import { DESKTOP_TABS, NAV_PACKS, overlayLinks } from "./navPacks.js";
 
-const SPECS = [
-  { href: "/moduller#govde", label: "IP-67 Alüminyum kutu" },
-  { href: "/moduller#max6675", label: "MAX6675 sıcaklık" },
-  { href: "/moduller#gps", label: "NEO GPS" },
-  { href: "/moduller#mq9", label: "MQ-9 gaz" },
-  { href: "/moduller#flame", label: "Kızılötesi alev" },
-  { href: "/moduller#lora", label: "Ra-02 LoRa" },
-];
-
-export const DESKTOP_TABS = [
-  { to: "/", label: "Ana", end: true },
-  { to: "/asistan", label: "Asistan", ariaLabel: "Yapay zeka asistan" },
-  { to: "/moduller", label: "Modüller" },
-  { to: "/sistem", label: "Sistem" },
-  { to: "/karisim", label: "Karışım" },
-  { to: "/analizler", label: "Analizler" },
-  { to: "/dashboard", label: "Pano" },
-  { to: "/eklentiler", label: "Eklenti" },
-  { to: "/cihaz", label: "Cihaz" },
-];
-
-const OVERLAY_LINKS = [
-  { to: "/", label: "Ana", tone: "tone-box" },
-  { to: "/asistan", label: "Asistan", tone: "tone-sys" },
-  { to: "/moduller", label: "Modüller", tone: "tone-sys" },
-  { to: "/sistem", label: "Sistem", tone: "tone-sys" },
-  { to: "/karisim", label: "Karışım", tone: "tone-mix" },
-  { to: "/analizler", label: "Analizler", tone: "tone-box" },
-  { to: "/dashboard", label: "Pano", tone: "tone-pan" },
-  { to: "/eklentiler", label: "Eklenti", tone: "tone-sys" },
-  { to: "/makine", label: "Öğrenme", tone: "tone-mix" },
-  { to: "/cihaz", label: "Cihaz", tone: "tone-dev" },
-];
+export { DESKTOP_TABS, NAV_PACKS };
 
 function TabLinks({ tabs, onPick }) {
   return tabs.map((tab) => (
@@ -46,7 +15,7 @@ function TabLinks({ tabs, onPick }) {
       end={tab.end}
       aria-label={tab.ariaLabel}
       title={tab.ariaLabel}
-      className={({ isActive }) => (isActive ? "is-on" : undefined)}
+      className={({ isActive }) => [tab.tone, isActive ? "is-on" : undefined].filter(Boolean).join(" ")}
       onClick={onPick}
     >
       {tab.label}
@@ -86,8 +55,14 @@ export function SiteNav({ product = "demo" }) {
     );
   }, []);
 
-  const tabs = standalone ? DESKTOP_TABS.filter((tab) => tab.to !== "/cihaz") : DESKTOP_TABS;
-  const overlay = standalone ? OVERLAY_LINKS.filter((item) => item.to !== "/cihaz") : OVERLAY_LINKS;
+  const packs = standalone
+    ? NAV_PACKS.flatMap((pack) => {
+        const tabs = pack.tabs.filter((tab) => tab.to !== "/cihaz");
+        const overlay = (pack.overlay || pack.tabs).filter((tab) => tab.to !== "/cihaz");
+        if (!tabs.length && !overlay.length && !pack.specs) return [];
+        return [{ ...pack, tabs, overlay }];
+      })
+    : NAV_PACKS;
 
   useEffect(() => {
     return () => {
@@ -129,7 +104,18 @@ export function SiteNav({ product = "demo" }) {
           <img src="/logo.png" alt="AOG" width="240" height="44" />
         </Link>
         <nav className="hud-tabs" aria-label="Sayfalar">
-          <TabLinks tabs={tabs} />
+          {packs.map((pack, i) =>
+            pack.tabs.length ? (
+              <Fragment key={pack.id}>
+                {i > 0 && packs[i - 1].tabs.length ? (
+                  <span className="hud-gap" aria-hidden="true" />
+                ) : null}
+                <div className="hud-pack" role="group" aria-label={pack.label}>
+                  <TabLinks tabs={pack.tabs} />
+                </div>
+              </Fragment>
+            ) : null,
+          )}
         </nav>
         <div className="hud-end">
           <ClerkAuth />
@@ -165,24 +151,47 @@ export function SiteNav({ product = "demo" }) {
             <h2 id="nav-title" className="visually-hidden">
               Site menüsü
             </h2>
-            <ul className="nav-primary">
-              {overlay.map((item) => (
-                <li key={item.to}>
-                  <Link className={item.tone} to={item.to} onClick={closeMenu}>
-                    {item.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-            <ul className="nav-specs">
-              {SPECS.map((item) => (
-                <li key={item.href}>
-                  <Link to={item.href} onClick={closeMenu}>
-                    {item.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
+            {packs.map((pack) => {
+              const links = overlayLinks(pack);
+              return (
+                <section
+                  key={pack.id}
+                  className={`nav-pack ${pack.tone}`}
+                  aria-labelledby={`nav-pack-${pack.id}`}
+                >
+                  <h3 id={`nav-pack-${pack.id}`}>{pack.label}</h3>
+                  {links.length ? (
+                    <ul className="nav-primary">
+                      {links.map((item) => (
+                        <li key={item.to}>
+                          <NavLink
+                            className={({ isActive }) =>
+                              [item.tone, isActive ? "is-on" : undefined].filter(Boolean).join(" ")
+                            }
+                            to={item.to}
+                            end={item.end}
+                            onClick={closeMenu}
+                          >
+                            {item.label}
+                          </NavLink>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : null}
+                  {pack.specs ? (
+                    <ul className="nav-specs">
+                      {pack.specs.map((item) => (
+                        <li key={item.href}>
+                          <Link to={item.href} onClick={closeMenu}>
+                            {item.label}
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : null}
+                </section>
+              );
+            })}
           </div>
           <div className="nav-foot">
             <span>

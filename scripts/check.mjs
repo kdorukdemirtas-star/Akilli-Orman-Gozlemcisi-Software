@@ -6,12 +6,16 @@ import { ntfyPollUrl, parseNtfyFeed } from "../src/ntfyFeed.js";
 import { DISPLAY_PIN, withDisplayPin } from "../src/displayPin.js";
 import { flameLabel, flameNote, gpsLabel, gpsNote, hopLabel, mq9Label, packetHop, packetRssi, rssiLabel } from "../src/packetView.js";
 import { addPlugin, alarmModeFor, asHttpUrl, defaultPlugins, pluginAdded, PLUGIN_CATALOG, readPlugins, removePlugin, writePlugins } from "../src/pluginStore.js";
-import { asChatKip, chatModel, kipLabel, kipTokens, stripThink, systemPrompt, titleFromQuestion } from "../src/chatStore.js";
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+import { asChatKip, AOG_FACTS, chatModel, kipLabel, kipTokens, stripThink, systemPrompt, titleFromQuestion } from "../src/chatStore.js";
 import { blendWeights, decideAlert, dynamicAlert, fixedAlert, monthsSince, tempP90 } from "../src/alertBlend.js";
 import { stationFromUser } from "../src/stationBind.js";
 import { deviceKind, isStandaloneDisplay, pwaPlatform } from "../src/pwa.js";
 import { packetLoadHint } from "../src/packetHint.js";
 import { pairHref, parseStation, STATION_STORAGE_KEY } from "../src/stationPair.js";
+import { NAV_PACKS, DESKTOP_TABS } from "../src/navPacks.js";
 
 test("parseStation accepts a raw station id", () => {
   assert.equal(parseStation("AOG-DEMO-1"), "AOG-DEMO-1");
@@ -266,8 +270,23 @@ test("chat kips hide model names and map tokens", () => {
   assert.equal(kipLabel("derin"), "Derin cevaplar");
   assert.doesNotMatch(kipLabel("hizli") + kipLabel("derin"), /qwen|deepseek|r1|0\.8b|1\.5b/i);
   assert.equal(kipTokens("hizli"), 192);
-  assert.equal(kipTokens("derin"), 512);
-  assert.doesNotMatch(systemPrompt("hizli") + systemPrompt("derin"), /Qwen|DeepSeek/);
+  assert.equal(kipTokens("derin"), 320);
+  const facts = readFileSync(
+    join(dirname(fileURLToPath(import.meta.url)), "../pi/AOG.md"),
+    "utf8",
+  ).trim();
+  assert.equal(facts, AOG_FACTS.trim());
+  const blob = systemPrompt("hizli") + systemPrompt("derin");
+  assert.doesNotMatch(blob, /Qwen|DeepSeek/);
+  assert.match(blob, /sklearn/);
+  assert.match(blob, /100 °C/);
+  assert.match(blob, /LoRa/);
+  assert.match(blob, /0x2A/);
+  assert.match(blob, /Mesh sistemi/);
+  assert.match(blob, /Clerk/);
+  assert.match(blob, /StandardScaler/);
+  assert.match(systemPrompt("hizli"), /Kip: hızlı/);
+  assert.match(systemPrompt("derin"), /Kip: derin/);
   assert.equal(stripThink("<think>gizli</think>Alarm AND kuralıdır."), "Alarm AND kuralıdır.");
   assert.doesNotMatch(stripThink("Qwen 3.5 0.8B ve DeepSeek R1 1.5B"), /qwen|deepseek|\br1\b|0\.8b|1\.5b/i);
   assert.doesNotMatch(
@@ -275,8 +294,20 @@ test("chat kips hide model names and map tokens", () => {
     /Qwen|DeepSeek|0\.8B|1\.5B|https?:\/\//i,
   );
   assert.match(PLUGIN_CATALOG.find((item) => item.id === "pi").body, /Adres yazılmaz/);
-  assert.match(PLUGIN_CATALOG.find((item) => item.id === "ml").body, /sklearn/);
+  assert.match(PLUGIN_CATALOG.find((item) => item.id === "ml").body, /100 °C ve alev/);
+  assert.doesNotMatch(PLUGIN_CATALOG.find((item) => item.id === "ml").body, /sklearn|LogReg/i);
   assert.equal(titleFromQuestion("alarm kuralı nedir acaba burada"), "alarm kuralı nedir acaba burada");
+  const here = dirname(fileURLToPath(import.meta.url));
+  const proxy = readFileSync(join(here, "../pi/chat_proxy.py"), "utf8");
+  assert.match(proxy, /Always replace client system/);
+  assert.doesNotMatch(proxy, /has_system/);
+  assert.match(proxy, /CHAT_CORS_ORIGIN/);
+  assert.doesNotMatch(proxy, /Access-Control-Allow-Origin", "\*"/);
+  const lookout = readFileSync(join(here, "../src/Lookout.jsx"), "utf8");
+  assert.match(lookout, /title="Skor"/);
+  assert.doesNotMatch(lookout, /title="sklearn"/);
+  const vite = readFileSync(join(here, "../vite.config.js"), "utf8");
+  assert.doesNotMatch(vite, /VITE_PI_CHAT_URL/);
 });
 
 test("addPlugin and removePlugin toggle catalog entries", () => {
@@ -351,4 +382,18 @@ test("hopLabel marks a repeated packet", () => {
 test("stationFromUser reads Clerk unsafe metadata", () => {
   assert.equal(stationFromUser({ unsafeMetadata: { stationId: "AOG-DEMO-1" } }), "AOG-DEMO-1");
   assert.equal(stationFromUser({ unsafeMetadata: { stationId: "x" } }), "");
+});
+
+test("nav packs split product watch and hardware with tones", () => {
+  assert.deepEqual(
+    NAV_PACKS.map((pack) => pack.id),
+    ["urun", "izle", "kutu"],
+  );
+  assert.equal(NAV_PACKS[0].tone, "tone-box");
+  assert.equal(NAV_PACKS[1].tone, "tone-pan");
+  assert.equal(NAV_PACKS[2].tone, "tone-dev");
+  assert.ok(DESKTOP_TABS.some((tab) => tab.to === "/asistan"));
+  assert.equal(DESKTOP_TABS.some((tab) => tab.to === "/makine"), false);
+  const izle = NAV_PACKS.find((pack) => pack.id === "izle");
+  assert.ok(izle.overlay.some((item) => item.to === "/makine"));
 });

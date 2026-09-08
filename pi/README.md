@@ -10,7 +10,7 @@ Alıcı USB ile Mac’te de durabilir; veri yolu I2C’dir. A4/A5 Arduino I2C de
 
 PWA `/asistan` aynı kökte açılır. Adres yazılmaz. Vite `PI_CHAT_URL` ile `/v1` vekiller.
 
-`chat_proxy.py` `:8080` üzerinde OpenAI uyumlu `/v1/chat/completions` açar. Gövdedeki `model` alanı `hizli` veya `derin` olur. 4 GB RAM için aynı anda tek llama-server çalışır; kip değişince süreç değişir.
+`chat_proxy.py` `:8080` üzerinde OpenAI uyumlu `/v1/chat/completions` açar. Gövdedeki `model` alanı `hizli` veya `derin` olur. İstemci `system` satırı atılır; her istekte `AOG.md` + kip kuralı yazılır. CORS `CHAT_CORS_ORIGIN` (varsayılan Vercel PWA + yerel Vite). IP başına dakikada 60, aynı anda 2 istek. CORS curl'ü kesmez; tünel hostname `vercel.json` içinde döner. 4 GB RAM için aynı anda tek llama-server çalışır; kip değişince süreç değişir.
 
 Operatör GGUF yolları (PWA’da geçmez):
 
@@ -21,4 +21,4 @@ Servis: `aog-chat.service` (eski `aog-asistan.service` durdurulur). PWA üst men
 
 ## ML
 
-`ml_score.py` + `aog-ml.timer`. `sklearn.linear_model.LogisticRegression`. Etiket: 100 °C ve alev. Çıktı `scores` (`model`: `logreg` veya `logreg-wait`). Ayar PWA `/makine` sayfasındadır. Asistan ile aynı anda eğitme.
+`ml_score.py` + `aog-ml.timer`. sklearn `Pipeline`: `StandardScaler` + `LogisticRegression(class_weight="balanced")`. Etiket: 100 °C ve alev. Her sınıftan en az 3 örnek yoksa `logreg-wait` (skor 0). Çıktı `scores` (`model`: `logreg` veya `logreg-wait`). Ayar PWA `/makine`. Asistan ile aynı anda eğitme.

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Train sklearn LogReg on packets and write scores.
+"""Fit a scaled LogReg on station packets and write P(y=1).
 
-Label is the locked demo rule: t >= 100 and flame (a8 or a9 is 0).
-Features: t, mq9, a8, a9, rssi/v. Does not decide ntfy by itself.
+Label is the locked AND rule: t >= 100 and flame (a8 or a9 is 0).
+Does not publish ntfy; the PWA kip decides whether the score is used.
 """
 
 from __future__ import annotations
@@ -10,15 +10,18 @@ from __future__ import annotations
 import json
 import math
 import os
-import time
 import urllib.error
 import urllib.parse
 import urllib.request
+from collections import Counter
 from pathlib import Path
 
 ENV_PATH = Path(os.environ.get("AOG_ENV", "/home/demir/aog-pi/.env"))
 STATION = os.environ.get("AOG_STATION_ID", "AOG-DEMO-1")
 MODEL_PATH = Path(os.environ.get("AOG_ML_MODEL", "/home/demir/aog-pi/logreg.joblib"))
+WINDOW = 400
+MIN_ROWS = 20
+MIN_PER_CLASS = 3
 
 
 def load_env(path: Path) -> dict[str, str]:
@@ -90,9 +93,26 @@ def rest(url: str, key: str, path: str, method="GET", body=None, params=None) ->
         raise SystemExit(f"HTTP {e.code} {err!r}") from e
 
 
+def write_score(url: str, key: str, latest: dict, score: float, model: str) -> None:
+    rest(
+        url,
+        key,
+        "scores",
+        method="POST",
+        body={
+            "station_id": STATION,
+            "n": latest.get("n"),
+            "score": round(float(score), 4),
+            "model": model,
+        },
+    )
+
+
 def main() -> int:
     from joblib import dump
     from sklearn.linear_model import LogisticRegression
+    from sklearn.pipeline import Pipeline
+    from sklearn.preprocessing import StandardScaler
 
     env = load_env(ENV_PATH)
     url = (env.get("VITE_SUPABASE_URL") or "").rstrip("/")
@@ -107,48 +127,45 @@ def main() -> int:
             "station_id": f"eq.{STATION}",
             "select": "id,n,t,mq9,a8,a9,v,rssi,created_at",
             "order": "created_at.desc",
-            "limit": "400",
+            "limit": str(WINDOW),
         },
     )
-    if not isinstance(rows, list) or len(rows) < 20:
-        print(f"az paket ({0 if not isinstance(rows, list) else len(rows)}), skor yok", flush=True)
+    if not isinstance(rows, list) or len(rows) < MIN_ROWS:
+        n = 0 if not isinstance(rows, list) else len(rows)
+        print(f"az paket ({n}), skor yok", flush=True)
         return 0
     X = [feats(r) for r in rows]
     y = [label_of(r) for r in rows]
-    if len(set(y)) < 2:
-        print("tek sinif: etiketler henuz 100C+alev yok, skor 0", flush=True)
-        latest = rows[0]
-        rest(
-            url,
-            key,
-            "scores",
-            method="POST",
-            body={
-                "station_id": STATION,
-                "n": latest.get("n"),
-                "score": 0.0,
-                "model": "logreg-wait",
-            },
-        )
-        return 0
-    clf = LogisticRegression(max_iter=200)
-    clf.fit(X, y)
-    dump(clf, MODEL_PATH)
+    counts = Counter(y)
     latest = rows[0]
-    proba = float(clf.predict_proba([feats(latest)])[0][1])
-    rest(
-        url,
-        key,
-        "scores",
-        method="POST",
-        body={
-            "station_id": STATION,
-            "n": latest.get("n"),
-            "score": round(proba, 4),
-            "model": "logreg",
-        },
+    if len(counts) < 2 or min(counts.values()) < MIN_PER_CLASS:
+        print(
+            f"sinif yetmez pos={counts.get(1, 0)} neg={counts.get(0, 0)}, skor 0",
+            flush=True,
+        )
+        write_score(url, key, latest, 0.0, "logreg-wait")
+        return 0
+    pipe = Pipeline(
+        [
+            ("scale", StandardScaler()),
+            (
+                "clf",
+                LogisticRegression(
+                    class_weight="balanced",
+                    max_iter=400,
+                    solver="lbfgs",
+                ),
+            ),
+        ]
     )
-    print(f"skor {proba:.3f} n={latest.get('n')} model={MODEL_PATH}", flush=True)
+    pipe.fit(X, y)
+    dump(pipe, MODEL_PATH)
+    proba = float(pipe.predict_proba([feats(latest)])[0][1])
+    write_score(url, key, latest, proba, "logreg")
+    print(
+        f"skor {proba:.3f} n={latest.get('n')} pos={counts[1]} neg={counts[0]} {MODEL_PATH}",
+        flush=True,
+    )
     return 0
 
 

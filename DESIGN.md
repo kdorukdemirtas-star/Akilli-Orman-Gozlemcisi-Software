@@ -6,7 +6,7 @@ Pano Home Assistant Mushroom: çip, oda kartı, Özet / Harita / Uyarı. Kartlar
 
 Asistan `/asistan` Open WebUI düzeni: sol sohbet listesi, üstte Hızlı/Derin kip, altta yazma. Model adı yoktur. html[data-chat=owui] tam yükseklik.
 
-Makine öğrenmesi `/makine`: sklearn LogisticRegression spec sayfası. Panoda tek tuş alarm değiştirmez.
+Makine öğrenmesi `/makine`: alarm kipi ayarı. Panoda tek tuş alarm değiştirmez.
 
 ## Ürün
 
