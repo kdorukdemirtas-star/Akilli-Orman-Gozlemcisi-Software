@@ -18,6 +18,33 @@ Operatör GGUF yolları (PWA’da geçmez):
 - orta: `models/Llama-3.2-1B-Instruct-Q4_K_M.gguf`
 - derin: `models/DeepSeek-R1-Distill-Qwen-1.5B-Q4_K_M.gguf`
 
+Bu üç dosya GitHub’da yoktur. Pi’de `~/aog-pi/models` altına çek:
+
+```bash
+mkdir -p /home/demir/aog-pi/models
+cd /home/demir/aog-pi/models
+
+# huggingface-cli (pip install -U "huggingface_hub[cli]")
+huggingface-cli download bartowski/Qwen_Qwen3.5-0.8B-GGUF Qwen_Qwen3.5-0.8B-Q4_K_M.gguf --local-dir .
+huggingface-cli download bartowski/Llama-3.2-1B-Instruct-GGUF Llama-3.2-1B-Instruct-Q4_K_M.gguf --local-dir .
+huggingface-cli download bartowski/DeepSeek-R1-Distill-Qwen-1.5B-GGUF DeepSeek-R1-Distill-Qwen-1.5B-Q4_K_M.gguf --local-dir .
+```
+
+`wget` ile aynı dosyalar:
+
+```bash
+wget -O Qwen_Qwen3.5-0.8B-Q4_K_M.gguf \
+  "https://huggingface.co/bartowski/Qwen_Qwen3.5-0.8B-GGUF/resolve/main/Qwen_Qwen3.5-0.8B-Q4_K_M.gguf"
+wget -O Llama-3.2-1B-Instruct-Q4_K_M.gguf \
+  "https://huggingface.co/bartowski/Llama-3.2-1B-Instruct-GGUF/resolve/main/Llama-3.2-1B-Instruct-Q4_K_M.gguf"
+wget -O DeepSeek-R1-Distill-Qwen-1.5B-Q4_K_M.gguf \
+  "https://huggingface.co/bartowski/DeepSeek-R1-Distill-Qwen-1.5B-GGUF/resolve/main/DeepSeek-R1-Distill-Qwen-1.5B-Q4_K_M.gguf"
+```
+
+Kaynak sayfalar: [Qwen 0.8B GGUF](https://huggingface.co/bartowski/Qwen_Qwen3.5-0.8B-GGUF), [Llama 3.2 1B GGUF](https://huggingface.co/bartowski/Llama-3.2-1B-Instruct-GGUF), [DeepSeek-R1 1.5B GGUF](https://huggingface.co/bartowski/DeepSeek-R1-Distill-Qwen-1.5B-GGUF).
+
+Yazılım vekilini depodan Pi’ye kopyala (`chat_proxy.py`, `AOG.md`, `aog-chat.service`). `llama-server` için llama.cpp’yi Pi’de derle; ikili `LLAMA_BIN` ile `aog-chat.service` içinde gösterilir.
+
 Servis: `aog-chat.service` (eski `aog-asistan.service` durdurulur). PWA üst menüden `/asistan` açar.
 
 ## ML

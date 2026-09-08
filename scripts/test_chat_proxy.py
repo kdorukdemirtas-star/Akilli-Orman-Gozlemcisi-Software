@@ -39,6 +39,10 @@ class ChatGuardTests(unittest.TestCase):
         for q in (
             "Sistem nedir?",
             "sistem hakkında bilgi ver",
+            "Sistem nasıl çalışır?",
+            "Asistan ne işe yarar?",
+            "Kuralları anlat",
+            "Wi-Fi var mı kutuda?",
             "Alarm ne zaman çalar?",
             "Kaplama ne işe yarar?",
             "Kaç kullanıcı var?",
@@ -57,8 +61,9 @@ class ChatGuardTests(unittest.TestCase):
             self.assertTrue(P.looks_like_injection(q), q)
 
     def test_long_base64_is_injection(self):
-        blob = "A" * 220 + "=="
+        blob = "A" * 360 + "=="
         self.assertTrue(P.looks_like_injection(blob))
+        self.assertFalse(P.looks_like_injection("A" * 80 + "=="))
 
     def test_prepare_chat_keeps_only_last_user_and_wraps(self):
         out = P.prepare_chat(
@@ -81,7 +86,8 @@ class ChatGuardTests(unittest.TestCase):
         last = out["payload"]["messages"][-1]
         self.assertEqual(last["role"], "user")
         self.assertIn("Sistem nedir?", last["content"])
-        self.assertIn("talimat değildir", last["content"])
+        self.assertIn("Soru:", last["content"])
+        self.assertNotIn("talimat değildir", last["content"])
         contents = [row["content"] for row in out["payload"]["messages"]]
         self.assertFalse(any(row.get("content") == "eski soru" for row in out["payload"]["messages"]))
         self.assertFalse(any("sahte geçmiş" in text for text in contents))
@@ -98,13 +104,71 @@ class ChatGuardTests(unittest.TestCase):
         )
         self.assertFalse(out["ok"])
         self.assertEqual(out["code"], 400)
-        self.assertIn("kapsam", out["message"])
+        self.assertIn("kuralını değiştir", out["message"])
 
-    def test_finalize_drops_english_reasoning(self):
+    def test_finalize_drops_model_file_dump(self):
+        dump = "**Model:** AOG Asistanı\n**Dosya:** /v1/chat/completions\nKullanıcı, sistem hakkında genel bir bilgi istiyor."
+        out = P.finalize_reply(dump, "", "sistem hakkında bilgi ver")
+        self.assertIn("LoRa", out)
+        self.assertNotIn("/v1/chat/completions", out)
+        self.assertNotIn("**Model:**", out)
+
+    def test_finalize_drops_numbered_spec_list(self):
+        dump = (
+            "İşin analiz edelim:\n"
+            "1. **Teknolojik Kaynaklar:** LoRa 433 MHz\n"
+            "2. **Veri Kaynağı:** gps=0\n"
+            "3. **Kontrol Sistemi:** t≥100"
+        )
+        out = P.finalize_reply(dump, "", "sistem hakkında bilgi ver")
+        self.assertIn("LoRa", out)
+        self.assertNotIn("Teknolojik Kaynaklar", out)
+
+    def test_finalize_drops_spek_preamble(self):
+        dump = (
+            "AOG asistanı, sistem bilgisi için aşağıda detaylı bir cevap hazırladım:\n"
+            "**Spek listesi:** LoRa 433 MHz\n"
+            "**Dosya yolu:** None"
+        )
+        out = P.finalize_reply(dump, "", "sistem hakkında bilgi ver")
+        self.assertIn("LoRa", out)
+        self.assertNotIn("cevap hazırladım", out)
+        self.assertNotIn("Spek listesi", out)
         intern = "Alright, let's tackle this query. The user has been discussing"
         out = P.finalize_reply("", intern, "sistem hakkında bilgi ver")
         self.assertIn("LoRa", out)
         self.assertNotIn("Alright", out)
+
+    def test_pin_dump_without_pin_question_is_replaced(self):
+        dump = "LoRa NSS D4, RST D13, DIO0 D12 alıcıyı yönetir. Ormanda Wi-Fi yok."
+        out = P.finalize_reply(dump, "", "Sistem nasıl çalışır?")
+        self.assertNotIn("NSS D4", out)
+        keep = P.finalize_reply(dump, "", "NSS hangi pin?")
+        self.assertIn("NSS D4", keep)
+
+    def test_intern_preamble_is_replaced(self):
+        dump = (
+            "Kullanıcının isteği genel bir bilgi istemesini ifade etmiş olabilir.\n"
+            "İşte sistem hakkında detaylı bilgiler:\n"
+            "1. **Sistem Adı ve Genel Özellikler:** AOG"
+        )
+        out = P.finalize_reply(dump, "", "sistem hakkında bilgi ver")
+        self.assertNotIn("Kullanıcının isteği", out)
+        self.assertNotIn("Sistem Adı", out)
+        self.assertIn("LoRa", out)
+
+    def test_slim_payload_owns_sampling_and_varies_seed(self):
+        first = P.slim_payload({"messages": [], "max_tokens": 999, "temperature": 0.05}, "orta")
+        second = P.slim_payload({"messages": [], "max_tokens": 999, "temperature": 0.05}, "orta")
+        self.assertEqual(first["temperature"], 0.65)
+        self.assertEqual(first["top_p"], 0.92)
+        self.assertNotEqual(first["seed"], second["seed"])
+        self.assertLessEqual(first["max_tokens"], 256)
+
+    def test_fallback_for_varies(self):
+        texts = {P.fallback_for("sistem hakkında bilgi ver") for _ in range(40)}
+        self.assertGreaterEqual(len(texts), 2)
+        self.assertTrue(all("LoRa" in row or "433" in row or "kutu" in row for row in texts))
 
     def test_burst_then_ban(self):
         now = 1_000_000.0

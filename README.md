@@ -8,6 +8,76 @@ Bu depo o ürünün yazılımıdır: tanıtım sitesi, canlı pano, asistan, kut
 
 Sürüm: [v1.0.0](https://github.com/kdorukdemirtas-star/Akilli-Orman-Gozlemcisi-Software/releases/tag/v1.0.0).
 
+Depo: [github.com/kdorukdemirtas-star/Akilli-Orman-Gozlemcisi-Software](https://github.com/kdorukdemirtas-star/Akilli-Orman-Gozlemcisi-Software).
+
+## İndirme
+
+Yazılım, firmware ve Pi vekili bu depodadır. Asistan ağırlık dosyaları GitHub'da yoktur; onları Pi'ye `pi/README.md` içindeki adreslerden çekersin.
+
+### Git (önerilen)
+
+HTTPS:
+
+```bash
+git clone https://github.com/kdorukdemirtas-star/Akilli-Orman-Gozlemcisi-Software.git
+cd Akilli-Orman-Gozlemcisi-Software
+```
+
+SSH (GitHub hesabında anahtar varsa):
+
+```bash
+git clone git@github.com:kdorukdemirtas-star/Akilli-Orman-Gozlemcisi-Software.git
+cd Akilli-Orman-Gozlemcisi-Software
+```
+
+GitHub CLI:
+
+```bash
+gh repo clone kdorukdemirtas-star/Akilli-Orman-Gozlemcisi-Software
+cd Akilli-Orman-Gozlemcisi-Software
+```
+
+Yalnız son commit (küçük indirme):
+
+```bash
+git clone --depth 1 https://github.com/kdorukdemirtas-star/Akilli-Orman-Gozlemcisi-Software.git
+```
+
+Güncelleme:
+
+```bash
+git pull origin main
+```
+
+### Zip / tar (git yoksa)
+
+| Ne | Adres |
+| --- | --- |
+| `main` zip | https://github.com/kdorukdemirtas-star/Akilli-Orman-Gozlemcisi-Software/archive/refs/heads/main.zip |
+| `main` tar.gz | https://github.com/kdorukdemirtas-star/Akilli-Orman-Gozlemcisi-Software/archive/refs/heads/main.tar.gz |
+| `v1.0.0` zip | https://github.com/kdorukdemirtas-star/Akilli-Orman-Gozlemcisi-Software/archive/refs/tags/v1.0.0.zip |
+| `v1.0.0` tar.gz | https://github.com/kdorukdemirtas-star/Akilli-Orman-Gozlemcisi-Software/archive/refs/tags/v1.0.0.tar.gz |
+| Sürüm sayfası | https://github.com/kdorukdemirtas-star/Akilli-Orman-Gozlemcisi-Software/releases |
+
+GitHub'da yeşil **Code** → **Download ZIP** aynı `main` paketidir.
+
+```bash
+curl -L -o aog-software.zip https://github.com/kdorukdemirtas-star/Akilli-Orman-Gozlemcisi-Software/archive/refs/heads/main.zip
+unzip aog-software.zip
+cd Akilli-Orman-Gozlemcisi-Software-main
+```
+
+### Bu indirmede ne var
+
+| Klasör | İçerik |
+| --- | --- |
+| kök | PWA (`npm install`, `npm run dev`) |
+| `firmware/` | Verici, alıcı, hop `.ino` |
+| `pi/` | `chat_proxy.py`, `AOG.md`, systemd birimleri, I2C köprüsü |
+| `.env.example` | Ortam şablonu (şifre yok) |
+
+Ağırlık dosyaları ve asistan sunucusu ikilisi depoda yoktur. Pi kurulumu: `pi/README.md`.
+
 ## Ne işe yarar
 
 - **LoRa izleme:** kutu ormanı eve bağlar. Paket Ra-02 433 MHz ile alıcıya çıkar. Orman düğümünde Wi-Fi yoktur.

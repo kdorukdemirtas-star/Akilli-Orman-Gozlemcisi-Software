@@ -8,8 +8,8 @@ export function chatLoadHint(status, message) {
   if (code === 429 || /meşgul|çok istek|çok sık/i.test(raw)) {
     return "Asistan meşgul. Birkaç saniye bekleyip yeniden gönder.";
   }
-  if (code === 400 && /kapsam/i.test(raw)) {
-    return "Bu istek asistan kapsamı dışında. Ürün, alarm veya kaplama sor.";
+  if (code === 400 && /kapsam|kuralını değiştir/i.test(raw)) {
+    return "Bu istek asistanın kuralını değiştirmeye çalışıyor. Ürün, alarm veya kaplama sor.";
   }
   if (code === 503 || /henüz hazır değil/i.test(raw)) {
     if (/derin/i.test(raw)) {
