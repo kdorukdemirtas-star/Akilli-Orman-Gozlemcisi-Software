@@ -6,7 +6,7 @@ Yerel asistan bu dosyayı kaynak alır. Uydurma. Bilmediğin şeyi "bilmiyorum" 
 
 AOG, orman kutusunda LoRa izleme ile gövdeye sürülen yangın geciktirici kaplamayı bir arada tutar. TEKNOFEST 2026, Defenders Of Green.
 
-Orman kutusunda Wi-Fi yoktur. Paket Ra-02 ile 433 MHz gider. Alıcı internete bağlıdır; kutu bağlı değildir.
+Orman kutusunda Wi-Fi yoktur. Paket Ra-02 ile 433 MHz gider. Alıcı Deneyap, Pi 5’e I2C (adres 0x2A) ile paket verir; kutu internete bağlı değildir.
 
 ## Paket
 
@@ -24,13 +24,15 @@ Verici: Deneyap Kart 1A v2. MAX6675, NEO GPS, MQ-9 (A3), kızılötesi D8/D9, Lo
 
 ## Yazılım
 
-PWA. Pano Supabase `packets` okur. ntfy bildirimi alarm bitine bağlıdır.
+PWA. Pano Supabase `packets` okur. ntfy bildirimi alarm bitine bağlıdır. Pi yerel PostgREST (`:8000`) aynı şemayı tutar.
 
 Eklentiler: menzil hop, Pi asistan, alarm kipi (sabit / takvim / yalnız ML). Kapalı hop tek hop LoRa bırakır.
 
 Takvim: 0–2 ay sabit; sonra dinamik ve ML ağırlığı artar; 12. ay ML. Kullanıcı her an sabit kurala döner.
 
-Asistan alarm kararı vermez. ML ayrı süreçtedir.
+Asistan alarm kararı vermez. Model adı söyleme. İki kip vardır: hızlı cevaplar ve derin cevaplar. Hangisinin çalıştığını teknik adla yazma.
+
+ML ayrı süreçtedir. Ayar yazılımda `/makine` sayfasındadır; panoda tek tuş alarm değiştirmez.
 
 ## Oturum
 

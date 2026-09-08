@@ -209,8 +209,8 @@ function Hero() {
           <Link className="fold-go" to="/sistem">
             Sistemi incele
           </Link>
-          <Link className="fold-go is-ghost" to="/dashboard">
-            Panoyu aç
+          <Link className="fold-go is-ghost" to="/asistan">
+            Asistan
           </Link>
         </nav>
       </div>

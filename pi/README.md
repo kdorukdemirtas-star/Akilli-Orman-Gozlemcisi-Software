@@ -1,19 +1,24 @@
-# Pi asistan
+# Pi asistan + I2C alıcı + yerel PostgREST
 
-Raspberry Pi 5 (4 GB). USB LoRa alıcı burada değil; Mac/PC `rx_to_supabase.py` kalır.
+Raspberry Pi 5 (4 GB). LoRa alıcı Deneyap Kart 1A v2, I2C köle **0x2A**. Pi master (`GPIO2` SDA pin 3, `GPIO3` SCL pin 5, ortak GND). Servis: `aog-i2c.service` → `i2c_to_supabase.py`.
 
-## Model
+Yerel tablo: `pi/supabase` (Postgres + PostgREST + Caddy `:8000`). PWA `VITE_SUPABASE_URL=http://192.168.68.61:8000`. Vercel HTTPS için tünel gerekir.
 
-Qwen 3.5 0.8B, Q4 GGUF. llama.cpp. Bağlam 2048–4096. 262K açma.
+Alıcı USB ile Mac’te de durabilir; veri yolu I2C’dir. A4/A5 Arduino I2C değildir; kartın **SDA / SCL** (D10 / D11) pinlerini kullan.
 
-Örnek:
+## Asistan
 
-```bash
-./llama-server -m Qwen3.5-0.8B-Q4_K_M.gguf --port 8080 -c 4096 --system-prompt-file AOG.md
-```
+PWA `/asistan` aynı kökte açılır. Adres yazılmaz. Vite `PI_CHAT_URL` ile `/v1` vekiller.
 
-PWA eklentisine `http://<pi>:8080` yazılır.
+`chat_proxy.py` `:8080` üzerinde OpenAI uyumlu `/v1/chat/completions` açar. Gövdedeki `model` alanı `hizli` veya `derin` olur. 4 GB RAM için aynı anda tek llama-server çalışır; kip değişince süreç değişir.
+
+Operatör GGUF yolları (PWA’da geçmez):
+
+- hızlı: `models/Qwen_Qwen3.5-0.8B-Q4_K_M.gguf`
+- derin: `models/DeepSeek-R1-Distill-Qwen-1.5B-Q4_K_M.gguf`
+
+Servis: `aog-chat.service` (eski `aog-asistan.service` durdurulur). PWA üst menüden `/asistan` açar.
 
 ## ML
 
-Paket tablosu (`t`, `mq9`, `a8`, `a9`, saat, rssi) ayrı süreç. Asistan ile aynı anda eğitme.
+`ml_score.py` + `aog-ml.timer`. `sklearn.linear_model.LogisticRegression`. Etiket: 100 °C ve alev. Çıktı `scores` (`model`: `logreg` veya `logreg-wait`). Ayar PWA `/makine` sayfasındadır. Asistan ile aynı anda eğitme.

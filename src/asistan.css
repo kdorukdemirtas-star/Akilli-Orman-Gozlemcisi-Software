@@ -1,0 +1,277 @@
+/* Hallmark · pre-emit critique: P5 H5 E5 S5 R5 V4
+ * Hallmark · macrostructure: Workbench · tone: utilitarian
+ * theme: studied-DNA (AOG tokens.css) · nav: existing HUD · footer: none
+ */
+html[data-chat="owui"] .view-pane {
+  overflow: hidden;
+}
+html[data-chat="owui"] .owui {
+  flex: 1 1 auto;
+}
+.owui {
+  display: grid;
+  grid-template-columns: minmax(12rem, 16rem) minmax(0, 1fr);
+  height: 100%;
+  min-height: 0;
+  background: var(--color-paper);
+  font-family: var(--font-body);
+}
+.owui-side {
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr);
+  gap: var(--space-sm);
+  min-width: 0;
+  padding: var(--space-sm);
+  border-right: var(--rule-hair) solid var(--color-rule);
+  background: var(--color-paper-2);
+}
+.owui-new {
+  width: 100%;
+  min-height: 44px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--color-ink);
+  color: var(--color-paper);
+  font-family: var(--font-body);
+  font-size: 0.92rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+.owui-new:hover {
+  opacity: 0.92;
+}
+.owui-new:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 3px;
+}
+.owui-side-label,
+.owui-who {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.owui-muted {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+.owui-chats {
+  display: grid;
+  gap: 4px;
+  align-content: start;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+.owui-chat {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: stretch;
+  min-width: 0;
+  border-radius: 8px;
+}
+.owui-chat.is-on {
+  background: var(--color-ok-bg);
+}
+.owui-chat-open,
+.owui-chat-drop {
+  border: 0;
+  background: transparent;
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  font-weight: 800;
+  cursor: pointer;
+}
+.owui-chat-open {
+  min-width: 0;
+  min-height: 44px;
+  padding: 0 10px;
+  overflow: hidden;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.9rem;
+}
+.owui-chat-open:hover,
+.owui-chat-drop:hover {
+  color: var(--color-moss);
+}
+.owui-chat-drop {
+  padding: 0 8px;
+  color: var(--color-muted);
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.owui-chat-open:focus-visible,
+.owui-chat-drop:focus-visible,
+.owui-models button:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+.owui-main {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto auto;
+  min-width: 0;
+  min-height: 0;
+}
+.owui-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-sm) var(--space-md);
+  min-width: 0;
+  padding: var(--space-sm) var(--space-md);
+  border-bottom: var(--rule-hair) solid var(--color-rule);
+}
+.owui-models {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 4px;
+  border: var(--rule-hair) solid var(--color-rule);
+  border-radius: var(--radius-pill);
+  background: var(--color-paper-2);
+}
+.owui-models button {
+  min-height: 44px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--color-muted);
+  font-family: var(--font-body);
+  font-size: 0.88rem;
+  font-weight: 800;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.owui-models button.is-on {
+  background: var(--color-paper);
+  color: var(--color-ink);
+  box-shadow: 0 1px 0 oklch(100% 0 0 / 0.35);
+}
+.owui-models button:hover:not(.is-on) {
+  color: var(--color-ink);
+}
+.owui-thread {
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: var(--space-md) var(--page-gutter);
+}
+.owui-log {
+  display: grid;
+  gap: var(--space-md);
+  max-width: 44rem;
+  margin: 0 auto;
+  padding: 0;
+  list-style: none;
+}
+.owui-msg {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+.owui-msg p {
+  margin: 0;
+  max-width: min(100%, 34rem);
+  width: fit-content;
+  padding: var(--space-sm) var(--space-md);
+  border-radius: 16px;
+  overflow-wrap: anywhere;
+  font-size: 1rem;
+  line-height: 1.45;
+}
+.owui-msg.is-user {
+  justify-items: end;
+}
+.owui-msg.is-user p {
+  background: var(--color-ink);
+  color: var(--color-paper);
+}
+.owui-msg.is-bot {
+  justify-items: start;
+}
+.owui-msg.is-bot p {
+  background: var(--color-paper-2);
+  color: var(--color-ink);
+}
+.owui-msg.is-wait p {
+  color: var(--color-muted);
+}
+.owui-empty {
+  display: grid;
+  gap: var(--space-sm);
+  place-content: center;
+  min-height: 100%;
+  max-width: 36rem;
+  margin: 0 auto;
+  text-align: center;
+}
+.owui-empty h1 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 5vw, 3.25rem);
+  font-style: normal;
+  font-weight: 800;
+  overflow-wrap: anywhere;
+  text-wrap: balance;
+}
+.owui-empty p,
+.owui-err {
+  margin: 0;
+  color: var(--color-muted);
+}
+.owui-err {
+  padding: 0 var(--page-gutter) var(--space-xs);
+}
+.owui-composer {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-sm);
+  align-items: end;
+  padding: var(--space-sm) var(--page-gutter) var(--space-md);
+  background: var(--color-paper);
+}
+.owui-composer textarea {
+  width: 100%;
+  min-height: 48px;
+  max-height: 8rem;
+  padding: 12px 14px;
+  border: var(--rule-hair) solid var(--color-rule);
+  border-radius: 16px;
+  background: var(--color-paper-2);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  font-size: 1rem;
+  line-height: 1.4;
+  resize: none;
+}
+.owui-composer textarea:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+.owui-composer .hit {
+  min-height: 48px;
+}
+@media (max-width: 880px) {
+  .owui {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+  .owui-side {
+    grid-template-rows: auto auto minmax(0, 7rem);
+    border-right: 0;
+    border-bottom: var(--rule-hair) solid var(--color-rule);
+    max-height: none;
+  }
+  .owui-models button {
+    flex: 1 1 auto;
+  }
+}

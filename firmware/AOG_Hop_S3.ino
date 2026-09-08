@@ -115,7 +115,7 @@ void loop() {
     msg[i++] = (char)LoRa.read();
   }
   msg[i] = 0;
-  if (strncmp(msg, "AOG ", 4) != 0) return;
+  if (strncmp(msg, "AOG n=", 6) != 0) return;
 
   long hop = alanI(msg, "hop=");
   if (hop >= 1) return;

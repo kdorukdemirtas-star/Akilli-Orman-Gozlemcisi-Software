@@ -1,7 +1,14 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Shell } from "./SiteNav.jsx";
-import { ALARM_MODES, asHttpUrl, readPlugins, writePlugins } from "./pluginStore.js";
+import {
+  PLUGIN_CATALOG,
+  addPlugin,
+  pluginAdded,
+  readPlugins,
+  removePlugin,
+  writePlugins,
+} from "./pluginStore.js";
 import "./site.css";
 
 function PlugIcon({ name }) {
@@ -35,15 +42,10 @@ function PlugIcon({ name }) {
   );
 }
 
-const MODE_LABEL = {
-  sabit: "Sabit kural",
-  takvim: "Takvim (12 ay)",
-  yalniz_ml: "Yalnız ML",
-};
-
 export default function Eklentiler({ product = "software" }) {
   const [plug, setPlug] = useState(() => readPlugins());
   const [note, setNote] = useState("");
+  const idle = PLUGIN_CATALOG.filter((item) => !pluginAdded(plug, item.id));
 
   function save(patch) {
     const next = writePlugins(patch);
@@ -51,24 +53,21 @@ export default function Eklentiler({ product = "software" }) {
     setNote("Kaydedildi.");
   }
 
-  function savePi(e) {
-    e.preventDefault();
-    const url = asHttpUrl(plug.piUrl);
-    if (plug.piOn && !url) {
-      setNote("Pi adresi http veya https olmalı.");
-      return;
-    }
-    save({ piUrl: url });
+  function add(id) {
+    const next = addPlugin(id);
+    setPlug(next);
+    setNote("Eklendi.");
+  }
+
+  function remove(id) {
+    const next = removePlugin(id);
+    setPlug(next);
+    setNote("Çıkarıldı.");
   }
 
   function saveHop(e) {
     e.preventDefault();
     save({ hopNote: String(plug.hopNote || "").trim().slice(0, 80) });
-  }
-
-  function saveDate(e) {
-    e.preventDefault();
-    save({ commissionedAt: String(plug.commissionedAt || "").slice(0, 32) });
   }
 
   return (
@@ -81,121 +80,104 @@ export default function Eklentiler({ product = "software" }) {
               Yazılım
             </p>
             <h1>Eklentiler</h1>
-            <p>
-              Kapalı eklenti eski yolu bozmaz. Hop yoksa paket doğrudan alıcıya
-              gider. Asistan kapalıysa pano sohbet açmaz. Alarm kipi Sabit kural
-              iken 100 °C ve alev birlikte aranır.
-            </p>
           </div>
         </header>
 
         <ul className="coat-parts plug-list">
-          <li>
-            <span className="coat-ico">
-              <PlugIcon name="radio" />
-            </span>
-            <strong>Menzil hop</strong>
-            <span>
-              ESP32-S3 LoRa, kutunun 433 MHz paketini bir kez tekrarlar. Meshtastic
-              köprü bu düğümdedir. Kapalıysa tek hop kalır.
-            </span>
-            <form className="plug-actions topic-row" onSubmit={saveHop}>
-              <button
-                type="button"
-                className={plug.hopOn ? "hit" : "hit ghost"}
-                aria-pressed={plug.hopOn}
-                onClick={() => save({ hopOn: !plug.hopOn })}
-              >
-                {plug.hopOn ? "Açık" : "Kapalı"}
-              </button>
-              <label className="visually-hidden" htmlFor="hop-note">
-                S3 MAC notu
-              </label>
-              <input
-                id="hop-note"
-                value={plug.hopNote}
-                onChange={(e) => setPlug({ ...plug, hopNote: e.target.value })}
-                placeholder="S3 MAC"
-                autoComplete="off"
-                spellCheck="false"
-              />
-              <button type="submit" className="hit ghost">
-                Notu yaz
-              </button>
-            </form>
-          </li>
-          <li>
-            <span className="coat-ico">
-              <PlugIcon name="chip" />
-            </span>
-            <strong>Pi asistan</strong>
-            <span>
-              Raspberry Pi 5 üzerinde Qwen 3.5 0.8B. Soru-cevap yerelde kalır.
-              Alarm kararı vermez.
-            </span>
-            <form className="plug-actions topic-row" onSubmit={savePi}>
-              <button
-                type="button"
-                className={plug.piOn ? "hit" : "hit ghost"}
-                aria-pressed={plug.piOn}
-                onClick={() => save({ piOn: !plug.piOn })}
-              >
-                {plug.piOn ? "Açık" : "Kapalı"}
-              </button>
-              <label className="visually-hidden" htmlFor="pi-url">
-                Pi adresi
-              </label>
-              <input
-                id="pi-url"
-                value={plug.piUrl}
-                onChange={(e) => setPlug({ ...plug, piUrl: e.target.value })}
-                placeholder="http://aog-pi.local:8080"
-                autoComplete="off"
-                spellCheck="false"
-              />
-              <button type="submit" className="hit ghost">
-                Adresi yaz
-              </button>
-            </form>
-          </li>
-          <li>
-            <span className="coat-ico">
-              <PlugIcon name="alert" />
-            </span>
-            <strong>Alarm kipi</strong>
-            <span>
-              Sabit kural bugünkü AND. Takvim 2 / 6 / 10 / 12 ay kaydırır. Yalnız
-              ML, Pi skoru gelmeden alarm açmaz. İstediğin an Sabit kurala dön.
-            </span>
-            <div className="plug-actions lab-tabs" role="group" aria-label="Alarm kipi">
-              {ALARM_MODES.map((mode) => (
+          {pluginAdded(plug, "hop") ? (
+            <li>
+              <span className="coat-ico">
+                <PlugIcon name="radio" />
+              </span>
+              <strong>Mesh sistemi</strong>
+              <form className="plug-actions topic-row" onSubmit={saveHop}>
                 <button
-                  key={mode}
                   type="button"
-                  aria-pressed={plug.alarmMode === mode}
-                  className={plug.alarmMode === mode ? "is-on" : undefined}
-                  onClick={() => save({ alarmMode: mode })}
+                  className={plug.hopOn ? "hit" : "hit ghost"}
+                  aria-pressed={plug.hopOn}
+                  onClick={() => save({ hopOn: !plug.hopOn })}
                 >
-                  {MODE_LABEL[mode]}
+                  {plug.hopOn ? "Açık" : "Kapalı"}
                 </button>
-              ))}
-            </div>
-            <form className="plug-actions topic-row" onSubmit={saveDate}>
-              <label className="visually-hidden" htmlFor="commissioned-at">
-                Kurulu tarihi
-              </label>
-              <input
-                id="commissioned-at"
-                type="date"
-                value={String(plug.commissionedAt || "").slice(0, 10)}
-                onChange={(e) => setPlug({ ...plug, commissionedAt: e.target.value })}
-              />
-              <button type="submit" className="hit ghost">
-                Tarihi yaz
-              </button>
-            </form>
-          </li>
+                <label className="visually-hidden" htmlFor="hop-note">
+                  S3 MAC notu
+                </label>
+                <input
+                  id="hop-note"
+                  value={plug.hopNote}
+                  onChange={(e) => setPlug({ ...plug, hopNote: e.target.value })}
+                  placeholder="S3 MAC"
+                  autoComplete="off"
+                  spellCheck="false"
+                />
+                <button type="submit" className="hit ghost">
+                  Notu yaz
+                </button>
+                <button type="button" className="hit ghost" onClick={() => remove("hop")}>
+                  Çıkar
+                </button>
+              </form>
+            </li>
+          ) : null}
+          {pluginAdded(plug, "pi") ? (
+            <li>
+              <span className="coat-ico">
+                <PlugIcon name="chip" />
+              </span>
+              <strong>Asistan</strong>
+              <div className="plug-actions">
+                <Link className="hit" to="/asistan">
+                  Asistanı aç
+                </Link>
+                <button type="button" className="hit ghost" onClick={() => remove("pi")}>
+                  Çıkar
+                </button>
+              </div>
+            </li>
+          ) : null}
+          {pluginAdded(plug, "ml") ? (
+            <li>
+              <span className="coat-ico">
+                <PlugIcon name="alert" />
+              </span>
+              <strong>Makine öğrenmesi</strong>
+              <div className="plug-actions">
+                <Link className="hit" to="/makine">
+                  Ayar sayfası
+                </Link>
+                <button type="button" className="hit ghost" onClick={() => remove("ml")}>
+                  Çıkar
+                </button>
+              </div>
+            </li>
+          ) : null}
         </ul>
+
+        {idle.length ? (
+          <ul className="coat-parts plug-list">
+            {idle.map((item) => (
+              <li key={item.id}>
+                <span className="coat-ico">
+                  <PlugIcon
+                    name={item.id === "hop" ? "radio" : item.id === "pi" ? "chip" : "alert"}
+                  />
+                </span>
+                <strong>{item.title}</strong>
+                <div className="plug-actions">
+                  {item.id === "ml" ? (
+                    <Link className="hit" to="/makine">
+                      Ayar sayfası
+                    </Link>
+                  ) : (
+                    <button type="button" className="hit" onClick={() => add(item.id)}>
+                      Ekle
+                    </button>
+                  )}
+                </div>
+              </li>
+            ))}
+          </ul>
+        ) : null}
 
         {note ? <p role="status">{note}</p> : null}
 
@@ -204,15 +186,9 @@ export default function Eklentiler({ product = "software" }) {
             <Link className="fold-go" to="/dashboard">
               Panoyu aç
             </Link>
-            {plug.piOn ? (
-              <Link className="fold-go is-ghost" to="/asistan">
-                Asistan
-              </Link>
-            ) : (
-              <Link className="fold-go is-ghost" to="/sistem">
-                Sistemi incele
-              </Link>
-            )}
+            <Link className="fold-go is-ghost" to="/asistan">
+              Asistan
+            </Link>
           </nav>
         </div>
       </article>

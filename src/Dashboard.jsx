@@ -10,7 +10,6 @@ function BoardLookout({ stationId, lede }) {
   return (
     <Lookout
       stationId={stationId}
-      kicker="Pano"
       lede={lede}
     />
   );
@@ -20,7 +19,7 @@ function SignedBoard() {
   const { isLoaded, user } = useUser();
   const bound = stationFromUser(user);
   const stationId = bound || STATION_ID;
-  const lede = bound ? bound : "Eşik: 100 °C ve alev.";
+  const lede = bound || undefined;
   if (!isLoaded) return <p className="boot" role="status">Pano açılıyor.</p>;
   return <BoardLookout stationId={stationId} lede={lede} />;
 }
@@ -32,7 +31,7 @@ export default function Dashboard() {
       {clerkOn ? (
         <SignedBoard />
       ) : (
-        <BoardLookout stationId={STATION_ID} lede="Eşik: 100 °C ve alev." />
+        <BoardLookout stationId={STATION_ID} />
       )}
     </Shell>
   );

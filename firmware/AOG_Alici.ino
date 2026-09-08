@@ -8,19 +8,33 @@
  * Beklenen paket:
  *   AOG n= t= gps= lat= lon= mq9= a8= a9=
  * a8/a9: 1=bos  0=alev
+ *
+ * I2C kose (Pi 5 master, bu kart slave 0x2A):
+ *   Deneyap SDA -> Pi pin 3 (GPIO2)
+ *   Deneyap SCL -> Pi pin 5 (GPIO3)
+ *   GND ortak. 5V paylasma. Pi 3V3 pull-up yeter.
  */
 
 #include <SPI.h>
 #include <LoRa.h>
+#include <Wire.h>
+#include <math.h>
+#include <string.h>
 #include "esp_mac.h"
 
 static const int LORA_SS = D4;
 static const int LORA_RST = D13;
 static const int LORA_DIO0 = D12;
 
+static const uint8_t I2C_ADDR = 0x2A;
+static const uint8_t I2C_MAGIC = 0xA1;
+static const size_t I2C_LEN = 32;
+
 bool loraVar = false;
 uint8_t surum = 0;
 uint32_t alinan = 0;
+uint8_t i2cSeq = 0;
+uint8_t i2cReady[I2C_LEN];
 
 uint8_t oku42() {
   pinMode(LORA_RST, OUTPUT);
@@ -69,6 +83,73 @@ long alanI(const char *s, const char *key) {
   return atol(p + strlen(key));
 }
 
+void le16(uint8_t *p, uint16_t v) {
+  p[0] = (uint8_t)(v & 0xFF);
+  p[1] = (uint8_t)((v >> 8) & 0xFF);
+}
+
+void le32(uint8_t *p, uint32_t v) {
+  p[0] = (uint8_t)(v & 0xFF);
+  p[1] = (uint8_t)((v >> 8) & 0xFF);
+  p[2] = (uint8_t)((v >> 16) & 0xFF);
+  p[3] = (uint8_t)((v >> 24) & 0xFF);
+}
+
+void i2cYayin() {
+  Wire.slaveWrite(i2cReady, I2C_LEN);
+}
+
+void onI2CRequest() {
+  Wire.write(i2cReady, I2C_LEN);
+}
+
+void onI2CReceive(int len) {
+  while (Wire.available()) {
+    Wire.read();
+  }
+  (void)len;
+}
+
+void i2cPaketle(const char *msg, int rssi) {
+  uint8_t b[I2C_LEN];
+  memset(b, 0, I2C_LEN);
+  b[0] = I2C_MAGIC;
+  i2cSeq++;
+  if (i2cSeq == 0) i2cSeq = 1;
+  b[1] = i2cSeq;
+
+  long n = alanI(msg, "n=");
+  float t = alanF(msg, "t=");
+  long gps = alanI(msg, "gps=");
+  float lat = alanF(msg, "lat=");
+  float lon = alanF(msg, "lon=");
+  long mq9 = alanI(msg, "mq9=");
+  long a8 = alanI(msg, "a8=");
+  long a9 = alanI(msg, "a9=");
+  long hop = alanI(msg, "hop=");
+
+  le16(b + 2, (uint16_t)(n < 0 ? 0 : n));
+  int32_t tcc = isnan(t) ? 0 : (int32_t)lroundf(t * 100.0f);
+  if (tcc > 32767) tcc = 32767;
+  if (tcc < -32768) tcc = -32768;
+  le16(b + 4, (uint16_t)(int16_t)tcc);
+  b[6] = (uint8_t)(gps < 0 ? 0 : gps);
+  b[7] = (uint8_t)(a8 < 0 ? 1 : a8);
+  b[8] = (uint8_t)(a9 < 0 ? 1 : a9);
+  if (rssi > 127) rssi = 127;
+  if (rssi < -128) rssi = -128;
+  b[9] = (uint8_t)(int8_t)rssi;
+  le16(b + 10, (uint16_t)(mq9 < 0 ? 0 : mq9));
+  int32_t lat_e5 = isnan(lat) ? 0 : (int32_t)lroundf(lat * 1e5f);
+  int32_t lon_e5 = isnan(lon) ? 0 : (int32_t)lroundf(lon * 1e5f);
+  le32(b + 12, (uint32_t)lat_e5);
+  le32(b + 16, (uint32_t)lon_e5);
+  b[20] = (uint8_t)(hop < 0 ? 0 : hop);
+  b[21] = 1;
+  memcpy(i2cReady, b, I2C_LEN);
+  i2cYayin();
+}
+
 void setup() {
   Serial.begin(115200);
   uint32_t t = millis();
@@ -100,9 +181,24 @@ void setup() {
   LoRa.setPins(LORA_SS, LORA_RST, LORA_DIO0);
   loraVar = LoRa.begin(433E6);
   Serial.println(loraVar ? "LoRa OK, dinleniyor" : "LoRa.begin FAIL");
+
+  memset(i2cReady, 0, I2C_LEN);
+  i2cReady[0] = I2C_MAGIC;
+  Wire.onReceive(onI2CReceive);
+  Wire.onRequest(onI2CRequest);
+  bool i2cOk = Wire.begin(I2C_ADDR, SDA, SCL, 100000);
+  i2cYayin();
+  Serial.printf("I2C slave 0x%02X SDA=%d SCL=%d %s\n",
+                I2C_ADDR, SDA, SCL, i2cOk ? "OK" : "FAIL");
 }
 
 void loop() {
+  static uint32_t lastI2c = 0;
+  if (millis() - lastI2c >= 200) {
+    i2cYayin();
+    lastI2c = millis();
+  }
+
   if (!loraVar) {
     Serial.printf("FAIL  VERSION=0x%02X\n", surum);
     delay(1500);
@@ -124,7 +220,9 @@ void loop() {
   Serial.printf("ALINDI #%lu rssi=%d snr=%.1f  %s\n",
                 (unsigned long)alinan, rssi, snr, msg);
 
-  if (strncmp(msg, "AOG ", 4) != 0) return;
+  if (strncmp(msg, "AOG n=", 6) != 0) return;
+
+  i2cPaketle(msg, rssi);
 
   long a8 = alanI(msg, "a8=");
   long a9 = alanI(msg, "a9=");

@@ -1,125 +1,301 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Shell } from "./SiteNav.jsx";
-import { asHttpUrl, readPlugins } from "./pluginStore.js";
+import {
+  asChatKip,
+  chatModel,
+  kipTokens,
+  newThreadId,
+  readKip,
+  readThreads,
+  stripThink,
+  systemPrompt,
+  titleFromQuestion,
+  writeKip,
+  writeThreads,
+} from "./chatStore.js";
 import "./site.css";
+import "./asistan.css";
 
-async function askPi(base, question) {
-  const url = `${base}/v1/chat/completions`;
-  const res = await fetch(url, {
+async function askPi(question, kip, signal) {
+  const res = await fetch("/v1/chat/completions", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
+    signal,
     body: JSON.stringify({
-      model: "qwen",
+      model: chatModel(kip),
       messages: [
-        {
-          role: "system",
-          content:
-            "AOG.md: orman kutusunda Wi-Fi yok. Paket Ra-02 ile 433 MHz LoRa gider. Sabit alarm: sıcaklık 100 °C ve üzeri VE alev (a8 veya a9 sıfır). Tek başına 60 °C alarm değildir. Asistan alarm açmaz. Bilmediğini bilmiyorum de. Kısa cevap.",
-        },
+        { role: "system", content: systemPrompt(kip) },
         { role: "user", content: question },
       ],
-      max_tokens: 256,
-      temperature: 0.2,
+      max_tokens: kipTokens(kip),
+      temperature: kip === "derin" ? 0.4 : 0.2,
     }),
   });
-  if (!res.ok) throw new Error("pi");
+  if (!res.ok) {
+    let detail = "";
+    try {
+      const fail = await res.json();
+      detail = String(fail?.error?.message || fail?.error || "").trim();
+    } catch {
+      /* not json */
+    }
+    throw new Error(detail || "pi");
+  }
   const data = await res.json();
   const msg = data?.choices?.[0]?.message || {};
-  const text = msg.content || msg.reasoning_content;
-  return String(text || "").trim();
+  return stripThink(msg.content || msg.reasoning_content);
+}
+
+function isAbort(err) {
+  return err?.name === "AbortError";
 }
 
 export default function Asistan({ product = "software" }) {
-  const plug = readPlugins();
-  const base = plug.piOn ? asHttpUrl(plug.piUrl) : "";
+  const [params, setParams] = useSearchParams();
+  const [kip, setKip] = useState(() =>
+    params.get("kip") ? asChatKip(params.get("kip")) : readKip(),
+  );
+  const [threads, setThreads] = useState(readThreads);
+  const [activeId, setActiveId] = useState(() => readThreads()[0]?.id || "");
   const [q, setQ] = useState("");
-  const [lines, setLines] = useState([]);
-  const [busy, setBusy] = useState(false);
-  const [err, setErr] = useState("");
+  const [busyId, setBusyId] = useState("");
+  const [err, setErr] = useState({ id: "", text: "" });
+  const endRef = useRef(null);
+  const aliveRef = useRef(true);
+  const inflight = useRef(new Map());
+
+  useEffect(() => {
+    aliveRef.current = true;
+    return () => {
+      aliveRef.current = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    const fromUrl = params.get("kip");
+    const value = asChatKip(fromUrl || readKip());
+    setKip(value);
+    writeKip(value);
+    if (fromUrl !== value) setParams({ kip: value }, { replace: true });
+  }, [params, setParams]);
+
+  const active = useMemo(
+    () => threads.find((row) => row.id === activeId) || null,
+    [threads, activeId],
+  );
+  const lines = active?.lines || [];
+  const waiting = busyId === activeId && Boolean(activeId);
+  const shownErr = err.text && err.id === activeId ? err.text : "";
+
+  useEffect(() => {
+    endRef.current?.scrollIntoView({ block: "end" });
+  }, [lines.length, waiting]);
+
+  function saveThreads(next) {
+    const saved = writeThreads(next);
+    if (aliveRef.current) setThreads(saved);
+    return saved;
+  }
+
+  function pickKip(next) {
+    const value = writeKip(next);
+    setKip(value);
+    setParams({ kip: value }, { replace: true });
+  }
+
+  function startThread() {
+    const id = newThreadId();
+    setThreads((prev) => writeThreads([{ id, title: "Yeni sohbet", kip, lines: [] }, ...prev]));
+    setActiveId(id);
+    setErr({ id: "", text: "" });
+    setQ("");
+  }
+
+  function dropThread(id) {
+    if (!window.confirm("Sohbet silinsin mi?")) return;
+    inflight.current.get(id)?.abort();
+    inflight.current.delete(id);
+    if (busyId === id) setBusyId("");
+    const next = writeThreads(threads.filter((row) => row.id !== id));
+    setThreads(next);
+    if (id === activeId) setActiveId(next[0]?.id || "");
+    if (err.id === id) setErr({ id: "", text: "" });
+  }
 
   async function onAsk(e) {
     e.preventDefault();
     const text = q.trim();
-    if (!text || !base || busy) return;
-    setBusy(true);
-    setErr("");
+    const id = activeId || newThreadId();
+    if (!text || busyId === id) return;
     setQ("");
-    setLines((prev) => [...prev, { who: "sen", text }]);
+    setErr({ id: "", text: "" });
+    inflight.current.get(id)?.abort();
+    const ac = new AbortController();
+    inflight.current.set(id, ac);
+    setBusyId(id);
+    if (!activeId) setActiveId(id);
+    setThreads((prev) => {
+      const has = prev.some((row) => row.id === id);
+      const list = has
+        ? prev
+        : [{ id, title: titleFromQuestion(text), kip, lines: [] }, ...prev];
+      return writeThreads(
+        list.map((row) =>
+          row.id === id
+            ? {
+                ...row,
+                title: row.lines.length ? row.title : titleFromQuestion(text),
+                kip,
+                lines: [...row.lines, { who: "sen", text }],
+              }
+            : row,
+        ),
+      );
+    });
     try {
-      const reply = await askPi(base, text);
-      setLines((prev) => [...prev, { who: "pi", text: reply || "(boş yanıt)" }]);
-    } catch {
-      setErr("Pi yanıt vermedi. Adres ve llama-server açık mı bak.");
+      const raw = await askPi(text, kip, ac.signal);
+      const reply = String(raw || "").trim() || "Yanıt boş geldi. Hızlı cevaplar kipini dene.";
+      saveThreads(
+        readThreads().map((row) =>
+          row.id === id ? { ...row, lines: [...row.lines, { who: "pi", text: reply }] } : row,
+        ),
+      );
+    } catch (e) {
+      if (isAbort(e)) return;
+      const textErr =
+        e instanceof Error && e.message && e.message !== "pi"
+          ? e.message
+          : "Asistan yanıt vermedi. Pi açık mı bak.";
+      setErr({ id, text: textErr });
     } finally {
-      setBusy(false);
+      if (inflight.current.get(id) === ac) inflight.current.delete(id);
+      setBusyId((cur) => (cur === id ? "" : cur));
+    }
+  }
+
+  function onComposerKey(e) {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      e.currentTarget.form?.requestSubmit();
     }
   }
 
   return (
-    <Shell product={product}>
-      <article className="coat-page">
-        <header className="coat-hero">
-          <div className="coat-hero-copy">
-            <p className="coat-badge">Yazılım</p>
-            <h1>Asistan</h1>
-            <p>
-              Soru Pi 5 üzerindeki Qwen 3.5 0.8B’ye gider. Bulut yok. Asistan
-              alarm açmaz.
-            </p>
-          </div>
-        </header>
+    <Shell product={product} footer={false}>
+      <div className="owui">
+        <aside className="owui-side">
+          <button type="button" className="owui-new" onClick={startThread}>
+            Yeni sohbet
+          </button>
+          <p className="owui-side-label">Sohbetler</p>
+          <nav className="owui-chats" aria-label="Sohbetler">
+            {threads.length ? (
+              threads.map((row) => (
+                <div
+                  key={row.id}
+                  className={row.id === activeId ? "owui-chat is-on" : "owui-chat"}
+                >
+                  <button
+                    type="button"
+                    className="owui-chat-open"
+                    aria-current={row.id === activeId ? "true" : undefined}
+                    onClick={() => setActiveId(row.id)}
+                  >
+                    {row.title}
+                  </button>
+                  <button
+                    type="button"
+                    className="owui-chat-drop"
+                    aria-label={`${row.title} sohbetini sil`}
+                    onClick={() => dropThread(row.id)}
+                  >
+                    Sil
+                  </button>
+                </div>
+              ))
+            ) : (
+              <p className="owui-muted">Henüz sohbet yok.</p>
+            )}
+          </nav>
+        </aside>
 
-        {!base ? (
-          <p role="status">
-            Pi asistan eklentisi kapalı veya adres yok.{" "}
-            <Link to="/eklentiler">Eklentiler</Link>
-          </p>
-        ) : (
-          <>
+        <section className="owui-main">
+          <header className="owui-bar">
+            <div className="owui-models" role="group" aria-label="Yanıt kipi">
+              <button
+                type="button"
+                className={kip === "hizli" ? "is-on" : undefined}
+                aria-pressed={kip === "hizli"}
+                onClick={() => pickKip("hizli")}
+              >
+                Hızlı cevaplar
+              </button>
+              <button
+                type="button"
+                className={kip === "derin" ? "is-on" : undefined}
+                aria-pressed={kip === "derin"}
+                onClick={() => pickKip("derin")}
+              >
+                Derin cevaplar
+              </button>
+            </div>
+          </header>
+
+          <div className="owui-thread">
             {lines.length ? (
-              <ul className="coat-parts plug-list">
+              <ul className="owui-log">
                 {lines.map((line, i) => (
-                  <li key={`${line.who}-${i}`}>
-                    <strong>{line.who === "sen" ? "Soru" : "Yanıt"}</strong>
-                    <span>{line.text}</span>
+                  <li
+                    key={`${line.who}-${i}`}
+                    className={line.who === "sen" ? "owui-msg is-user" : "owui-msg is-bot"}
+                  >
+                    <span className="owui-who">{line.who === "sen" ? "Sen" : "Asistan"}</span>
+                    <p>{line.text}</p>
                   </li>
                 ))}
+                {waiting ? (
+                  <li className="owui-msg is-bot is-wait" aria-live="polite">
+                    <span className="owui-who">Asistan</span>
+                    <p>Yazıyor…</p>
+                  </li>
+                ) : null}
               </ul>
             ) : (
-              <p>Örnek: alarm kuralı nedir, kutuda Wi-Fi var mı.</p>
+              <div className="owui-empty">
+                <h1>Asistan</h1>
+              </div>
             )}
-            <form className="topic-row" onSubmit={onAsk}>
-              <label className="visually-hidden" htmlFor="ask-pi">
-                Soru
-              </label>
-              <input
-                id="ask-pi"
-                value={q}
-                onChange={(e) => setQ(e.target.value)}
-                placeholder="Sor"
-                autoComplete="off"
-                disabled={busy}
-              />
-              <button type="submit" className="hit" disabled={busy || !q.trim()}>
-                {busy ? "Bekleniyor" : "Gönder"}
-              </button>
-            </form>
-            {err ? <p role="alert">{err}</p> : null}
-          </>
-        )}
+            <div ref={endRef} />
+          </div>
 
-        <div className="coat-close">
-          <nav className="coat-next" aria-label="Sonraki adım">
-            <Link className="fold-go" to="/eklentiler">
-              Eklentiler
-            </Link>
-            <Link className="fold-go is-ghost" to="/dashboard">
-              Panoyu aç
-            </Link>
-          </nav>
-        </div>
-      </article>
+          {shownErr ? (
+            <p className="err owui-err" role="alert">
+              {shownErr}
+            </p>
+          ) : null}
+
+          <form className="owui-composer" onSubmit={onAsk}>
+            <label className="visually-hidden" htmlFor="ask-pi">
+              Soru
+            </label>
+            <textarea
+              id="ask-pi"
+              name="soru"
+              rows={1}
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              onKeyDown={onComposerKey}
+              placeholder="Bir şey sor…"
+              autoComplete="off"
+              disabled={waiting}
+            />
+            <button type="submit" className="hit" disabled={waiting || !q.trim()}>
+              {waiting ? "…" : "Gönder"}
+            </button>
+          </form>
+        </section>
+      </div>
     </Shell>
   );
 }

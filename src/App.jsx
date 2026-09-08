@@ -11,6 +11,7 @@ const Karisim = lazy(() => import("./Karisim.jsx"));
 const Analizler = lazy(() => import("./Analizler.jsx"));
 const Eklentiler = lazy(() => import("./Eklentiler.jsx"));
 const Asistan = lazy(() => import("./Asistan.jsx"));
+const Makine = lazy(() => import("./Makine.jsx"));
 const Pair = lazy(() => import("./Pair.jsx"));
 
 function BoardFallback({ product }) {
@@ -80,6 +81,14 @@ export default function App() {
         element={
           <Suspense fallback={<PageFallback product="software" />}>
             <Asistan product="software" />
+          </Suspense>
+        }
+      />
+      <Route
+        path="/makine"
+        element={
+          <Suspense fallback={<PageFallback product="software" />}>
+            <Makine product="software" />
           </Suspense>
         }
       />

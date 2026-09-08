@@ -1,0 +1,10 @@
+[Unit]
+Description=AOG sklearn score
+After=docker.service aog-i2c.service network-online.target
+
+[Service]
+Type=oneshot
+User=demir
+EnvironmentFile=/home/demir/aog-pi/.env
+WorkingDirectory=/home/demir/aog-pi
+ExecStart=/home/demir/aog-pi/.venv/bin/python /home/demir/aog-pi/ml_score.py

@@ -4,12 +4,13 @@ import { NTFY_TOPIC } from "./config.js";
 import { DISPLAY_PIN, withDisplayPin } from "./displayPin.js";
 import { asStationId } from "./stationPair.js";
 import { packetLoadHint } from "./packetHint.js";
-import { readPlugins } from "./pluginStore.js";
+import { alarmModeFor, pluginAdded, readPlugins } from "./pluginStore.js";
 import { decideAlert, monthsSince, tempP90 } from "./alertBlend.js";
 import { coatProgress, readCoatRenewed, writeCoatRenewed } from "./coatCycle.js";
 import { ntfyPollUrl, parseNtfyFeed } from "./ntfyFeed.js";
 import { flameLabel, flameNote, flameOn, gpsLabel, gpsNote, hopLabel, mq9Label, packetHop, packetRssi, rssiLabel } from "./packetView.js";
 import { chartLayout, clockLabel } from "./tempChart.js";
+import { BoardPlugins } from "./BoardPlugins.jsx";
 import "./ops.css";
 
 const MapCard = lazy(() => import("./MapCard.jsx"));
@@ -51,7 +52,7 @@ function packetTime(iso) {
   return Number.isFinite(t) ? t : 0;
 }
 
-const PACKET_COLS = "id,station_id,n,t,gps,mq9,a8,a9,v,created_at";
+const PACKET_COLS = "id,station_id,n,t,gps,mq9,a8,a9,v,hop,created_at";
 
 function livePacket(row, stationId) {
   if (!row || typeof row !== "object") return false;
@@ -218,14 +219,22 @@ function IcoRssi() {
     </svg>
   );
 }
+function IcoMl() {
+  return (
+    <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+      <path d="M4 16c3-8 6-8 8 0s5 8 8 0" fill="none" stroke="currentColor" strokeWidth="1.8" />
+      <circle cx="12" cy="12" r="1.4" fill="currentColor" />
+    </svg>
+  );
+}
 
 function alertCopy({ loading, silent, alertOn, fire, mode }) {
   if (loading) return "Paket okunuyor.";
   if (silent) return "Son 24 saatte paket gelmedi. Kutunun açık olduğunu kontrol et.";
-  if (mode === "yalniz_ml" && !alertOn) return "ML skoru yok.";
+  if (mode === "yalniz_ml" && !alertOn) return "sklearn skor 0,5 altında.";
   if (alertOn) {
     if (mode === "takvim") return "Takvim eşiği.";
-    if (mode === "yalniz_ml") return "ML eşiği.";
+    if (mode === "yalniz_ml") return "sklearn skor ≥ 0,5.";
     return "Eşik: 100 °C ve alev.";
   }
   if (fire) return "Alev var, sıcaklık eşiğin altındadır.";
@@ -234,7 +243,7 @@ function alertCopy({ loading, silent, alertOn, fire, mode }) {
 
 function alertTitle(mode) {
   if (mode === "takvim") return "Takvim eşiği";
-  if (mode === "yalniz_ml") return "ML eşiği";
+  if (mode === "yalniz_ml") return "Öğrenme eşiği";
   return "Eşik: 100 °C ve alev";
 }
 
@@ -248,36 +257,38 @@ export function Lookout({ stationId, kicker, lede }) {
   const [notesErr, setNotesErr] = useState(false);
   const [renewedAt, setRenewedAt] = useState(readCoatRenewed);
   const [lastRssi, setLastRssi] = useState(null);
+  const [plug, setPlug] = useState(readPlugins);
+  const [mlScore, setMlScore] = useState(0);
+  const [mlModel, setMlModel] = useState("");
   const stationRef = useRef(stationId);
   const latest = rows[0] || null;
   const shown = withDisplayPin(latest);
-  const plugins = readPlugins();
+  const alarmMode = alarmModeFor(plug);
   const stats = useMemo(() => ({ p90: tempP90(rows) }), [rows]);
   const silent = !loading && !err && !latest;
   const alertOn = decideAlert({
     packet: latest,
-    mode: plugins.alarmMode,
-    months: monthsSince(plugins.commissionedAt),
-    mlScore: 0,
+    mode: alarmMode,
+    months: monthsSince(plug.commissionedAt),
+    mlScore,
     stats,
   });
   const fire = flameOn(latest);
   const coat = useMemo(() => coatProgress(renewedAt, Date.now()), [renewedAt, nowTick]);
-  const packetAlerts = useMemo(
-    () =>
-      rows
-        .filter((row) =>
-          decideAlert({
-            packet: row,
-            mode: plugins.alarmMode,
-            months: monthsSince(plugins.commissionedAt),
-            mlScore: 0,
-            stats,
-          }),
-        )
-        .slice(0, 8),
-    [rows, plugins.alarmMode, plugins.commissionedAt, stats],
-  );
+  const packetAlerts = useMemo(() => {
+    if (alarmMode === "yalniz_ml") return alertOn && latest ? [latest] : [];
+    return rows
+      .filter((row) =>
+        decideAlert({
+          packet: row,
+          mode: alarmMode,
+          months: monthsSince(plug.commissionedAt),
+          mlScore,
+          stats,
+        }),
+      )
+      .slice(0, 8);
+  }, [rows, latest, alertOn, alarmMode, plug.commissionedAt, stats, mlScore]);
 
   useEffect(() => {
     const id = window.setInterval(() => setNowTick((n) => n + 1), 1000);
@@ -286,6 +297,7 @@ export function Lookout({ stationId, kicker, lede }) {
 
   useEffect(() => {
     let ignore = false;
+    let loadGen = 0;
     const scopedId = asStationId(stationId);
     const stationChanged = stationRef.current !== scopedId;
     stationRef.current = scopedId;
@@ -294,6 +306,8 @@ export function Lookout({ stationId, kicker, lede }) {
     if (stationChanged) {
       setRows([]);
       setLastRssi(null);
+      setMlScore(0);
+      setMlModel("");
     }
     if (!scopedId) {
       setLoading(false);
@@ -302,24 +316,56 @@ export function Lookout({ stationId, kicker, lede }) {
     }
     const sinceIso = new Date(Date.now() - DAY_MS).toISOString();
     async function load() {
+      const gen = ++loadGen;
       try {
-        const { data, error } = await supabase
+        let query = supabase
           .from("packets")
           .select(PACKET_COLS)
           .eq("station_id", scopedId)
           .gte("created_at", sinceIso)
           .order("created_at", { ascending: false })
           .limit(40);
-        if (ignore) return;
+        let { data, error } = await query;
+        if (error && /hop/i.test(error.message || "")) {
+          ({ data, error } = await supabase
+            .from("packets")
+            .select("id,station_id,n,t,gps,mq9,a8,a9,v,created_at")
+            .eq("station_id", scopedId)
+            .gte("created_at", sinceIso)
+            .order("created_at", { ascending: false })
+            .limit(40));
+        }
+        if (ignore || gen !== loadGen) return;
         if (error) setErr(error.message);
-        else setRows((prev) => mergePacketRows(data || [], prev, scopedId));
+        else {
+          setErr("");
+          setRows((prev) => mergePacketRows(data || [], prev, scopedId));
+        }
+        const scored = await supabase
+          .from("scores")
+          .select("score,model")
+          .eq("station_id", scopedId)
+          .order("created_at", { ascending: false })
+          .limit(1);
+        if (ignore || gen !== loadGen) return;
+        if (scored.error) {
+          /* keep last sklearn row */
+        } else if (scored.data?.[0]) {
+          const n = Number(scored.data[0].score);
+          setMlScore(Number.isFinite(n) ? n : 0);
+          setMlModel(String(scored.data[0].model || ""));
+        } else {
+          setMlScore(0);
+          setMlModel("");
+        }
       } catch {
-        if (!ignore) setErr("Paketler okunamadı.");
+        if (!ignore && gen === loadGen) setErr("Paketler okunamadı.");
       } finally {
-        if (!ignore) setLoading(false);
+        if (!ignore && gen === loadGen) setLoading(false);
       }
     }
     load();
+    const poll = window.setInterval(load, 4000);
     const ch = supabase
       .channel(`packets-live-${scopedId}`)
       .on(
@@ -337,14 +383,10 @@ export function Lookout({ stationId, kicker, lede }) {
           setRows((prev) => mergePacketRows(prev, [scrubPacket(row)], scopedId));
         },
       )
-      .subscribe((status) => {
-        if (ignore) return;
-        if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
-          setErr((prev) => prev || "Canlı kanal düştü. Yeniden dene.");
-        }
-      });
+      .subscribe();
     return () => {
       ignore = true;
+      window.clearInterval(poll);
       supabase.removeChannel(ch);
     };
   }, [stationId, reloadTick]);
@@ -390,15 +432,6 @@ export function Lookout({ stationId, kicker, lede }) {
 
   const tempLabel = loading || latest?.t == null ? "-" : `${fmt(latest.t, 1)} °C`;
   const ageLabel = loading ? "-" : since(latest?.created_at);
-  const tempChartMeta = chartLayout(rows, Date.now());
-  const tempCaption = tempChartMeta.empty ? "Gelen paketler" : tempChartMeta.caption;
-  const warnCount = notes.length ? notes.length : packetAlerts.length;
-  const coatNote =
-    coat.elapsedDays == null
-      ? "Yenileme kaydı yok"
-      : coat.remainingDays > 0
-        ? `${coat.remainingDays} gün kaldı`
-        : "Süre doldu";
 
   const noticeList = notes.length
     ? notes.map((n) => ({
@@ -410,7 +443,7 @@ export function Lookout({ stationId, kicker, lede }) {
       }))
     : packetAlerts.map((p) => ({
         id: p.id,
-        title: alertTitle(plugins.alarmMode),
+        title: alertTitle(alarmMode),
         body: `Sıcaklık ${fmt(p.t, 0)} °C. Sayaç ${p.n ?? "-"}.`,
         when: since(p.created_at),
         hot: true,
@@ -434,7 +467,7 @@ export function Lookout({ stationId, kicker, lede }) {
             silent,
             alertOn,
             fire,
-            mode: plugins.alarmMode,
+            mode: alarmMode,
           })}
         </p>
       </header>
@@ -485,15 +518,31 @@ export function Lookout({ stationId, kicker, lede }) {
         >
           <IcoRssi />
         </Metric>
-        {plugins.hopOn ? (
+        {pluginAdded(plug, "ml") ? (
+          <Metric
+            tone="is-moss"
+            title="sklearn"
+            value={loading ? "-" : mlModel ? fmt(mlScore, 3) : "—"}
+            note={
+              mlModel === "logreg-wait"
+                ? "LogReg bekliyor"
+                : mlModel === "logreg"
+                  ? "LogReg skor"
+                  : "scores tablosu"
+            }
+          >
+            <IcoMl />
+          </Metric>
+        ) : null}
+        {plug.hopOn ? (
           <Metric
             tone="is-bark"
-            title="Hop"
+            title="Mesh"
             value={loading ? "-" : hopLabel(latest)}
             note={
               packetHop(latest) != null
-                ? plugins.hopNote || "S3 tekrar"
-                : plugins.hopNote || "Tek hop"
+                ? plug.hopNote || "Mesh"
+                : plug.hopNote || "Doğrudan"
             }
           >
             <IcoRssi />
@@ -504,10 +553,7 @@ export function Lookout({ stationId, kicker, lede }) {
       <section className="ops-mid">
         <article className="ops-card">
           <header className="ops-card-h">
-            <div>
-              <h2>Sıcaklık grafiği</h2>
-              <p>{tempCaption}</p>
-            </div>
+            <h2>Sıcaklık grafiği</h2>
           </header>
           <TempChart rows={rows} loading={loading} />
         </article>
@@ -529,21 +575,14 @@ export function Lookout({ stationId, kicker, lede }) {
         </article>
       </section>
 
+      <section className="ops-plugs" aria-label="Eklentiler">
+        <BoardPlugins plug={plug} onChange={setPlug} />
+      </section>
+
       <section className="ops-bot">
         <article className="ops-card">
           <header className="ops-card-h">
-            <div>
-              <h2>Son uyarılar</h2>
-              <p>
-                {notesErr
-                  ? "Bildirimler okunamadı. Eşik geçen paketler gösterilir."
-                  : notes.length
-                    ? "ntfy konusuna düşen gönderiler."
-                    : packetAlerts.length
-                      ? "Konuya düşen bildirim yok. Eşik geçen paketler."
-                      : "Gönderilmiş bildirim yok."}
-              </p>
-            </div>
+            <h2>Son uyarılar</h2>
           </header>
           {noticeList.length ? (
             <ul className="ops-notes">
@@ -562,10 +601,7 @@ export function Lookout({ stationId, kicker, lede }) {
 
         <article className="ops-card">
           <header className="ops-card-h">
-            <div>
-              <h2>Kaplama durumu</h2>
-              <p>Karışım 3 ayda bir yenilenir. Çubuk kalan süreye göredir.</p>
-            </div>
+            <h2>Kaplama durumu</h2>
             <button type="button" className="ops-btn" onClick={markRenewed}>
               Karışım yenilendi
             </button>

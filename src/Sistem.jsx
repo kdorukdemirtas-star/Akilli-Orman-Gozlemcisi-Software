@@ -214,15 +214,15 @@ export default function Sistem({ product = "demo" }) {
 
         <div className="coat-close">
           <p className="coat-banner">
-            Sistem paketi gönderir, pano 24 saat tutar; alevi geciktiren ise gövdedeki
-            kaplamadır.
+            Sistem paketi gönderir, pano 24 saat tutar. Asistan aynı sitededir; alarm
+            açmaz. Alevi geciktiren gövdedeki kaplamadır.
           </p>
           <nav className="coat-next" aria-label="Sonraki adım">
             <Link className="fold-go" to="/karisim">
               Karışımı incele
             </Link>
-            <Link className="fold-go is-ghost" to="/dashboard">
-              Panoyu aç
+            <Link className="fold-go is-ghost" to="/asistan">
+              Asistan
             </Link>
           </nav>
         </div>

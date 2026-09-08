@@ -5,6 +5,8 @@
 dist
 node_modules
 .DS_Store
+__pycache__/
+*.pyc
 supabase/.temp
 .hallmark
 native/android/.gradle

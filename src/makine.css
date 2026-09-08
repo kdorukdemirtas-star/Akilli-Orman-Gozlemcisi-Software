@@ -1,0 +1,149 @@
+/* Hallmark · pre-emit critique: P5 H5 E5 S5 R5 V4
+ * Hallmark · macrostructure: Spec sheet · tone: utilitarian
+ * theme: studied-DNA (AOG tokens.css)
+ */
+.ml-page {
+  max-width: 40rem;
+}
+.ml-head h1 {
+  margin: 0 0 var(--space-lg);
+  text-wrap: balance;
+}
+.ml-spec {
+  display: grid;
+  gap: 0;
+  margin: 0 0 var(--space-xl);
+  padding: 0;
+  background: var(--coat-card);
+}
+.ml-spec div {
+  display: grid;
+  grid-template-columns: minmax(7rem, 9rem) minmax(0, 1fr);
+  gap: var(--space-sm);
+  align-items: baseline;
+  padding: 10px 12px;
+  border-bottom: var(--rule-hair) solid var(--coat-line);
+  min-width: 0;
+}
+.ml-spec dt,
+.ml-spec dd {
+  margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.ml-spec dt {
+  color: var(--color-muted);
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+.ml-spec dd {
+  font-family: var(--font-data);
+  font-size: 0.92rem;
+  font-variant-numeric: tabular-nums;
+}
+.ml-set {
+  display: grid;
+  gap: 0;
+  margin: 0 0 var(--space-lg);
+  background: var(--coat-card);
+}
+.ml-set h2 {
+  margin: 0;
+  padding: 12px 12px 4px;
+  font-size: 1.05rem;
+  font-weight: 800;
+}
+.ml-field {
+  display: grid;
+  grid-template-columns: minmax(7rem, 9rem) minmax(0, 1fr);
+  gap: var(--space-sm);
+  align-items: center;
+  min-width: 0;
+  padding: 12px;
+  border-top: var(--rule-hair) solid var(--coat-line);
+}
+.ml-field > span,
+.ml-field > label {
+  color: var(--color-muted);
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+.ml-field .hit {
+  justify-self: start;
+}
+.ml-kips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  min-width: 0;
+}
+.ml-kips button {
+  min-height: 44px;
+  padding: 0 14px;
+  border: var(--rule-hair) solid var(--color-rule);
+  background: var(--color-paper-2);
+  color: var(--color-muted);
+  font-family: var(--font-body);
+  font-size: 0.92rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+.ml-kips button.is-on {
+  background: var(--color-ink);
+  border-color: var(--color-ink);
+  color: var(--color-paper);
+}
+.ml-kips button:hover:not(:disabled):not(.is-on) {
+  color: var(--color-ink);
+}
+.ml-kips button:focus-visible,
+.ml-date input:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+.ml-date {
+  grid-template-columns: minmax(7rem, 9rem) minmax(0, 1fr) auto;
+}
+.ml-date input {
+  min-width: 0;
+  min-height: 44px;
+  width: 100%;
+  padding: 0 12px;
+  border: var(--rule-hair) solid var(--color-rule);
+  background: var(--color-paper-2);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+}
+.ml-score {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: baseline;
+  margin: 0;
+  min-width: 0;
+  font-variant-numeric: tabular-nums;
+}
+.ml-score b {
+  font-family: var(--font-data);
+  font-size: 1.05rem;
+}
+.ml-score span {
+  color: var(--color-muted);
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+.ml-note {
+  margin: 0 0 var(--space-md);
+  color: var(--color-muted);
+}
+.ml-page .coat-next {
+  margin-top: 0;
+  justify-content: start;
+}
+@media (max-width: 640px) {
+  .ml-spec div,
+  .ml-field,
+  .ml-date {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

@@ -15,6 +15,7 @@ const SPECS = [
 
 export const DESKTOP_TABS = [
   { to: "/", label: "Ana", end: true },
+  { to: "/asistan", label: "Asistan", ariaLabel: "Yapay zeka asistan" },
   { to: "/moduller", label: "Modüller" },
   { to: "/sistem", label: "Sistem" },
   { to: "/karisim", label: "Karışım" },
@@ -26,12 +27,14 @@ export const DESKTOP_TABS = [
 
 const OVERLAY_LINKS = [
   { to: "/", label: "Ana", tone: "tone-box" },
+  { to: "/asistan", label: "Asistan", tone: "tone-sys" },
   { to: "/moduller", label: "Modüller", tone: "tone-sys" },
   { to: "/sistem", label: "Sistem", tone: "tone-sys" },
   { to: "/karisim", label: "Karışım", tone: "tone-mix" },
-  { to: "/analizler", label: "Analizler", tone: "tone-lab" },
+  { to: "/analizler", label: "Analizler", tone: "tone-box" },
   { to: "/dashboard", label: "Pano", tone: "tone-pan" },
   { to: "/eklentiler", label: "Eklenti", tone: "tone-sys" },
+  { to: "/makine", label: "Öğrenme", tone: "tone-mix" },
   { to: "/cihaz", label: "Cihaz", tone: "tone-dev" },
 ];
 
@@ -41,6 +44,8 @@ function TabLinks({ tabs, onPick }) {
       key={tab.to}
       to={tab.to}
       end={tab.end}
+      aria-label={tab.ariaLabel}
+      title={tab.ariaLabel}
       className={({ isActive }) => (isActive ? "is-on" : undefined)}
       onClick={onPick}
     >
@@ -211,6 +216,8 @@ export function Shell({ product, children, footer = true }) {
       location.pathname.startsWith("/dashboard") || location.pathname.startsWith("/pair");
     root.dataset.chrome = "tabs";
     root.dataset.surface = onBoard ? "ha" : "market";
+    if (location.pathname.startsWith("/asistan")) root.dataset.chat = "owui";
+    else delete root.dataset.chat;
     const standalone = isStandaloneDisplay({
       displayModeStandalone: window.matchMedia("(display-mode: standalone)").matches,
       iosStandalone: Boolean(window.navigator.standalone),
@@ -222,6 +229,7 @@ export function Shell({ product, children, footer = true }) {
       delete root.dataset.chrome;
       delete root.dataset.surface;
       delete root.dataset.display;
+      delete root.dataset.chat;
     };
   }, [location.pathname]);
 

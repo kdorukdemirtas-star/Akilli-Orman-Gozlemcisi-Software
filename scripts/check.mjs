@@ -5,7 +5,8 @@ import { chartLayout, hourMarks, yScale } from "../src/tempChart.js";
 import { ntfyPollUrl, parseNtfyFeed } from "../src/ntfyFeed.js";
 import { DISPLAY_PIN, withDisplayPin } from "../src/displayPin.js";
 import { flameLabel, flameNote, gpsLabel, gpsNote, hopLabel, mq9Label, packetHop, packetRssi, rssiLabel } from "../src/packetView.js";
-import { asHttpUrl, defaultPlugins, readPlugins, writePlugins } from "../src/pluginStore.js";
+import { addPlugin, alarmModeFor, asHttpUrl, defaultPlugins, pluginAdded, PLUGIN_CATALOG, readPlugins, removePlugin, writePlugins } from "../src/pluginStore.js";
+import { asChatKip, chatModel, kipLabel, kipTokens, stripThink, systemPrompt, titleFromQuestion } from "../src/chatStore.js";
 import { blendWeights, decideAlert, dynamicAlert, fixedAlert, monthsSince, tempP90 } from "../src/alertBlend.js";
 import { stationFromUser } from "../src/stationBind.js";
 import { deviceKind, isStandaloneDisplay, pwaPlatform } from "../src/pwa.js";
@@ -248,11 +249,53 @@ test("pluginStore writes alarm mode and hop note", () => {
     },
   };
   assert.equal(readPlugins().alarmMode, defaultPlugins().alarmMode);
-  writePlugins({ hopOn: true, hopNote: "3C:0F:02:DA:30:9C", alarmMode: "takvim" });
+  writePlugins({ hopOn: true, hopNote: "3C:0F:02:DA:30:9C", alarmMode: "takvim", added: ["hop", "ml"] });
   const next = readPlugins();
   assert.equal(next.hopOn, true);
   assert.equal(next.hopNote, "3C:0F:02:DA:30:9C");
   assert.equal(next.alarmMode, "takvim");
+  assert.equal(pluginAdded(next, "hop"), true);
+  assert.equal(alarmModeFor(next), "takvim");
+});
+
+test("chat kips hide model names and map tokens", () => {
+  assert.equal(asChatKip("derin"), "derin");
+  assert.equal(asChatKip("qwen"), "hizli");
+  assert.equal(chatModel("derin"), "derin");
+  assert.equal(kipLabel("hizli"), "Hızlı cevaplar");
+  assert.equal(kipLabel("derin"), "Derin cevaplar");
+  assert.doesNotMatch(kipLabel("hizli") + kipLabel("derin"), /qwen|deepseek|r1|0\.8b|1\.5b/i);
+  assert.equal(kipTokens("hizli"), 192);
+  assert.equal(kipTokens("derin"), 512);
+  assert.doesNotMatch(systemPrompt("hizli") + systemPrompt("derin"), /Qwen|DeepSeek/);
+  assert.equal(stripThink("<think>gizli</think>Alarm AND kuralıdır."), "Alarm AND kuralıdır.");
+  assert.doesNotMatch(stripThink("Qwen 3.5 0.8B ve DeepSeek R1 1.5B"), /qwen|deepseek|\br1\b|0\.8b|1\.5b/i);
+  assert.doesNotMatch(
+    PLUGIN_CATALOG.map((item) => item.title + item.body).join(" "),
+    /Qwen|DeepSeek|0\.8B|1\.5B|https?:\/\//i,
+  );
+  assert.match(PLUGIN_CATALOG.find((item) => item.id === "pi").body, /Adres yazılmaz/);
+  assert.match(PLUGIN_CATALOG.find((item) => item.id === "ml").body, /sklearn/);
+  assert.equal(titleFromQuestion("alarm kuralı nedir acaba burada"), "alarm kuralı nedir acaba burada");
+});
+
+test("addPlugin and removePlugin toggle catalog entries", () => {
+  const mem = new Map();
+  globalThis.localStorage = {
+    getItem: (k) => (mem.has(k) ? mem.get(k) : null),
+    setItem: (k, v) => {
+      mem.set(k, String(v));
+    },
+  };
+  assert.equal(pluginAdded(readPlugins(), "ml"), false);
+  assert.equal(alarmModeFor(readPlugins()), "sabit");
+  addPlugin("ml");
+  writePlugins({ alarmMode: "yalniz_ml" });
+  assert.equal(pluginAdded(readPlugins(), "ml"), true);
+  assert.equal(alarmModeFor(readPlugins()), "yalniz_ml");
+  removePlugin("ml");
+  assert.equal(pluginAdded(readPlugins(), "ml"), false);
+  assert.equal(alarmModeFor(readPlugins()), "sabit");
 });
 
 test("blendWeights follow the 2 / 6 / 10 / 12 month table", () => {

@@ -1,8 +1,12 @@
 # AOG tanıtım + pano
 
-Tanıtım kâğıdı Marvis HUD: logo solda, hex MENÜ, overlay Kutu / Modüller / Pano / Cihaz. Sayfalar sekmesi: Ana, Kutu, Modüller, Sistem, Pano, Cihaz. Hash ile aşağı kaydırarak bölüm değiştirme yoktur.
+Tanıtım kâğıdı Marvis HUD: logo solda, hex MENÜ, overlay Ana / Asistan / Modüller / Sistem / Karışım / Analizler / Pano / Eklenti / Öğrenme / Cihaz. Sayfalar sekmesi: Ana, Asistan, Modüller, Sistem, Karışım, Analizler, Pano, Eklenti, Cihaz. Öğrenme hex menüde. Hash ile aşağı kaydırarak bölüm değiştirme yoktur.
 
 Pano Home Assistant Mushroom: çip, oda kartı, Özet / Harita / Uyarı. Kartlar bu tarayıcıda saklanır. html[data-surface=market] kâğıt, html[data-surface=ha] yuvarlak kart. Eski board camı yoktur.
+
+Asistan `/asistan` Open WebUI düzeni: sol sohbet listesi, üstte Hızlı/Derin kip, altta yazma. Model adı yoktur. html[data-chat=owui] tam yükseklik.
+
+Makine öğrenmesi `/makine`: sklearn LogisticRegression spec sayfası. Panoda tek tuş alarm değiştirmez.
 
 ## Ürün
 
