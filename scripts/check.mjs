@@ -386,6 +386,11 @@ test("chat kips hide model names and map tokens", () => {
   assert.doesNotMatch(cleanReply(soup, "Sistem nedir?"), /概念|mantener|system management|required/i);
   const grounded = "AOG, LoRa 433 MHz ile ormanı izleyen kutudur. Kaplama alevi yavaşlatır.";
   assert.equal(cleanReply(grounded, "Sistem nedir?"), grounded);
+  const logistics =
+    'Türkiye\'de "AOG" (Orman Güvenlik ve Sıkışıklığı Önleme) sistemi, lojistik operatörleri için 24 saat panodur. emin değilim. kısıtlamalı kaplama.';
+  assert.equal(looksLikeScratch(logistics, "Sistem nedir?"), true);
+  assert.match(cleanReply(logistics, "Sistem nedir?"), /LoRa/);
+  assert.doesNotMatch(cleanReply(logistics, "Sistem nedir?"), /lojistik|Sıkışıklık|emin değilim|kısıtlamalı/);
   assert.equal(
     cleanReply("GPS fix yoksa harita işaret koymaz.", "GPS ne işe yarar?"),
     "GPS fix yoksa harita işaret koymaz.",

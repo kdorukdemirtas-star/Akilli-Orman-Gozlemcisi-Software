@@ -203,6 +203,32 @@ class ChatGuardTests(unittest.TestCase):
         text = "Verici kodu AOG_Verici.ino içinde. LoRa 433 MHz ile paket çıkar."
         self.assertEqual(P.finalize_reply(text, "", "Verici nerede?"), text)
 
+    def test_finalize_drops_wrong_aog_expansion_and_logistics(self):
+        dump = (
+            'Türkiye\'de "AOG" (Orman Güvenlik ve Sıkışıklığı Önleme) sistemi, '
+            "lojistik operatörleri için 24 saat panodur ve internet bağlantısı yoktur. "
+            "LoRa 433 MHz kutusu alıcıdan gelen paketler ve Wi-Fi yok; bu yüzden sistem sorulsa "
+            '"LoRa 433 MHz" veya "IP-67 kutu" gibi spesifik bir cihaz adı vereceğinden emin değilim. '
+            "Sistem, AOG'yi korumaya yardımcı olan kısıtlamalı kaplama (yangın geciktirici) "
+            "ve lojistik sinyalleri izlemek içindir."
+        )
+        out = P.finalize_reply(dump, "", "Sistem nedir?")
+        self.assertIn("LoRa", out)
+        self.assertNotIn("Sıkışıklık", out)
+        self.assertNotIn("lojistik", out)
+        self.assertNotIn("emin değilim", out)
+        self.assertNotIn("kısıtlamalı", out)
+        self.assertNotIn("Orman Güvenlik", out)
+        self.assertNotIn("alıcıdan gelen", out)
+
+    def test_overview_question_skips_model(self):
+        self.assertTrue(P.looks_like_overview_question("Sistem nedir?"))
+        self.assertTrue(P.looks_like_overview_question("sistem hakkında bilgi ver"))
+        self.assertTrue(P.looks_like_overview_question("AOG nedir?"))
+        self.assertFalse(P.looks_like_overview_question("Alarm ne zaman çalar?"))
+        self.assertFalse(P.looks_like_overview_question("Kaplama ne işe yarar?"))
+        self.assertFalse(P.looks_like_overview_question("NSS hangi pin?"))
+
     def test_intern_preamble_is_replaced(self):
         dump = (
             "Kullanıcının isteği genel bir bilgi istemesini ifade etmiş olabilir.\n"

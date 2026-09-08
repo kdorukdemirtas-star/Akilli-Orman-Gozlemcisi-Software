@@ -148,6 +148,27 @@ GROUND_RE = re.compile(
     r"gps|karışım|karisim|eşik|esik|sıcaklık|verici|alıcı|alici|clerk|"
     r"termokupl|asistan|\bskor\b|kural|kullanıcı|ksantan|aloe|ftir|tga"
 )
+FALSE_RE = re.compile(
+    r"(?i)"
+    r"lojistik|"
+    r"sıkışık|"
+    r"orman güvenlik|"
+    r"kısıtlamalı|"
+    r"emin değil|"
+    r"vereceğinden emin|"
+    r"cihaz adı|"
+    r"alıcıdan gelen|"
+    r"sistem sorulsa|"
+    r"operatörleri için|"
+    r"aog.{0,48}(güvenlik|sıkış|lojistik)"
+)
+OVERVIEW_RE = re.compile(
+    r"(?i)sistem\s+nedir|sistem\s+hakkında|sistemi\s+anlat|sistem\s+nasıl|"
+    r"aog\s+nedir|ürün\s+nedir|sistem\s+ne\s+işe"
+)
+OVERVIEW_DETAIL_RE = re.compile(
+    r"(?i)alarm|kaplama|karışım|karisim|pin|nss|gpio|sklearn|gps|mesh|clerk|\bhop\b|mq-?9"
+)
 INJECTION_MSG = "Bu istek asistanın kuralını değiştirmeye çalışıyor. Ürün, alarm veya kaplama sor."
 MAX_BODY = int(os.environ.get("CHAT_MAX_BODY", "8192"))
 MAX_USER_CHARS = int(os.environ.get("CHAT_MAX_USER_CHARS", "500"))
@@ -310,6 +331,13 @@ def release_slot():
         in_flight = max(0, in_flight - 1)
 
 
+def looks_like_overview_question(text):
+    blob = sanitize_user(text, cap=MAX_USER_CHARS * 2)
+    if not blob or OVERVIEW_DETAIL_RE.search(blob):
+        return False
+    return bool(OVERVIEW_RE.search(blob))
+
+
 def looks_like_product_question(text):
     blob = sanitize_user(text, cap=MAX_USER_CHARS * 2)
     return bool(blob and PRODUCT_RE.search(blob))
@@ -435,6 +463,8 @@ def looks_like_scratch(text, question=""):
     if looks_like_injection(blob):
         return True
     if LEAK_RE.search(blob):
+        return True
+    if FALSE_RE.search(blob):
         return True
     if FOREIGN_RE.search(blob):
         return True
@@ -717,6 +747,27 @@ class Handler(BaseHTTPRequestHandler):
             return
         outbound = prepared["payload"]
         if not looks_like_product_question(prepared["question"]):
+            scoped = {
+                "model": kip,
+                "choices": [{"message": {"role": "assistant", "content": REPLY_SCOPE}}],
+            }
+            self._send(200, hide_model(scoped, kip, prepared["question"]))
+            return
+        if looks_like_overview_question(prepared["question"]):
+            scoped = {
+                "model": kip,
+                "choices": [
+                    {
+                        "message": {
+                            "role": "assistant",
+                            "content": fallback_for(prepared["question"]),
+                        }
+                    }
+                ],
+            }
+            self._send(200, hide_model(scoped, kip, prepared["question"]))
+            return
+        if not os.path.isfile(KIPS[kip]["gguf"]):
             scoped = {
                 "model": kip,
                 "choices": [{"message": {"role": "assistant", "content": REPLY_SCOPE}}],
