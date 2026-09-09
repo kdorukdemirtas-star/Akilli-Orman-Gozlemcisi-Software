@@ -14,6 +14,12 @@ export function clerkJsUrl() {
     : "";
 }
 
+export function clerkUiUrl() {
+  return clerkProxyUrl()
+    ? "https://cdn.jsdelivr.net/npm/@clerk/ui@1/dist/ui.browser.js"
+    : "";
+}
+
 export function useClerkFlag() {
   return Boolean(clerkPublishableKey());
 }
