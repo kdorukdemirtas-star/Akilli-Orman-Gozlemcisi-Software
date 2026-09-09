@@ -40,7 +40,7 @@ KIPS = {
     "hizli": {
         "gguf": HIZLI_GGUF,
         "port": LLAMA_PORT,
-        "ctx": 2048,
+        "ctx": 4096,
         "threads": 3,
         "missing": "Hızlı cevaplar henüz hazır değil. Biraz sonra yeniden dene.",
     },
@@ -54,7 +54,7 @@ KIPS = {
     "derin": {
         "gguf": DERIN_GGUF,
         "port": LLAMA_PORT,
-        "ctx": 2048,
+        "ctx": 4096,
         "threads": 2,
         "missing": "Derin cevaplar henüz hazır değil. Hızlı cevapları dene veya biraz sonra yeniden gönder.",
     },
@@ -680,6 +680,13 @@ def ensure(kip):
         return start_kip(kip)
 
 
+class LlamaBusy(Exception):
+    def __init__(self, code, body=""):
+        self.code = int(code or 0)
+        self.body = str(body or "")
+        super().__init__(self.body)
+
+
 def forward(kip, payload):
     spec = KIPS[kip]
     body = json.dumps(payload).encode("utf-8")
@@ -689,8 +696,19 @@ def forward(kip, payload):
         headers={"Content-Type": "application/json"},
         method="POST",
     )
-    with urllib.request.urlopen(req, timeout=180) as res:
-        return json.loads(res.read().decode("utf-8"))
+    try:
+        with urllib.request.urlopen(req, timeout=180) as res:
+            return json.loads(res.read().decode("utf-8"))
+    except urllib.error.HTTPError as err:
+        blob = ""
+        try:
+            blob = err.read().decode("utf-8", "replace")
+        finally:
+            try:
+                err.close()
+            except Exception:
+                pass
+        raise LlamaBusy(err.code, blob) from err
 
 
 def hide_model(data, kip, question=""):
@@ -830,11 +848,17 @@ class Handler(BaseHTTPRequestHandler):
                 },
             )
             return
+        except LlamaBusy:
+            self._send(
+                503,
+                {"error": {"message": "Asistan şu an yanıt veremiyor. Biraz sonra yeniden dene."}},
+            )
+            return
         except urllib.error.URLError as err:
             reason = str(getattr(err, "reason", err) or err).lower()
             timed_out = "timed out" in reason or isinstance(getattr(err, "reason", None), TimeoutError)
             self._send(
-                504 if timed_out else 502,
+                504 if timed_out else 503,
                 {
                     "error": {
                         "message": (
@@ -848,7 +872,7 @@ class Handler(BaseHTTPRequestHandler):
             return
         except Exception:
             self._send(
-                502,
+                503,
                 {"error": {"message": "Asistan şu an yanıt veremiyor. Biraz sonra yeniden dene."}},
             )
             return

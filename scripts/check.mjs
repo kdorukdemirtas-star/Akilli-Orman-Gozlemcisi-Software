@@ -94,8 +94,12 @@ test("chatLoadHint maps busy and not-ready statuses", () => {
   assert.doesNotMatch(chatLoadHint(429, "Pi meşgul. Biraz bekleyip tekrar dene."), /\bPi\b/);
   assert.match(chatLoadHint(503, "Derin kip henüz hazır değil. Hızlı cevapları dene veya bekleyip tekrar gönder."), /Derin cevaplar henüz hazır değil/);
   assert.match(chatLoadHint(503, "Orta cevaplar henüz hazır değil. Hızlı cevapları dene veya biraz sonra yeniden gönder."), /Orta cevaplar henüz hazır değil/);
+  assert.match(chatLoadHint(503, "Asistan şu an yanıt veremiyor. Biraz sonra yeniden dene."), /yanıt veremiyor/);
+  assert.doesNotMatch(chatLoadHint(503, "Asistan şu an yanıt veremiyor. Biraz sonra yeniden dene."), /hazır değil/);
   assert.match(chatLoadHint(0, "Failed to fetch"), /ulaşılamadı/);
   assert.doesNotMatch(chatLoadHint(0, "Failed to fetch"), /Failed to fetch/);
+  assert.match(chatLoadHint(502, "Failed to fetch"), /yanıt veremiyor/);
+  assert.doesNotMatch(chatLoadHint(502, "Failed to fetch"), /ulaşılamadı|Failed to fetch/);
   assert.match(chatLoadHint(400, "Bu istek asistanın kuralını değiştirmeye çalışıyor. Ürün, alarm veya kaplama sor."), /kuralını değiştir/);
   assert.match(chatLoadHint(400, "Bu istek asistan kapsamı dışında. Ürün, alarm veya kaplama sor."), /kuralını değiştir/);
 });
@@ -437,6 +441,7 @@ test("chat kips hide model names and map tokens", () => {
   assert.match(proxy, /READY_WAIT = 55/);
   assert.match(proxy, /"--parallel"/);
   assert.match(proxy, /"ctx": 4096/);
+  assert.doesNotMatch(proxy, /"ctx": 2048/);
   assert.match(proxy, /finalize_reply/);
   assert.doesNotMatch(proxy, /if not content and reason:/);
   const unit = readFileSync(join(here, "../pi/aog-chat.service"), "utf8");

@@ -35,6 +35,10 @@ class ChatGuardTests(unittest.TestCase):
         self.assertEqual(P.as_kip("llama"), "hizli")
         self.assertEqual(P.as_kip("qwen"), "hizli")
 
+    def test_all_kips_use_ctx_that_fits_facts(self):
+        for kip in ("hizli", "orta", "derin"):
+            self.assertGreaterEqual(P.KIPS[kip]["ctx"], 4096, kip)
+
     def test_product_questions_are_not_injection(self):
         for q in (
             "Sistem nedir?",
