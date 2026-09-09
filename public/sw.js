@@ -1,4 +1,4 @@
-const CACHE = "aog-shell-v4";
+const CACHE = "aog-shell-v5";
 const SHELL = [
   "/",
   "/cihaz",
@@ -10,6 +10,14 @@ const SHELL = [
   "/icons/icon-192.png",
   "/icons/icon-512.png",
 ];
+
+function bypass(url) {
+  return (
+    url.pathname.startsWith("/__clerk") ||
+    url.pathname.startsWith("/api/") ||
+    url.pathname.startsWith("/v1/")
+  );
+}
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -30,6 +38,10 @@ self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return;
   const url = new URL(event.request.url);
   if (url.origin !== self.location.origin) return;
+  if (bypass(url)) {
+    event.respondWith(fetch(event.request));
+    return;
+  }
   event.respondWith(
     fetch(event.request)
       .then((res) => {

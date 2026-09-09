@@ -595,12 +595,16 @@ test("production Clerk Frontend API is proxied through /__clerk", async () => {
   const proxy = readFileSync(join(here, "../api/clerk-proxy/[...path].js"), "utf8");
   const edge = readFileSync(join(here, "../middleware.js"), "utf8");
   const fapi = readFileSync(join(here, "../clerkFapi.js"), "utf8");
+  const sw = readFileSync(join(here, "../public/sw.js"), "utf8");
   assert.match(proxy + fapi, /Clerk-Proxy-Url/);
   assert.match(proxy + fapi, /Clerk-Secret-Key/);
   assert.match(proxy + fapi, /X-Forwarded-For/);
   assert.match(proxy, /process\.env\.CLERK_SECRET_KEY/);
   assert.match(edge, /matcher: "\/__clerk\/:path\*"/);
   assert.match(edge, /process\.env\.CLERK_SECRET_KEY/);
+  assert.match(sw, /pathname\.startsWith\("\/__clerk"\)/);
+  assert.match(sw, /aog-shell-v5/);
+  assert.doesNotMatch(sw, /aog-shell-v4/);
   assert.match(proxy + fapi, /frontend-api\.clerk\.dev/);
   assert.doesNotMatch(proxy + fapi, /sk_live_|sk_test_/);
   const main = readFileSync(join(here, "../src/main.jsx"), "utf8");
