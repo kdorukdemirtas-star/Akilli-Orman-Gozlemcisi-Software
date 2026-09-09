@@ -9,7 +9,7 @@ import { addPlugin, alarmModeFor, asHttpUrl, defaultPlugins, pluginAdded, PLUGIN
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { asChatKip, AOG_FACTS, CHAT_KIPS, chatModel, cleanReply, kipLabel, kipTemp, kipTokens, looksLikeScratch, stripThink, systemPrompt, titleFromQuestion } from "../src/chatStore.js";
+import { asChatKip, AOG_FACTS, CHAT_KIPS, chatModel, cleanReply, kipLabel, kipTemp, kipTokens, looksLikeScratch, readThreads, stripThink, systemPrompt, titleFromQuestion, accountStoreKey, writeThreads } from "../src/chatStore.js";
 import { blendWeights, decideAlert, dynamicAlert, fixedAlert, monthsSince, tempP90 } from "../src/alertBlend.js";
 import { stationFromUser } from "../src/stationBind.js";
 import { deviceKind, isStandaloneDisplay, pwaPlatform } from "../src/pwa.js";
@@ -132,10 +132,11 @@ test("README lists every software download path and hides GGUF names", () => {
   assert.match(contribute, /INDIRME.md/);
   const piReadme = readFileSync(join(here, "../pi/README.md"), "utf8");
   assert.match(piReadme, /huggingface-cli download bartowski\/Qwen_Qwen3.5-0.8B-GGUF/);
-  assert.match(piReadme, /huggingface-cli download unsloth\/gemma-4-E2B-it-GGUF gemma-4-E2B-it-Q4_K_M.gguf/);
-  assert.match(piReadme, /huggingface.co\/unsloth\/gemma-4-E2B-it-GGUF\/resolve\/main\/gemma-4-E2B-it-Q4_K_M.gguf/);
+  assert.match(piReadme, /huggingface-cli download unsloth\/gemma-3-1b-it-GGUF gemma-3-1b-it-Q4_K_M.gguf/);
+  assert.match(piReadme, /huggingface.co\/unsloth\/gemma-3-1b-it-GGUF\/resolve\/main\/gemma-3-1b-it-Q4_K_M.gguf/);
   assert.match(piReadme, /DeepSeek-R1-Distill-Qwen-1.5B-Q4_K_M.gguf/);
   assert.doesNotMatch(piReadme, /Llama-3\.2-1B-Instruct/);
+  assert.doesNotMatch(piReadme, /gemma-4-E2B-it-Q4_K_M/);
 });
 
 test("looksLikeInjection refuses jailbreaks and keeps product questions", () => {
@@ -350,6 +351,27 @@ test("chat kips hide model names and map tokens", () => {
   assert.equal(kipTokens("orta"), 256);
   assert.equal(kipTokens("derin"), 320);
   assert.equal(kipTemp("orta"), 0.65);
+  const mem = new Map();
+  globalThis.localStorage = {
+    getItem: (k) => (mem.has(k) ? mem.get(k) : null),
+    setItem: (k, v) => {
+      mem.set(k, String(v));
+    },
+  };
+  assert.equal(accountStoreKey("aog-chat-threads-v1", "user_abc"), "aog-chat-threads-v1:user_abc");
+  assert.equal(accountStoreKey("aog-chat-threads-v1", ""), "");
+  writeThreads(
+    [{ id: "s1", title: "bir", kip: "hizli", lines: [{ who: "sen", text: "gizli" }] }],
+    "user_a",
+  );
+  writeThreads(
+    [{ id: "s2", title: "iki", kip: "hizli", lines: [{ who: "sen", text: "başka" }] }],
+    "user_b",
+  );
+  assert.equal(readThreads("user_a")[0].id, "s1");
+  assert.equal(readThreads("user_b")[0].id, "s2");
+  assert.equal(readThreads("").length, 0);
+  assert.equal(mem.get("aog-chat-threads-v1"), undefined);
   const facts = readFileSync(
     join(dirname(fileURLToPath(import.meta.url)), "../pi/AOG.md"),
     "utf8",
@@ -384,6 +406,7 @@ test("chat kips hide model names and map tokens", () => {
   assert.doesNotMatch(stripThink("Qwen 3.5 0.8B ve DeepSeek R1 1.5B"), /qwen|deepseek|\br1\b|0\.8b|1\.5b/i);
   assert.doesNotMatch(stripThink("Llama 3.2 1B"), /llama|3\.2|\b1b\b/i);
   assert.doesNotMatch(stripThink("Gemma 4 E2B"), /gemma|\be2b\b/i);
+  assert.doesNotMatch(stripThink("Gemma 3 1B"), /gemma|\b1b\b/i);
   const intern =
     "Alright, let's tackle this query. The user has been discussing an application where Sen AOG (Asistan) is an assistant. I should generate the PDF with system architecture.";
   assert.equal(looksLikeScratch(intern), true);
@@ -446,10 +469,12 @@ test("chat kips hide model names and map tokens", () => {
   assert.doesNotMatch(proxy, /if not content and reason:/);
   const unit = readFileSync(join(here, "../pi/aog-chat.service"), "utf8");
   assert.match(unit, /ORTA_GGUF/);
-  assert.match(unit, /gemma-4-E2B-it-Q4_K_M/);
+  assert.match(unit, /gemma-3-1b-it-Q4_K_M/);
+  assert.doesNotMatch(unit, /gemma-4-E2B-it-Q4_K_M/);
   assert.doesNotMatch(unit, /Llama-3\.2-1B-Instruct/);
   assert.match(unit, /DeepSeek-R1-Distill-Qwen-1.5B-Q4_K_M/);
-  assert.match(proxy, /gemma-4-E2B-it-Q4_K_M/);
+  assert.match(proxy, /gemma-3-1b-it-Q4_K_M/);
+  assert.doesNotMatch(proxy, /gemma-4-E2B-it-Q4_K_M/);
   assert.doesNotMatch(proxy, /Llama-3\.2-1B-Instruct/);
   assert.match(proxy, /gemma\[\\w/);
   assert.match(proxy, /\\be2b\\b/);
@@ -459,6 +484,20 @@ test("chat kips hide model names and map tokens", () => {
   const asistan = readFileSync(join(here, "../src/Asistan.jsx"), "utf8");
   assert.match(asistan, /fetch\("\/v1\/chat\/completions"/);
   assert.doesNotMatch(asistan, /systemPrompt/);
+  assert.match(asistan, /useUser/);
+  assert.match(asistan, /writeThreads\([\s\S]*userId/);
+  const app = readFileSync(join(here, "../src/App.jsx"), "utf8");
+  assert.match(app, /RequireAuth/);
+  assert.match(app, /path="\/asistan"/);
+  assert.match(app, /path="\/cihaz"/);
+  assert.match(app, /<RequireAuth[\s\S]*Asistan/);
+  assert.match(app, /<RequireAuth[\s\S]*Device/);
+  const nav = readFileSync(join(here, "../src/SiteNav.jsx"), "utf8");
+  assert.match(nav, /SignUpButton/);
+  assert.match(nav, /SignInButton/);
+  const gate = readFileSync(join(here, "../src/RequireAuth.jsx"), "utf8");
+  assert.match(gate, /SignUpButton/);
+  assert.doesNotMatch(gate, /CLERK_SECRET_KEY/);
   assert.match(proxy, /CHAT_MAX_BODY/);
   assert.doesNotMatch(proxy, /CHAT_MAX_BODY", "8192"/);
   const vite = readFileSync(join(here, "../vite.config.js"), "utf8");

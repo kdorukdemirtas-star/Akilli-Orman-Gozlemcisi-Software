@@ -1404,6 +1404,9 @@ html[data-surface="ha"] .qr-mark {
   max-width: 100%;
   pointer-events: auto;
 }
+.hud-end .nav-auth {
+  justify-content: flex-end;
+}
 .hex:focus-visible {
   outline: 3px solid var(--color-focus);
   outline-offset: 3px;

@@ -1,6 +1,6 @@
 import { Fragment, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
-import { SignInButton, UserButton, useUser } from "@clerk/react";
+import { SignInButton, SignUpButton, UserButton, useUser } from "@clerk/react";
 import { isStandaloneDisplay } from "./pwa.js";
 import { useClerkFlag } from "./clerkFlag.js";
 import { DESKTOP_TABS, NAV_PACKS, overlayLinks } from "./navPacks.js";
@@ -28,11 +28,18 @@ function ClerkButtons() {
   if (!isLoaded) return <span>Hesap</span>;
   if (isSignedIn) return <UserButton afterSignOutUrl="/" />;
   return (
-    <SignInButton mode="modal">
-      <button type="button" className="hit ghost">
-        Giriş
-      </button>
-    </SignInButton>
+    <div className="nav-auth">
+      <SignInButton mode="modal">
+        <button type="button" className="hit ghost">
+          Giriş
+        </button>
+      </SignInButton>
+      <SignUpButton mode="modal">
+        <button type="button" className="hit">
+          Kayıt
+        </button>
+      </SignUpButton>
+    </div>
   );
 }
 

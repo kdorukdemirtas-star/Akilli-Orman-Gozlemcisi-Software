@@ -214,18 +214,30 @@ export function cleanReply(text, question) {
   return cleaned;
 }
 
-export function readKip() {
+export function accountStoreKey(base, userId) {
+  const id = String(userId || "")
+    .replace(/[^A-Za-z0-9_-]/g, "")
+    .slice(0, 64);
+  if (!id || !base) return "";
+  return `${base}:${id}`;
+}
+
+export function readKip(userId) {
   try {
-    return asChatKip(localStorage.getItem(KIP_KEY));
+    const key = accountStoreKey(KIP_KEY, userId);
+    if (!key) return "hizli";
+    return asChatKip(localStorage.getItem(key));
   } catch {
     return "hizli";
   }
 }
 
-export function writeKip(kip) {
+export function writeKip(kip, userId) {
   const next = asChatKip(kip);
+  const key = accountStoreKey(KIP_KEY, userId);
+  if (!key) return next;
   try {
-    localStorage.setItem(KIP_KEY, next);
+    localStorage.setItem(key, next);
   } catch {
     /* quota */
   }
@@ -253,9 +265,11 @@ function asThread(raw) {
   };
 }
 
-export function readThreads() {
+export function readThreads(userId) {
+  const key = accountStoreKey(THREAD_KEY, userId);
+  if (!key) return [];
   try {
-    const parsed = JSON.parse(localStorage.getItem(THREAD_KEY) || "[]");
+    const parsed = JSON.parse(localStorage.getItem(key) || "[]");
     if (!Array.isArray(parsed)) return [];
     return parsed.map(asThread).filter(Boolean).slice(0, 24);
   } catch {
@@ -263,10 +277,12 @@ export function readThreads() {
   }
 }
 
-export function writeThreads(list) {
+export function writeThreads(list, userId) {
   const next = (list || []).map(asThread).filter(Boolean).slice(0, 24);
+  const key = accountStoreKey(THREAD_KEY, userId);
+  if (!key) return [];
   try {
-    localStorage.setItem(THREAD_KEY, JSON.stringify(next));
+    localStorage.setItem(key, JSON.stringify(next));
   } catch {
     /* quota */
   }

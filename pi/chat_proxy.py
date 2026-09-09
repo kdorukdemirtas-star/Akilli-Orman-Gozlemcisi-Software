@@ -26,7 +26,7 @@ HIZLI_GGUF = os.environ.get(
 )
 ORTA_GGUF = os.environ.get(
     "ORTA_GGUF",
-    "/home/demir/aog-pi/models/gemma-4-E2B-it-Q4_K_M.gguf",
+    "/home/demir/aog-pi/models/gemma-3-1b-it-Q4_K_M.gguf",
 )
 DERIN_GGUF = os.environ.get(
     "DERIN_GGUF",

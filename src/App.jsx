@@ -3,6 +3,7 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import { Home } from "./Home.jsx";
 import { Device } from "./Device.jsx";
 import { Shell } from "./SiteNav.jsx";
+import { RequireAuth } from "./RequireAuth.jsx";
 import "./site.css";
 
 const Dashboard = lazy(() => import("./Dashboard.jsx"));
@@ -27,6 +28,18 @@ function PageFallback({ product }) {
     <Shell product={product} footer={false}>
       <p className="boot" role="status">Sayfa açılıyor.</p>
     </Shell>
+  );
+}
+
+function CihazGate() {
+  return (
+    <RequireAuth
+      product="software"
+      title="Cihaz"
+      lead="Kutu ve cihaz sayfası hesaba bağlıdır. Giriş yapmadan cihaz ekranı açılmaz."
+    >
+      <Device product="software" />
+    </RequireAuth>
   );
 }
 
@@ -80,7 +93,13 @@ export default function App() {
         path="/asistan"
         element={
           <Suspense fallback={<PageFallback product="software" />}>
-            <Asistan product="software" />
+            <RequireAuth
+              product="software"
+              title="Asistan"
+              lead="Sohbetler hesaba yazılır. Başka hesabın sohbeti bu tarayıcıda görünmez."
+            >
+              <Asistan product="software" />
+            </RequireAuth>
           </Suspense>
         }
       />
@@ -100,8 +119,8 @@ export default function App() {
           </Suspense>
         }
       />
-      <Route path="/cihaz" element={<Device product="software" />} />
-      <Route path="/cihaz/:kind" element={<Device product="software" />} />
+      <Route path="/cihaz" element={<CihazGate />} />
+      <Route path="/cihaz/:kind" element={<CihazGate />} />
       <Route path="/yerel/ios" element={<Navigate to="/cihaz/ios" replace />} />
       <Route path="/yerel/android" element={<Navigate to="/cihaz/android" replace />} />
       <Route path="*" element={<Navigate to="/" replace />} />

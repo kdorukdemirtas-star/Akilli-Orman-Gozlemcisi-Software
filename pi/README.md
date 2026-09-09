@@ -15,7 +15,7 @@ PWA `/asistan` aynı kökte açılır. Adres yazılmaz. Vite `PI_CHAT_URL` ile `
 Operatör GGUF yolları (PWA’da geçmez):
 
 - hızlı: `models/Qwen_Qwen3.5-0.8B-Q4_K_M.gguf`
-- orta: `models/gemma-4-E2B-it-Q4_K_M.gguf`
+- orta: `models/gemma-3-1b-it-Q4_K_M.gguf`
 - derin: `models/DeepSeek-R1-Distill-Qwen-1.5B-Q4_K_M.gguf`
 
 Bu üç dosya GitHub’da yoktur. Yazılım deposunu indirmek [INDIRME.md](../INDIRME.md). Ağırlıkları Pi’de `~/aog-pi/models` altına çek:
@@ -26,7 +26,7 @@ cd /home/demir/aog-pi/models
 
 # huggingface-cli (pip install -U "huggingface_hub[cli]")
 huggingface-cli download bartowski/Qwen_Qwen3.5-0.8B-GGUF Qwen_Qwen3.5-0.8B-Q4_K_M.gguf --local-dir .
-huggingface-cli download unsloth/gemma-4-E2B-it-GGUF gemma-4-E2B-it-Q4_K_M.gguf --local-dir .
+huggingface-cli download unsloth/gemma-3-1b-it-GGUF gemma-3-1b-it-Q4_K_M.gguf --local-dir .
 huggingface-cli download bartowski/DeepSeek-R1-Distill-Qwen-1.5B-GGUF DeepSeek-R1-Distill-Qwen-1.5B-Q4_K_M.gguf --local-dir .
 ```
 
@@ -35,13 +35,13 @@ huggingface-cli download bartowski/DeepSeek-R1-Distill-Qwen-1.5B-GGUF DeepSeek-R
 ```bash
 wget -O Qwen_Qwen3.5-0.8B-Q4_K_M.gguf \
   "https://huggingface.co/bartowski/Qwen_Qwen3.5-0.8B-GGUF/resolve/main/Qwen_Qwen3.5-0.8B-Q4_K_M.gguf"
-wget -O gemma-4-E2B-it-Q4_K_M.gguf \
-  "https://huggingface.co/unsloth/gemma-4-E2B-it-GGUF/resolve/main/gemma-4-E2B-it-Q4_K_M.gguf"
+wget -O gemma-3-1b-it-Q4_K_M.gguf \
+  "https://huggingface.co/unsloth/gemma-3-1b-it-GGUF/resolve/main/gemma-3-1b-it-Q4_K_M.gguf"
 wget -O DeepSeek-R1-Distill-Qwen-1.5B-Q4_K_M.gguf \
   "https://huggingface.co/bartowski/DeepSeek-R1-Distill-Qwen-1.5B-GGUF/resolve/main/DeepSeek-R1-Distill-Qwen-1.5B-Q4_K_M.gguf"
 ```
 
-Kaynak sayfalar: [Qwen 0.8B GGUF](https://huggingface.co/bartowski/Qwen_Qwen3.5-0.8B-GGUF), [Gemma 4 E2B GGUF](https://huggingface.co/unsloth/gemma-4-E2B-it-GGUF), [DeepSeek-R1 1.5B GGUF](https://huggingface.co/bartowski/DeepSeek-R1-Distill-Qwen-1.5B-GGUF). Orta kip Unsloth Q4_K_M (~2,9 GB); 4 GB Pi için bartowski 3,5 GB dosyası yerine bu.
+Kaynak sayfalar: [Qwen 0.8B GGUF](https://huggingface.co/bartowski/Qwen_Qwen3.5-0.8B-GGUF), [Gemma 3 1B GGUF](https://huggingface.co/unsloth/gemma-3-1b-it-GGUF), [DeepSeek-R1 1.5B GGUF](https://huggingface.co/bartowski/DeepSeek-R1-Distill-Qwen-1.5B-GGUF). Orta kip Unsloth Q4_K_M (~0,8 GB); Gemma 4 E2B (~2,9 GB) 4 GB Pi’de orta kipi yavaşlatıyordu.
 
 Yazılım vekilini depodan Pi’ye kopyala (`chat_proxy.py`, `AOG.md`, `aog-chat.service`). `llama-server` için llama.cpp’yi Pi’de derle; ikili `LLAMA_BIN` ile `aog-chat.service` içinde gösterilir.
 

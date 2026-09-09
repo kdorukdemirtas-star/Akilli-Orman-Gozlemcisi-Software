@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { SignInButton, useUser } from "@clerk/react";
+import { SignInButton, SignUpButton, useUser } from "@clerk/react";
 import { Shell } from "./SiteNav.jsx";
 import { useClerkFlag } from "./clerkFlag.js";
 import { bindStationToUser, stationFromUser } from "./stationBind.js";
@@ -37,12 +37,17 @@ function PairBody({ wanted }) {
     return (
       <>
         <p>QR’daki kutuyu bağlamak için giriş yap.</p>
-        <p>
+        <p className="nav-auth">
           <SignInButton mode="modal">
-            <button type="button" className="hit">
+            <button type="button" className="hit ghost">
               Giriş
             </button>
           </SignInButton>
+          <SignUpButton mode="modal">
+            <button type="button" className="hit">
+              Kayıt
+            </button>
+          </SignUpButton>
         </p>
       </>
     );

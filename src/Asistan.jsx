@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
+import { useUser } from "@clerk/react";
 import { Shell } from "./SiteNav.jsx";
 import {
   asChatKip,
@@ -63,12 +64,12 @@ function isAbort(err) {
 }
 
 export default function Asistan({ product = "software" }) {
+  const { user } = useUser();
+  const userId = user?.id || "";
   const [params, setParams] = useSearchParams();
-  const [kip, setKip] = useState(() =>
-    params.get("kip") ? asChatKip(params.get("kip")) : readKip(),
-  );
-  const [threads, setThreads] = useState(readThreads);
-  const [activeId, setActiveId] = useState(() => readThreads()[0]?.id || "");
+  const [kip, setKip] = useState("hizli");
+  const [threads, setThreads] = useState([]);
+  const [activeId, setActiveId] = useState("");
   const [q, setQ] = useState("");
   const [busyId, setBusyId] = useState("");
   const [err, setErr] = useState({ id: "", text: "" });
@@ -84,12 +85,21 @@ export default function Asistan({ product = "software" }) {
   }, []);
 
   useEffect(() => {
+    if (!userId) return;
+    const saved = readThreads(userId);
+    setThreads(saved);
+    setActiveId(saved[0]?.id || "");
+    setErr({ id: "", text: "" });
+  }, [userId]);
+
+  useEffect(() => {
+    if (!userId) return;
     const fromUrl = params.get("kip");
-    const value = asChatKip(fromUrl || readKip());
+    const value = asChatKip(fromUrl || readKip(userId));
     setKip(value);
-    writeKip(value);
+    writeKip(value, userId);
     if (fromUrl !== value) setParams({ kip: value }, { replace: true });
-  }, [params, setParams]);
+  }, [userId, params, setParams]);
 
   const active = useMemo(
     () => threads.find((row) => row.id === activeId) || null,
@@ -104,20 +114,22 @@ export default function Asistan({ product = "software" }) {
   }, [lines.length, waiting]);
 
   function saveThreads(next) {
-    const saved = writeThreads(next);
+    const saved = writeThreads(next, userId);
     if (aliveRef.current) setThreads(saved);
     return saved;
   }
 
   function pickKip(next) {
-    const value = writeKip(next);
+    const value = writeKip(next, userId);
     setKip(value);
     setParams({ kip: value }, { replace: true });
   }
 
   function startThread() {
     const id = newThreadId();
-    setThreads((prev) => writeThreads([{ id, title: "Yeni sohbet", kip, lines: [] }, ...prev]));
+    setThreads((prev) =>
+      writeThreads([{ id, title: "Yeni sohbet", kip, lines: [] }, ...prev], userId),
+    );
     setActiveId(id);
     setErr({ id: "", text: "" });
     setQ("");
@@ -128,7 +140,10 @@ export default function Asistan({ product = "software" }) {
     inflight.current.get(id)?.abort();
     inflight.current.delete(id);
     if (busyId === id) setBusyId("");
-    const next = writeThreads(threads.filter((row) => row.id !== id));
+    const next = writeThreads(
+      threads.filter((row) => row.id !== id),
+      userId,
+    );
     setThreads(next);
     if (id === activeId) setActiveId(next[0]?.id || "");
     if (err.id === id) setErr({ id: "", text: "" });
@@ -162,6 +177,7 @@ export default function Asistan({ product = "software" }) {
               }
             : row,
         ),
+        userId,
       );
     });
     if (looksLikeInjection(text)) {
@@ -176,7 +192,7 @@ export default function Asistan({ product = "software" }) {
         String(raw || "").trim() ||
         "Asistan boş yanıt döndürdü. Hızlı cevapları dene.";
       saveThreads(
-        readThreads().map((row) =>
+        readThreads(userId).map((row) =>
           row.id === id ? { ...row, lines: [...row.lines, { who: "pi", text: reply }] } : row,
         ),
       );
