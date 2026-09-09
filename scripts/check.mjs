@@ -18,6 +18,9 @@ import { chatLoadHint } from "../src/chatHint.js";
 import { looksLikeInjection } from "../src/chatGuard.js";
 import { pairHref, parseStation, STATION_STORAGE_KEY } from "../src/stationPair.js";
 import { NAV_PACKS, DESKTOP_TABS } from "../src/navPacks.js";
+import { CONSENT_KEY, defaultConsent, hasConsent, readConsent, writeConsent } from "../src/consentStore.js";
+import { privacyBlob } from "../src/privacyCopy.js";
+import { exportPersonalData, wipePersonalData } from "../src/accountData.js";
 
 test("parseStation accepts a raw station id", () => {
   assert.equal(parseStation("AOG-DEMO-1"), "AOG-DEMO-1");
@@ -502,6 +505,101 @@ test("chat kips hide model names and map tokens", () => {
   assert.doesNotMatch(proxy, /CHAT_MAX_BODY", "8192"/);
   const vite = readFileSync(join(here, "../vite.config.js"), "utf8");
   assert.doesNotMatch(vite, /VITE_PI_CHAT_URL/);
+});
+
+test("kvkk notice covers controllers, chats, cookies, and US sale ban", () => {
+  const blob = privacyBlob();
+  assert.match(blob, /6698/);
+  assert.match(blob, /KVKK/);
+  assert.match(blob, /aydınlatma/);
+  assert.match(blob, /Defenders Of Green/);
+  assert.match(blob, /Clerk/);
+  assert.match(blob, /sohbet/);
+  assert.match(blob, /hesaba/);
+  assert.match(blob, /OpenStreetMap/);
+  assert.match(blob, /çerez/);
+  assert.match(blob, /BTK/);
+  assert.match(blob, /GDPR|GDPR \(AB\)/i);
+  assert.match(blob, /satılmaz/);
+  assert.match(blob, /Kaliforniya|CCPA/);
+  assert.doesNotMatch(blob, /sertifikal|GDPR certified|ISO 27001/i);
+});
+
+test("optional cookies stay off until the visitor decides", () => {
+  const mem = new Map();
+  globalThis.localStorage = {
+    getItem: (k) => (mem.has(k) ? mem.get(k) : null),
+    setItem: (k, v) => {
+      mem.set(k, String(v));
+    },
+    removeItem: (k) => {
+      mem.delete(k);
+    },
+  };
+  assert.equal(CONSENT_KEY, "aog-consent-v1");
+  assert.equal(readConsent().decided, false);
+  assert.equal(hasConsent("fonts"), false);
+  assert.equal(hasConsent("map"), false);
+  assert.equal(defaultConsent().necessary, true);
+  writeConsent({ fonts: true, map: false });
+  assert.equal(readConsent().decided, true);
+  assert.equal(hasConsent("fonts"), true);
+  assert.equal(hasConsent("map"), false);
+  writeConsent({ fonts: false, map: false });
+  assert.equal(hasConsent("fonts"), false);
+});
+
+test("account wipe drops only this Clerk user's chat keys", () => {
+  const mem = new Map();
+  globalThis.localStorage = {
+    getItem: (k) => (mem.has(k) ? mem.get(k) : null),
+    setItem: (k, v) => {
+      mem.set(k, String(v));
+    },
+    removeItem: (k) => {
+      mem.delete(k);
+    },
+  };
+  writeThreads(
+    [{ id: "s1", title: "bir", kip: "hizli", lines: [{ who: "sen", text: "gizli" }] }],
+    "user_a",
+  );
+  writeThreads(
+    [{ id: "s2", title: "iki", kip: "hizli", lines: [{ who: "sen", text: "başka" }] }],
+    "user_b",
+  );
+  const dump = exportPersonalData("user_a");
+  assert.equal(dump.threads[0].id, "s1");
+  assert.equal(dump.threads[0].lines[0].text, "gizli");
+  wipePersonalData("user_a");
+  assert.equal(readThreads("user_a").length, 0);
+  assert.equal(readThreads("user_b")[0].id, "s2");
+});
+
+test("production Clerk satellite is allowed in CSP and live keys stay out of git", () => {
+  const here = dirname(fileURLToPath(import.meta.url));
+  const vercel = readFileSync(join(here, "../vercel.json"), "utf8");
+  assert.match(vercel, /clerk\.akilli-orman-gozlemcisi-software\.vercel\.app/);
+  assert.match(vercel, /accounts\.akilli-orman-gozlemcisi-software\.vercel\.app/);
+  const app = readFileSync(join(here, "../src/App.jsx"), "utf8");
+  const main = readFileSync(join(here, "../src/main.jsx"), "utf8");
+  assert.doesNotMatch(app + main, /pk_live_|pk_test_/);
+});
+
+test("gizlilik and cerezler routes are public", () => {
+  const here = dirname(fileURLToPath(import.meta.url));
+  const app = readFileSync(join(here, "../src/App.jsx"), "utf8");
+  assert.match(app, /path="\/gizlilik"/);
+  assert.match(app, /path="\/cerezler"/);
+  const giz = app.split('path="/gizlilik"')[1]?.split("path=")[0] ?? "";
+  assert.doesNotMatch(giz, /RequireAuth/);
+  const html = readFileSync(join(here, "../index.html"), "utf8");
+  assert.doesNotMatch(html, /fonts\.googleapis\.com/);
+  const main = readFileSync(join(here, "../src/main.jsx"), "utf8");
+  assert.match(main, /telemetry=\{false\}/);
+  const nav = readFileSync(join(here, "../src/SiteNav.jsx"), "utf8");
+  assert.match(nav, /to="\/gizlilik"/);
+  assert.match(nav, /to="\/cerezler"/);
 });
 
 test("pano requires Clerk sign-in", () => {

@@ -1,6 +1,7 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import { hasConsent, openConsentPanel } from "./consentStore.js";
 
 function hasCoords(lat, lon) {
   const la = Number(lat);
@@ -13,10 +14,17 @@ export default function MapCard({ lat, lon, gps, zoom = 13, title = "Harita", he
   const markerRef = useRef(null);
   const mapBox = useRef(null);
   const placed = hasCoords(lat, lon);
+  const [mapOk, setMapOk] = useState(() => hasConsent("map"));
+
+  useEffect(() => {
+    const sync = () => setMapOk(hasConsent("map"));
+    window.addEventListener("aog-consent", sync);
+    return () => window.removeEventListener("aog-consent", sync);
+  }, []);
 
   useEffect(() => {
     const el = mapBox.current;
-    if (!el) return undefined;
+    if (!mapOk || !el) return undefined;
     if (el._leaflet_id) {
       try {
         mapRef.current?.remove();
@@ -56,7 +64,7 @@ export default function MapCard({ lat, lon, gps, zoom = 13, title = "Harita", he
       mapRef.current = null;
       markerRef.current = null;
     };
-  }, []);
+  }, [mapOk]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -85,7 +93,21 @@ export default function MapCard({ lat, lon, gps, zoom = 13, title = "Harita", he
     }
     map.setView([la, lo], Number.isFinite(Number(zoom)) ? Number(zoom) : 13);
     map.invalidateSize({ animate: false });
-  }, [lat, lon, gps, zoom]);
+  }, [lat, lon, gps, zoom, mapOk]);
+
+  if (!mapOk) {
+    return (
+      <section className="map-card">
+        {heading ? <p className="kicker">{title}</p> : null}
+        <p className="ops-empty">
+          Harita karosu OpenStreetMap’e IP gönderir.{" "}
+          <button type="button" className="hit ghost" onClick={() => openConsentPanel()}>
+            Çerezleri aç
+          </button>
+        </p>
+      </section>
+    );
+  }
 
   return (
     <section className="map-card">

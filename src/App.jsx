@@ -14,6 +14,8 @@ const Eklentiler = lazy(() => import("./Eklentiler.jsx"));
 const Asistan = lazy(() => import("./Asistan.jsx"));
 const Makine = lazy(() => import("./Makine.jsx"));
 const Pair = lazy(() => import("./Pair.jsx"));
+const Gizlilik = lazy(() => import("./Gizlilik.jsx"));
+const Cerezler = lazy(() => import("./Cerezler.jsx"));
 
 function BoardFallback({ product }) {
   return (
@@ -122,6 +124,22 @@ export default function App() {
         element={
           <Suspense fallback={<PageFallback product="software" />}>
             <Pair product="software" />
+          </Suspense>
+        }
+      />
+      <Route
+        path="/gizlilik"
+        element={
+          <Suspense fallback={<PageFallback product="software" />}>
+            <Gizlilik />
+          </Suspense>
+        }
+      />
+      <Route
+        path="/cerezler"
+        element={
+          <Suspense fallback={<PageFallback product="software" />}>
+            <Cerezler />
           </Suspense>
         }
       />

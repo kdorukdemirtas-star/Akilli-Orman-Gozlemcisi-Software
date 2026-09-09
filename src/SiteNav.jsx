@@ -3,6 +3,7 @@ import { Link, NavLink, useLocation } from "react-router-dom";
 import { SignInButton, SignUpButton, UserButton, useUser } from "@clerk/react";
 import { isStandaloneDisplay } from "./pwa.js";
 import { useClerkFlag } from "./clerkFlag.js";
+import { CookieBanner, FontConsent } from "./CookieBanner.jsx";
 import { DESKTOP_TABS, NAV_PACKS, overlayLinks } from "./navPacks.js";
 
 export { DESKTOP_TABS, NAV_PACKS };
@@ -204,6 +205,8 @@ export function SiteNav({ product = "demo" }) {
             <span>
               {product === "software" ? "Yazılım" : "Akıllı Orman Gözlemcisi"}
             </span>
+            <Link to="/gizlilik">Gizlilik</Link>
+            <Link to="/cerezler">Çerezler</Link>
           </div>
         </div>
       </dialog>
@@ -217,6 +220,10 @@ export function SiteFooter() {
       <span>Defenders Of Green</span>
       <span>Akıllı Orman Gözlemcisi</span>
       <span>TEKNOFEST 2026</span>
+      <nav className="legal-end" aria-label="Yasal">
+        <Link to="/gizlilik">Gizlilik</Link>
+        <Link to="/cerezler">Çerezler</Link>
+      </nav>
     </footer>
   );
 }
@@ -251,11 +258,13 @@ export function Shell({ product, children, footer = true }) {
 
   return (
     <div className="app-shell">
+      <FontConsent />
       <SiteNav product={product} />
       <main className="view-pane" id="icerik">
         {children}
         {footer ? <SiteFooter /> : null}
       </main>
+      <CookieBanner />
     </div>
   );
 }

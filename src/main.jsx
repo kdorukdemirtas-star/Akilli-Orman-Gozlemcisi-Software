@@ -21,7 +21,7 @@ const tree = (
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     {clerkKey ? (
-      <ClerkProvider publishableKey={clerkKey} afterSignOutUrl="/">
+      <ClerkProvider publishableKey={clerkKey} afterSignOutUrl="/" telemetry={false}>
         {tree}
       </ClerkProvider>
     ) : (
