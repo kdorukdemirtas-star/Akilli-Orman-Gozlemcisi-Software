@@ -12,7 +12,6 @@ import {
   readKip,
   readThreads,
   cleanReply,
-  systemPrompt,
   titleFromQuestion,
   writeKip,
   writeThreads,
@@ -31,10 +30,7 @@ async function askPi(question, kip, signal) {
       signal,
       body: JSON.stringify({
         model: chatModel(kip),
-        messages: [
-          { role: "system", content: systemPrompt(kip) },
-          { role: "user", content: question },
-        ],
+        messages: [{ role: "user", content: question }],
         max_tokens: kipTokens(kip),
         temperature: kipTemp(kip),
       }),

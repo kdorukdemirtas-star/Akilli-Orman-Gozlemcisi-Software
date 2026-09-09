@@ -456,6 +456,11 @@ test("chat kips hide model names and map tokens", () => {
   const lookout = readFileSync(join(here, "../src/Lookout.jsx"), "utf8");
   assert.match(lookout, /title="Skor"/);
   assert.doesNotMatch(lookout, /title="sklearn"/);
+  const asistan = readFileSync(join(here, "../src/Asistan.jsx"), "utf8");
+  assert.match(asistan, /fetch\("\/v1\/chat\/completions"/);
+  assert.doesNotMatch(asistan, /systemPrompt/);
+  assert.match(proxy, /CHAT_MAX_BODY/);
+  assert.doesNotMatch(proxy, /CHAT_MAX_BODY", "8192"/);
   const vite = readFileSync(join(here, "../vite.config.js"), "utf8");
   assert.doesNotMatch(vite, /VITE_PI_CHAT_URL/);
 });

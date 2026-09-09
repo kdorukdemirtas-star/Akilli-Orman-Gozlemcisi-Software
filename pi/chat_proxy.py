@@ -184,7 +184,7 @@ OVERVIEW_DETAIL_RE = re.compile(
     r"(?i)alarm|kaplama|karışım|karisim|pin|nss|gpio|sklearn|gps|mesh|clerk|\bhop\b|mq-?9"
 )
 INJECTION_MSG = "Bu istek asistanın kuralını değiştirmeye çalışıyor. Ürün, alarm veya kaplama sor."
-MAX_BODY = int(os.environ.get("CHAT_MAX_BODY", "8192"))
+MAX_BODY = int(os.environ.get("CHAT_MAX_BODY", "16384"))
 MAX_USER_CHARS = int(os.environ.get("CHAT_MAX_USER_CHARS", "500"))
 RATE_WINDOW = int(os.environ.get("CHAT_RATE_WINDOW", "60"))
 RATE_MAX = int(os.environ.get("CHAT_RATE_MAX", "8"))
