@@ -29,6 +29,7 @@ createRoot(document.getElementById("root")).render(
         telemetry={false}
         proxyUrl={proxyUrl}
         clerkJSUrl={clerkJSUrl}
+        __internal_clerkJSUrl={clerkJSUrl}
       >
         {tree}
       </ClerkProvider>

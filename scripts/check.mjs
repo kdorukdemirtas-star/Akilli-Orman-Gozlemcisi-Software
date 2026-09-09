@@ -615,6 +615,7 @@ test("production Clerk Frontend API is proxied through /__clerk", async () => {
   const main = readFileSync(join(here, "../src/main.jsx"), "utf8");
   assert.match(main, /proxyUrl=\{proxyUrl\}/);
   assert.match(main, /clerkJSUrl=\{clerkJSUrl\}/);
+  assert.match(main, /__internal_clerkJSUrl=\{clerkJSUrl\}/);
   assert.doesNotMatch(main, /CLERK_SECRET_KEY/);
   const vite = readFileSync(join(here, "../vite.config.js"), "utf8");
   assert.match(vite, /"\/__clerk"/);
