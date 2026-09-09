@@ -10,6 +10,14 @@ const DROP = new Set([
   "keep-alive",
 ]);
 
+const CORS_DROP = [
+  "access-control-allow-origin",
+  "access-control-allow-credentials",
+  "access-control-allow-headers",
+  "access-control-allow-methods",
+  "access-control-expose-headers",
+];
+
 const FAPI_ORIGIN = new URL(CLERK_FAPI).origin;
 
 export function clerkFapiDest(requestUrl) {
@@ -50,7 +58,23 @@ export function clerkFapiHeaders(request, secret) {
   return headers;
 }
 
+export function clerkFapiFollow(method, dest) {
+  return method === "GET" && dest.pathname.startsWith("/npm/");
+}
+
 export function clerkFapiLocation(location) {
   const raw = String(location || "");
   return raw.replace(/https:\/\/frontend-api\.clerk\.(dev|services)/i, CLERK_PROXY_URL);
+}
+
+export function clerkFapiResponseHeaders(upstream, request) {
+  const out = new Headers(upstream);
+  for (const name of CORS_DROP) out.delete(name);
+  const origin =
+    request.headers.get("origin") || "https://akilli-orman-gozlemcisi-software.vercel.app";
+  out.set("Access-Control-Allow-Origin", origin);
+  out.set("Access-Control-Allow-Credentials", "true");
+  const loc = out.get("Location") || out.get("location");
+  if (loc) out.set("Location", clerkFapiLocation(loc));
+  return out;
 }

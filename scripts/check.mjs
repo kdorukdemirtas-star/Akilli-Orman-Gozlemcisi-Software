@@ -618,7 +618,7 @@ test("production Clerk Frontend API is proxied through /__clerk", async () => {
   const example = readFileSync(join(here, "../.env.example"), "utf8");
   assert.match(example, /CLERK_SECRET_KEY=/);
   assert.match(example, /VITE_CLERK_PROXY_URL=/);
-  const { clerkFapiDest, clerkFapiHeaders } = await import("../clerkFapi.js");
+  const { clerkFapiDest, clerkFapiHeaders, clerkFapiResponseHeaders } = await import("../clerkFapi.js");
   assert.equal(
     clerkFapiDest("https://akilli-orman-gozlemcisi-software.vercel.app/__clerk/v1/environment").href,
     "https://frontend-api.clerk.dev/v1/environment",
@@ -644,6 +644,22 @@ test("production Clerk Frontend API is proxied through /__clerk", async () => {
     "sk_placeholder",
   );
   assert.equal(v6.get("X-Forwarded-For"), "2001:db8::1");
+  const cors = clerkFapiResponseHeaders(
+    new Headers({
+      "access-control-allow-origin": "*",
+      "access-control-allow-credentials": "true",
+      Location: "https://frontend-api.clerk.dev/npm/@clerk/clerk-js@6.31.0/dist/clerk.browser.js",
+    }),
+    new Request("https://akilli-orman-gozlemcisi-software.vercel.app/__clerk/npm/x", {
+      headers: { origin: "https://akilli-orman-gozlemcisi-software.vercel.app" },
+    }),
+  );
+  assert.equal(cors.get("Access-Control-Allow-Origin"), "https://akilli-orman-gozlemcisi-software.vercel.app");
+  assert.equal(cors.get("Access-Control-Allow-Credentials"), "true");
+  assert.equal(
+    cors.get("Location"),
+    "https://akilli-orman-gozlemcisi-software.vercel.app/__clerk/npm/@clerk/clerk-js@6.31.0/dist/clerk.browser.js",
+  );
 });
 
 test("gizlilik and cerezler routes are public", () => {

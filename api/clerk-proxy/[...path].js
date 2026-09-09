@@ -1,4 +1,4 @@
-import { clerkFapiDest, clerkFapiHeaders, clerkFapiLocation } from "../../clerkFapi.js";
+import { clerkFapiDest, clerkFapiFollow, clerkFapiHeaders, clerkFapiResponseHeaders } from "../../clerkFapi.js";
 
 export const config = { runtime: "edge" };
 
@@ -18,15 +18,15 @@ export default async function handler(request) {
   const init = {
     method: request.method,
     headers,
-    redirect: "manual",
+    redirect: clerkFapiFollow(request.method, dest) ? "follow" : "manual",
   };
   if (request.method !== "GET" && request.method !== "HEAD") {
     init.body = request.body;
   }
 
   const up = await fetch(dest, init);
-  const out = new Headers(up.headers);
-  const loc = out.get("Location") || out.get("location");
-  if (loc) out.set("Location", clerkFapiLocation(loc));
-  return new Response(up.body, { status: up.status, headers: out });
+  return new Response(up.body, {
+    status: up.status,
+    headers: clerkFapiResponseHeaders(up.headers, request),
+  });
 }
