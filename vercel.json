@@ -8,7 +8,7 @@
       "source": "/v1/:path*",
       "destination": "https://year-cable-events-parking.trycloudflare.com/v1/:path*"
     },
-    { "source": "/(.*)", "destination": "/index.html" }
+    { "source": "/((?!api/|__clerk/).*)", "destination": "/index.html" }
   ],
   "headers": [
     {
