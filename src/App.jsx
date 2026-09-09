@@ -76,9 +76,15 @@ export default function App() {
       <Route
         path="/dashboard"
         element={
-          <Suspense fallback={<BoardFallback product="software" />}>
-            <Dashboard />
-          </Suspense>
+          <RequireAuth
+            product="software"
+            title="Pano"
+            lead="Pano hesaba bağlıdır. Giriş yapmadan istasyon ekranı açılmaz."
+          >
+            <Suspense fallback={<BoardFallback product="software" />}>
+              <Dashboard />
+            </Suspense>
+          </RequireAuth>
         }
       />
       <Route

@@ -504,6 +504,16 @@ test("chat kips hide model names and map tokens", () => {
   assert.doesNotMatch(vite, /VITE_PI_CHAT_URL/);
 });
 
+test("pano requires Clerk sign-in", () => {
+  const app = readFileSync(
+    join(dirname(fileURLToPath(import.meta.url)), "../src/App.jsx"),
+    "utf8",
+  );
+  const dash = app.split('path="/dashboard"')[1]?.split('path="/eklentiler"')[0] ?? "";
+  assert.match(dash, /RequireAuth/);
+  assert.match(dash, /title="Pano"/);
+});
+
 test("addPlugin and removePlugin toggle catalog entries", () => {
   const mem = new Map();
   globalThis.localStorage = {
