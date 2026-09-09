@@ -109,7 +109,7 @@ test("README lists every software download path and hides GGUF names", () => {
   assert.match(readme, /archive\/refs\/heads\/main.zip/);
   assert.match(readme, /archive\/refs\/tags\/v1.0.0.zip/);
   assert.match(readme, /\[INDIRME\.md\]\(INDIRME\.md\)/);
-  assert.doesNotMatch(readme, /Qwen|DeepSeek|Llama|\.gguf/i);
+  assert.doesNotMatch(readme, /Qwen|DeepSeek|Llama|Gemma|\.gguf/i);
   const indir = readFileSync(join(here, "../INDIRME.md"), "utf8");
   assert.match(indir, /git clone --depth 1 https:\/\/github.com\/kdorukdemirtas-star\/Akilli-Orman-Gozlemcisi-Software.git/);
   assert.match(indir, /git clone --filter=blob:none --sparse/);
@@ -122,14 +122,16 @@ test("README lists every software download path and hides GGUF names", () => {
   assert.match(indir, /raw.githubusercontent.com\/kdorukdemirtas-star\/Akilli-Orman-Gozlemcisi-Software\/main\/firmware\/AOG_Verici.ino/);
   assert.match(indir, /GitHub Desktop/);
   assert.match(indir, /github.dev\/kdorukdemirtas-star\/Akilli-Orman-Gozlemcisi-Software/);
-  assert.doesNotMatch(indir, /Qwen|DeepSeek|Llama|\.gguf/i);
+  assert.doesNotMatch(indir, /Qwen|DeepSeek|Llama|Gemma|\.gguf/i);
   const contribute = readFileSync(join(here, "../CONTRIBUTING.md"), "utf8");
   assert.match(contribute, /npm install/);
   assert.match(contribute, /INDIRME.md/);
   const piReadme = readFileSync(join(here, "../pi/README.md"), "utf8");
   assert.match(piReadme, /huggingface-cli download bartowski\/Qwen_Qwen3.5-0.8B-GGUF/);
-  assert.match(piReadme, /huggingface.co\/bartowski\/Llama-3.2-1B-Instruct-GGUF\/resolve\/main/);
+  assert.match(piReadme, /huggingface-cli download unsloth\/gemma-4-E2B-it-GGUF gemma-4-E2B-it-Q4_K_M.gguf/);
+  assert.match(piReadme, /huggingface.co\/unsloth\/gemma-4-E2B-it-GGUF\/resolve\/main\/gemma-4-E2B-it-Q4_K_M.gguf/);
   assert.match(piReadme, /DeepSeek-R1-Distill-Qwen-1.5B-Q4_K_M.gguf/);
+  assert.doesNotMatch(piReadme, /Llama-3\.2-1B-Instruct/);
 });
 
 test("looksLikeInjection refuses jailbreaks and keeps product questions", () => {
@@ -338,7 +340,7 @@ test("chat kips hide model names and map tokens", () => {
   assert.equal(kipLabel("derin"), "Derin cevaplar");
   assert.doesNotMatch(
     CHAT_KIPS.map(kipLabel).join(" "),
-    /qwen|deepseek|r1|llama|0\.8b|1\.5b|3\.2|1b/i,
+    /qwen|deepseek|r1|llama|gemma|e2b|0\.8b|1\.5b|3\.2|1b/i,
   );
   assert.equal(kipTokens("hizli"), 192);
   assert.equal(kipTokens("orta"), 256);
@@ -354,10 +356,16 @@ test("chat kips hide model names and map tokens", () => {
   assert.match(facts, /YAZIM:/);
   assert.match(facts, /kutuyu yönetmez/);
   assert.match(facts, /Orta cevaplar/);
+  assert.match(facts, /OGM/);
+  assert.match(facts, /üç haftalık/);
+  assert.match(facts, /6,81/);
+  assert.match(facts, /1–5 km/);
+  assert.doesNotMatch(facts, /IP65|powerbank/i);
+  assert.doesNotMatch(facts, /100 °C|t≥100|AND kuralı|alev birlikte/);
   const blob = systemPrompt("hizli") + systemPrompt("orta") + systemPrompt("derin");
-  assert.doesNotMatch(blob, /Qwen|DeepSeek|Llama/);
+  assert.doesNotMatch(blob, /Qwen|DeepSeek|Llama|Gemma/);
   assert.match(blob, /sklearn/);
-  assert.match(blob, /100 °C/);
+  assert.match(blob, /399 °C/);
   assert.match(blob, /LoRa/);
   assert.match(blob, /0x2A/);
   assert.match(blob, /Mesh sistemi/);
@@ -371,6 +379,7 @@ test("chat kips hide model names and map tokens", () => {
   assert.equal(stripThink("<think>gizli</think>Alarm AND kuralıdır."), "Alarm AND kuralıdır.");
   assert.doesNotMatch(stripThink("Qwen 3.5 0.8B ve DeepSeek R1 1.5B"), /qwen|deepseek|\br1\b|0\.8b|1\.5b/i);
   assert.doesNotMatch(stripThink("Llama 3.2 1B"), /llama|3\.2|\b1b\b/i);
+  assert.doesNotMatch(stripThink("Gemma 4 E2B"), /gemma|\be2b\b/i);
   const intern =
     "Alright, let's tackle this query. The user has been discussing an application where Sen AOG (Asistan) is an assistant. I should generate the PDF with system architecture.";
   assert.equal(looksLikeScratch(intern), true);
@@ -425,12 +434,20 @@ test("chat kips hide model names and map tokens", () => {
   assert.match(proxy, /GLOBAL_MAX/);
   assert.match(proxy, /Retry-After/);
   assert.doesNotMatch(proxy, /RATE_MAX = 60/);
+  assert.match(proxy, /READY_WAIT = 55/);
+  assert.match(proxy, /"--parallel"/);
+  assert.match(proxy, /"ctx": 4096/);
   assert.match(proxy, /finalize_reply/);
   assert.doesNotMatch(proxy, /if not content and reason:/);
   const unit = readFileSync(join(here, "../pi/aog-chat.service"), "utf8");
   assert.match(unit, /ORTA_GGUF/);
-  assert.match(unit, /Llama-3.2-1B-Instruct-Q4_K_M/);
+  assert.match(unit, /gemma-4-E2B-it-Q4_K_M/);
+  assert.doesNotMatch(unit, /Llama-3\.2-1B-Instruct/);
   assert.match(unit, /DeepSeek-R1-Distill-Qwen-1.5B-Q4_K_M/);
+  assert.match(proxy, /gemma-4-E2B-it-Q4_K_M/);
+  assert.doesNotMatch(proxy, /Llama-3\.2-1B-Instruct/);
+  assert.match(proxy, /gemma\[\\w/);
+  assert.match(proxy, /\\be2b\\b/);
   const lookout = readFileSync(join(here, "../src/Lookout.jsx"), "utf8");
   assert.match(lookout, /title="Skor"/);
   assert.doesNotMatch(lookout, /title="sklearn"/);

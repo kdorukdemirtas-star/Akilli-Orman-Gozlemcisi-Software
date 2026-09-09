@@ -26,7 +26,7 @@ HIZLI_GGUF = os.environ.get(
 )
 ORTA_GGUF = os.environ.get(
     "ORTA_GGUF",
-    "/home/demir/aog-pi/models/Llama-3.2-1B-Instruct-Q4_K_M.gguf",
+    "/home/demir/aog-pi/models/gemma-4-E2B-it-Q4_K_M.gguf",
 )
 DERIN_GGUF = os.environ.get(
     "DERIN_GGUF",
@@ -47,7 +47,7 @@ KIPS = {
     "orta": {
         "gguf": ORTA_GGUF,
         "port": LLAMA_PORT,
-        "ctx": 2048,
+        "ctx": 4096,
         "threads": 3,
         "missing": "Orta cevaplar henüz hazır değil. Hızlı cevapları dene veya biraz sonra yeniden gönder.",
     },
@@ -60,7 +60,7 @@ KIPS = {
     },
 }
 
-NAME_RE = re.compile(r"(?i)qwen[\w.\-]*|deepseek[\w.\-]*|llama[\w.\-]*|\.gguf")
+NAME_RE = re.compile(r"(?i)qwen[\w.\-]*|deepseek[\w.\-]*|llama[\w.\-]*|gemma[\w.\-]*|\be2b\b|\.gguf")
 THINK_RE = re.compile(r"<think>[\s\S]*?</think>", re.I)
 PATH_RE = re.compile(r"(?i)(?:/home|/opt|/usr|models/)[^\s\"']+")
 LEAK_RE = re.compile(
@@ -104,13 +104,12 @@ REPLY_SYSTEMS = (
     "Kutu ormanda ölçer, paket LoRa 433 MHz ile çıkar, evdeki pano okur. Yangını kaplama söndürmez, alevi yavaşlatır. Mesh sistemi ayrı bir hop eklentisidir.",
 )
 REPLY_ALARM = (
-    "Alarm, sıcaklık en az 100 °C ve alev birlikteyse açılır. "
-    "Yalnız sıcaklık veya yalnız alev yetmez. Asistan alarm yazmaz."
+    "Alarmı kutu kuralı yazar. Asistan ntfy atmaz. Eşik bu kaynakta derece olarak yazılmaz."
 )
 REPLY_ALARMS = (
     REPLY_ALARM,
-    "Eşik AND kuralıdır: 100 °C ve alev aynı anda. Güneş ısısı tek başına yangın sayılmaz. Asistan ntfy atmaz.",
-    "Alarm bitini kutu kuralı kurar. Sıcaklık 100’ü geçse bile alev yoksa sessiz kalır; alev tek başına da yetmez.",
+    "Asistan alarm açmaz. Pano haberi gösterir; eşik derece bu kaynakta yoktur.",
+    "Yangın bitini asistan kurmaz. Kutu kuralı panodadır.",
 )
 REPLY_USERS = (
     "Kullanıcı sayısı bu kaynakta yok. 24 saat, panonun tuttuğu süredir; kişi sayısı değildir."
@@ -234,6 +233,8 @@ rate_lock = threading.Lock()
 in_flight = 0
 current = ""
 child = None
+loading = ""
+READY_WAIT = 55
 
 
 class LimitBook:
@@ -562,11 +563,33 @@ def healthy(port):
     return False
 
 
+def wait_ready(kip, seconds):
+    global child, current, loading
+    spec = KIPS[kip]
+    deadline = time.time() + seconds
+    while time.time() < deadline:
+        if child is None:
+            loading = ""
+            return False
+        if child.poll() is not None:
+            child = None
+            current = ""
+            loading = ""
+            return False
+        if healthy(spec["port"]):
+            current = kip
+            loading = ""
+            return True
+        time.sleep(0.4)
+    return False
+
+
 def stop_child():
-    global child, current
+    global child, current, loading
     proc = child
     child = None
     current = ""
+    loading = ""
     if not proc:
         return
     try:
@@ -595,12 +618,16 @@ def stop_child():
 
 
 def start_kip(kip):
-    global child, current
+    global child, current, loading
     spec = KIPS[kip]
     if not os.path.isfile(spec["gguf"]):
         return False
     if not os.path.isfile(LLAMA_BIN):
         return False
+    if child is not None and child.poll() is None and loading == kip:
+        return wait_ready(kip, READY_WAIT)
+    if child is not None and child.poll() is None and current == kip and healthy(spec["port"]):
+        return True
     stop_child()
     cmd = [
         LLAMA_BIN,
@@ -614,6 +641,8 @@ def start_kip(kip):
         str(spec["ctx"]),
         "-t",
         str(spec["threads"]),
+        "--parallel",
+        "1",
         "--jinja",
         "--reasoning",
         "off",
@@ -626,17 +655,9 @@ def start_kip(kip):
         stderr=log_f,
         start_new_session=True,
     )
-    deadline = time.time() + 90
-    while time.time() < deadline:
-        if child.poll() is not None:
-            child = None
-            return False
-        if healthy(spec["port"]):
-            current = kip
-            return True
-        time.sleep(0.4)
-    stop_child()
-    return False
+    loading = kip
+    current = ""
+    return wait_ready(kip, READY_WAIT)
 
 
 def ensure(kip):
@@ -654,6 +675,8 @@ def ensure(kip):
         if running:
             current = kip
             return True
+        if child is not None and child.poll() is None and loading == kip:
+            return wait_ready(kip, READY_WAIT)
         return start_kip(kip)
 
 
