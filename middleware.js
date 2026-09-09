@@ -1,4 +1,4 @@
-import { clerkFapiDest, clerkFapiFollow, clerkFapiHeaders, clerkFapiResponseHeaders } from "./clerkFapi.js";
+import { clerkFapiDest, clerkFapiHeaders, clerkFapiResponseHeaders } from "./clerkFapi.js";
 
 export const config = {
   matcher: "/__clerk/:path*",
@@ -21,7 +21,7 @@ export default async function middleware(request) {
   const init = {
     method: request.method,
     headers,
-    redirect: clerkFapiFollow(request.method, dest) ? "follow" : "manual",
+    redirect: "manual",
   };
   if (request.method !== "GET" && request.method !== "HEAD") {
     init.body = request.body;
