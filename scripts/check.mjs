@@ -586,6 +586,58 @@ test("production Clerk satellite is allowed in CSP and live keys stay out of git
   assert.doesNotMatch(app + main, /pk_live_|pk_test_/);
 });
 
+test("production Clerk Frontend API is proxied through /__clerk", async () => {
+  const here = dirname(fileURLToPath(import.meta.url));
+  const vercel = readFileSync(join(here, "../vercel.json"), "utf8");
+  assert.match(vercel, /"source": "\/__clerk\/:path\*"/);
+  assert.match(vercel, /"destination": "\/api\/clerk-proxy\/:path\*"/);
+  const proxy = readFileSync(join(here, "../api/clerk-proxy/[...path].js"), "utf8");
+  const fapi = readFileSync(join(here, "../clerkFapi.js"), "utf8");
+  assert.match(proxy + fapi, /Clerk-Proxy-Url/);
+  assert.match(proxy + fapi, /Clerk-Secret-Key/);
+  assert.match(proxy + fapi, /X-Forwarded-For/);
+  assert.match(proxy, /process\.env\.CLERK_SECRET_KEY/);
+  assert.match(proxy + fapi, /frontend-api\.clerk\.dev/);
+  assert.doesNotMatch(proxy + fapi, /sk_live_|sk_test_/);
+  const main = readFileSync(join(here, "../src/main.jsx"), "utf8");
+  assert.match(main, /proxyUrl=\{proxyUrl\}/);
+  assert.doesNotMatch(main, /CLERK_SECRET_KEY/);
+  const flag = readFileSync(join(here, "../src/clerkFlag.js"), "utf8");
+  assert.match(flag, /\/__clerk/);
+  const vite = readFileSync(join(here, "../vite.config.js"), "utf8");
+  assert.match(vite, /"\/__clerk"/);
+  assert.doesNotMatch(vite, /envPrefix:[\s\S]*CLERK_/);
+  const example = readFileSync(join(here, "../.env.example"), "utf8");
+  assert.match(example, /CLERK_SECRET_KEY=/);
+  assert.match(example, /VITE_CLERK_PROXY_URL=/);
+  const { clerkFapiDest, clerkFapiHeaders } = await import("../clerkFapi.js");
+  assert.equal(
+    clerkFapiDest("https://akilli-orman-gozlemcisi-software.vercel.app/__clerk/v1/environment").href,
+    "https://frontend-api.clerk.dev/v1/environment",
+  );
+  assert.equal(
+    clerkFapiDest(
+      "https://akilli-orman-gozlemcisi-software.vercel.app/__clerk/npm/@clerk/clerk-js@6/dist/clerk.browser.js",
+    ).href,
+    "https://frontend-api.clerk.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js",
+  );
+  assert.equal(
+    clerkFapiDest("https://akilli-orman-gozlemcisi-software.vercel.app/api/clerk-proxy/v1/environment").href,
+    "https://frontend-api.clerk.dev/v1/environment",
+  );
+  assert.equal(
+    clerkFapiDest("https://akilli-orman-gozlemcisi-software.vercel.app/__clerk//evil.example/v1").origin,
+    "https://frontend-api.clerk.dev",
+  );
+  const v6 = clerkFapiHeaders(
+    new Request("https://akilli-orman-gozlemcisi-software.vercel.app/__clerk/v1/environment", {
+      headers: { "x-real-ip": "2001:db8::1" },
+    }),
+    "sk_placeholder",
+  );
+  assert.equal(v6.get("X-Forwarded-For"), "2001:db8::1");
+});
+
 test("gizlilik and cerezler routes are public", () => {
   const here = dirname(fileURLToPath(import.meta.url));
   const app = readFileSync(join(here, "../src/App.jsx"), "utf8");

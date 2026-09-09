@@ -2,7 +2,7 @@ import { defineConfig, loadEnv } from "vite";
 import react from "@vitejs/plugin-react";
 
 export default defineConfig(({ mode }) => {
-  const env = loadEnv(mode, process.cwd(), ["VITE_", "PI_", "NEXT_PUBLIC_"]);
+  const env = loadEnv(mode, process.cwd(), ["VITE_", "PI_", "NEXT_PUBLIC_", "CLERK_"]);
   const restTarget = env.VITE_SUPABASE_URL || "";
   const chatTarget = String(env.PI_CHAT_URL || "").trim();
   const proxy = {
@@ -23,6 +23,22 @@ export default defineConfig(({ mode }) => {
           },
         }
       : {}),
+    "/__clerk": {
+      target: "https://frontend-api.clerk.dev",
+      changeOrigin: true,
+      rewrite: (path) => path.replace(/^\/__clerk/, "") || "/",
+      configure: (httpProxy) => {
+        httpProxy.on("proxyReq", (proxyReq) => {
+          proxyReq.setHeader(
+            "Clerk-Proxy-Url",
+            "https://akilli-orman-gozlemcisi-software.vercel.app/__clerk",
+          );
+          const secret = env.CLERK_SECRET_KEY || process.env.CLERK_SECRET_KEY || "";
+          if (secret) proxyReq.setHeader("Clerk-Secret-Key", secret);
+          proxyReq.setHeader("X-Forwarded-For", "127.0.0.1");
+        });
+      },
+    },
   };
 
   return {

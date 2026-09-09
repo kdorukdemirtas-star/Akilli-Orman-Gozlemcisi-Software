@@ -4,12 +4,13 @@ import { BrowserRouter } from "react-router-dom";
 import { ClerkProvider } from "@clerk/react";
 import "leaflet/dist/leaflet.css";
 import App from "./App.jsx";
-import { clerkPublishableKey } from "./clerkFlag.js";
+import { clerkPublishableKey, clerkProxyUrl } from "./clerkFlag.js";
 import { ErrorBoundary } from "./ErrorBoundary.jsx";
 import { registerPwa } from "./pwa.js";
 import "./index.css";
 
 const clerkKey = clerkPublishableKey();
+const proxyUrl = clerkProxyUrl() || undefined;
 const tree = (
   <ErrorBoundary>
     <BrowserRouter>
@@ -21,7 +22,12 @@ const tree = (
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     {clerkKey ? (
-      <ClerkProvider publishableKey={clerkKey} afterSignOutUrl="/" telemetry={false}>
+      <ClerkProvider
+        publishableKey={clerkKey}
+        afterSignOutUrl="/"
+        telemetry={false}
+        proxyUrl={proxyUrl}
+      >
         {tree}
       </ClerkProvider>
     ) : (

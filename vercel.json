@@ -1,6 +1,10 @@
 {
   "rewrites": [
     {
+      "source": "/__clerk/:path*",
+      "destination": "/api/clerk-proxy/:path*"
+    },
+    {
       "source": "/v1/:path*",
       "destination": "https://year-cable-events-parking.trycloudflare.com/v1/:path*"
     },

@@ -3,6 +3,11 @@ export function clerkPublishableKey() {
   return raw.startsWith("pk_") ? raw : "";
 }
 
+export function clerkProxyUrl() {
+  const key = clerkPublishableKey();
+  return key.startsWith("pk_") && !key.startsWith("pk_test_") ? "/__clerk" : "";
+}
+
 export function useClerkFlag() {
   return Boolean(clerkPublishableKey());
 }
