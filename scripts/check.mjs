@@ -607,11 +607,15 @@ test("production Clerk Frontend API is proxied through /__clerk", async () => {
   assert.doesNotMatch(sw, /aog-shell-v4/);
   assert.match(proxy + fapi, /frontend-api\.clerk\.dev/);
   assert.doesNotMatch(proxy + fapi, /sk_live_|sk_test_/);
-  const main = readFileSync(join(here, "../src/main.jsx"), "utf8");
-  assert.match(main, /proxyUrl=\{proxyUrl\}/);
-  assert.doesNotMatch(main, /CLERK_SECRET_KEY/);
   const flag = readFileSync(join(here, "../src/clerkFlag.js"), "utf8");
   assert.match(flag, /\/__clerk/);
+  assert.match(flag, /cdn\.jsdelivr\.net/);
+  const vercelCsp = readFileSync(join(here, "../vercel.json"), "utf8");
+  assert.match(vercelCsp, /cdn\.jsdelivr\.net/);
+  const main = readFileSync(join(here, "../src/main.jsx"), "utf8");
+  assert.match(main, /proxyUrl=\{proxyUrl\}/);
+  assert.match(main, /clerkJSUrl=\{clerkJSUrl\}/);
+  assert.doesNotMatch(main, /CLERK_SECRET_KEY/);
   const vite = readFileSync(join(here, "../vite.config.js"), "utf8");
   assert.match(vite, /"\/__clerk"/);
   assert.doesNotMatch(vite, /envPrefix:[\s\S]*CLERK_/);

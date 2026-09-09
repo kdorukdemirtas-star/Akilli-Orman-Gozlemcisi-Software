@@ -8,6 +8,12 @@ export function clerkProxyUrl() {
   return key.startsWith("pk_") && !key.startsWith("pk_test_") ? "/__clerk" : "";
 }
 
+export function clerkJsUrl() {
+  return clerkProxyUrl()
+    ? "https://cdn.jsdelivr.net/npm/@clerk/clerk-js@6/dist/clerk.browser.js"
+    : "";
+}
+
 export function useClerkFlag() {
   return Boolean(clerkPublishableKey());
 }
