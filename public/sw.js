@@ -1,4 +1,4 @@
-const CACHE = "aog-shell-v10";
+const CACHE = "aog-shell-v11";
 const SHELL = [
   "/",
   "/cihaz",
@@ -38,10 +38,7 @@ self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return;
   const url = new URL(event.request.url);
   if (url.origin !== self.location.origin) return;
-  if (bypass(url)) {
-    event.respondWith(fetch(event.request));
-    return;
-  }
+  if (bypass(url)) return;
   event.respondWith(
     fetch(event.request)
       .then((res) => {

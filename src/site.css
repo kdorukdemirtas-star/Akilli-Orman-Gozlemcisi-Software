@@ -1902,6 +1902,18 @@ html[data-surface="ha"] .qr-mark {
 .clerk-screen .cl-card {
   margin-inline: auto;
 }
+.clerk-github {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  margin: 0 0 var(--space-md);
+}
+.clerk-github-mount {
+  width: 100%;
+}
+.auth-github {
+  min-width: 14rem;
+}
 
 [data-localization-key="unstable__developmentFooter"],
 .cl-internal-b3fm6y {

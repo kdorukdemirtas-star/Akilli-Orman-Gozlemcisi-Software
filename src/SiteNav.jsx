@@ -1,6 +1,7 @@
 import { Fragment, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
 import { SignInButton, SignUpButton, UserButton, useUser } from "@clerk/react";
+import { GithubInClerk } from "./GithubAuth.jsx";
 import { isStandaloneDisplay } from "./pwa.js";
 import { clerkAppearance, useClerkFlag } from "./clerkFlag.js";
 import { CookieBanner, FontConsent } from "./CookieBanner.jsx";
@@ -35,6 +36,7 @@ function ClerkButtons() {
           Giriş
         </button>
       </SignInButton>
+      <GithubInClerk />
       <SignUpButton mode="modal" appearance={clerkAppearance}>
         <button type="button" className="hit">
           Kayıt
