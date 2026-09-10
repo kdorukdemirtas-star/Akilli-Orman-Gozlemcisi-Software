@@ -1877,6 +1877,25 @@ html[data-surface="ha"] .qr-mark {
   font-size: var(--text-body);
   line-height: 1.55;
 }
+.coat-hero-auth {
+  grid-template-columns: 1fr;
+  justify-items: center;
+  text-align: center;
+}
+.coat-hero-auth .coat-hero-copy {
+  width: min(42ch, 100%);
+}
+.coat-hero-auth .coat-hero-copy p {
+  margin-inline: auto;
+}
+.coat-hero-auth .nav-auth {
+  justify-content: center;
+  width: 100%;
+}
+
+[data-localization-key="unstable__developmentFooter"] {
+  display: none !important;
+}
 .coat-stage {
   display: grid;
   grid-template-columns: 7.5rem minmax(0, 1fr);

@@ -25,6 +25,7 @@ export const clerkAppearance = {
     unsafe_disableDevelopmentModeWarnings: true,
   },
   elements: {
+    footer: { display: "none" },
     socialButtonsIconButton__google: { display: "none" },
     socialButtonsIconButton__microsoft: { display: "none" },
     socialButtonsBlockButton__google: { display: "none" },

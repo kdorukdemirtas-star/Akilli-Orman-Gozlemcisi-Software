@@ -1,7 +1,7 @@
 import { SignInButton, SignUpButton, useUser } from "@clerk/react";
 import { GithubSignIn } from "./GithubAuth.jsx";
 import { Shell } from "./SiteNav.jsx";
-import { useClerkFlag } from "./clerkFlag.js";
+import { clerkAppearance, useClerkFlag } from "./clerkFlag.js";
 import "./site.css";
 
 export function RequireAuth({
@@ -49,25 +49,25 @@ function SignedGate({ children, product, title, lead }) {
     return (
       <Shell product={product}>
         <article className="coat-page">
-          <header className="coat-hero">
+          <header className="coat-hero coat-hero-auth">
             <div className="coat-hero-copy">
               <h1>{title}</h1>
               <p>{lead}</p>
             </div>
+            <p className="nav-auth">
+              <SignInButton mode="modal" appearance={clerkAppearance}>
+                <button type="button" className="hit ghost">
+                  Giriş
+                </button>
+              </SignInButton>
+              <GithubSignIn />
+              <SignUpButton mode="modal" appearance={clerkAppearance}>
+                <button type="button" className="hit">
+                  Kayıt
+                </button>
+              </SignUpButton>
+            </p>
           </header>
-          <p className="nav-auth">
-            <SignInButton mode="modal">
-              <button type="button" className="hit ghost">
-                Giriş
-              </button>
-            </SignInButton>
-            <GithubSignIn />
-            <SignUpButton mode="modal">
-              <button type="button" className="hit">
-                Kayıt
-              </button>
-            </SignUpButton>
-          </p>
         </article>
       </Shell>
     );

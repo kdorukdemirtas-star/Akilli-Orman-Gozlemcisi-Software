@@ -502,6 +502,8 @@ test("chat kips hide model names and map tokens", () => {
   const gate = readFileSync(join(here, "../src/RequireAuth.jsx"), "utf8");
   assert.match(gate, /SignUpButton/);
   assert.match(gate, /GithubSignIn/);
+  assert.match(gate, /coat-hero-auth/);
+  assert.match(gate, /appearance=\{clerkAppearance\}/);
   const github = readFileSync(join(here, "../src/GithubAuth.jsx"), "utf8");
   assert.match(github, /oauth_github/);
   assert.match(app, /sso-callback/);
@@ -609,8 +611,8 @@ test("production Clerk Frontend API is proxied through /__clerk", async () => {
   assert.match(edge, /matcher: "\/__clerk\/:path\*"/);
   assert.match(edge, /process\.env\.CLERK_SECRET_KEY/);
   assert.match(sw, /pathname\.startsWith\("\/__clerk"\)/);
-  assert.match(sw, /aog-shell-v7/);
-  assert.doesNotMatch(sw, /aog-shell-v6/);
+  assert.match(sw, /aog-shell-v8/);
+  assert.doesNotMatch(sw, /aog-shell-v7/);
   assert.match(proxy + fapi, /frontend-api\.clerk\.dev/);
   assert.doesNotMatch(proxy + fapi, /sk_live_|sk_test_/);
   const flag = readFileSync(join(here, "../src/clerkFlag.js"), "utf8");
@@ -619,8 +621,12 @@ test("production Clerk Frontend API is proxied through /__clerk", async () => {
   assert.match(flag, /@clerk\/clerk-js@6/);
   assert.match(flag, /@clerk\/ui@1/);
   assert.match(flag, /unsafe_disableDevelopmentModeWarnings/);
+  assert.match(flag, /footer: \{ display: "none" \}/);
   assert.match(flag, /socialButtonsIconButton__google/);
   assert.match(flag, /socialButtonsIconButton__microsoft/);
+  const css = readFileSync(join(here, "../src/site.css"), "utf8");
+  assert.match(css, /\.coat-hero-auth/);
+  assert.match(css, /unstable__developmentFooter/);
   const vercelCsp = readFileSync(join(here, "../vercel.json"), "utf8");
   assert.match(vercelCsp, /cdn\.jsdelivr\.net/);
   const main = readFileSync(join(here, "../src/main.jsx"), "utf8");

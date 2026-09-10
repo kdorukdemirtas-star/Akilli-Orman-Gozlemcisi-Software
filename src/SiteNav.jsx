@@ -3,7 +3,7 @@ import { Link, NavLink, useLocation } from "react-router-dom";
 import { SignInButton, SignUpButton, UserButton, useUser } from "@clerk/react";
 import { GithubSignIn } from "./GithubAuth.jsx";
 import { isStandaloneDisplay } from "./pwa.js";
-import { useClerkFlag } from "./clerkFlag.js";
+import { clerkAppearance, useClerkFlag } from "./clerkFlag.js";
 import { CookieBanner, FontConsent } from "./CookieBanner.jsx";
 import { DESKTOP_TABS, NAV_PACKS, overlayLinks } from "./navPacks.js";
 
@@ -31,13 +31,13 @@ function ClerkButtons() {
   if (isSignedIn) return <UserButton afterSignOutUrl="/" />;
   return (
     <div className="nav-auth">
-      <SignInButton mode="modal">
+      <SignInButton mode="modal" appearance={clerkAppearance}>
         <button type="button" className="hit ghost">
           Giriş
         </button>
       </SignInButton>
       <GithubSignIn />
-      <SignUpButton mode="modal">
+      <SignUpButton mode="modal" appearance={clerkAppearance}>
         <button type="button" className="hit">
           Kayıt
         </button>
