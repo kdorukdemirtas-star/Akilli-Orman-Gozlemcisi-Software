@@ -1,4 +1,4 @@
-const CACHE = "aog-shell-v5";
+const CACHE = "aog-shell-v6";
 const SHELL = [
   "/",
   "/cihaz",

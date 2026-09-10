@@ -10,13 +10,7 @@ export function clerkProxyUrl() {
 
 export function clerkJsUrl() {
   return clerkProxyUrl()
-    ? "https://cdn.jsdelivr.net/npm/@clerk/clerk-js@6/dist/clerk.browser.js"
-    : "";
-}
-
-export function clerkUiUrl() {
-  return clerkProxyUrl()
-    ? "https://cdn.jsdelivr.net/npm/@clerk/ui@1/dist/ui.browser.js"
+    ? "https://cdn.jsdelivr.net/npm/@clerk/clerk-js@6.15.1/dist/clerk.browser.js"
     : "";
 }
 
