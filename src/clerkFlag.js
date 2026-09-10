@@ -22,10 +22,22 @@ export function clerkUiUrl() {
 
 export const clerkAppearance = {
   layout: {
+    socialButtonsPlacement: "top",
+    socialButtonsVariant: "blockButton",
     unsafe_disableDevelopmentModeWarnings: true,
   },
   elements: {
     footer: { display: "none" },
+    modalBackdrop: {
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    modalContent: {
+      margin: "auto",
+    },
+    socialButtons: {
+      justifyContent: "center",
+    },
     socialButtonsIconButton__google: { display: "none" },
     socialButtonsIconButton__microsoft: { display: "none" },
     socialButtonsBlockButton__google: { display: "none" },

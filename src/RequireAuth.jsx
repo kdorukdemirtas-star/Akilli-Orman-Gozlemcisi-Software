@@ -54,19 +54,21 @@ function SignedGate({ children, product, title, lead }) {
               <h1>{title}</h1>
               <p>{lead}</p>
             </div>
-            <p className="nav-auth">
-              <SignInButton mode="modal" appearance={clerkAppearance}>
-                <button type="button" className="hit ghost">
-                  Giriş
-                </button>
-              </SignInButton>
-              <GithubSignIn />
-              <SignUpButton mode="modal" appearance={clerkAppearance}>
-                <button type="button" className="hit">
-                  Kayıt
-                </button>
-              </SignUpButton>
-            </p>
+            <div className="auth-gate">
+              <GithubSignIn className="hit auth-github" />
+              <p className="nav-auth">
+                <SignInButton mode="modal" appearance={clerkAppearance}>
+                  <button type="button" className="hit ghost">
+                    Giriş
+                  </button>
+                </SignInButton>
+                <SignUpButton mode="modal" appearance={clerkAppearance}>
+                  <button type="button" className="hit">
+                    Kayıt
+                  </button>
+                </SignUpButton>
+              </p>
+            </div>
           </header>
         </article>
       </Shell>
