@@ -506,7 +506,7 @@ test("chat kips hide model names and map tokens", () => {
   assert.match(gate, /appearance=\{clerkAppearance\}/);
   const github = readFileSync(join(here, "../src/GithubAuth.jsx"), "utf8");
   assert.match(github, /oauth_github/);
-  assert.match(github, /createPortal/);
+  assert.match(github, /area === "modal"/);
   assert.match(app, /sso-callback/);
   assert.match(app, /AuthenticateWithRedirectCallback/);
   assert.doesNotMatch(gate, /CLERK_SECRET_KEY/);
@@ -676,6 +676,8 @@ test("production Clerk Frontend API is proxied through /__clerk", async () => {
     new Headers({
       "access-control-allow-origin": "*",
       "access-control-allow-credentials": "true",
+      "content-encoding": "br",
+      "content-security-policy": "default-src 'none'",
       Location: "https://frontend-api.clerk.dev/npm/@clerk/clerk-js@6.31.0/dist/clerk.browser.js",
     }),
     new Request("https://akilli-orman-gozlemcisi-software.vercel.app/__clerk/npm/x", {
@@ -684,6 +686,8 @@ test("production Clerk Frontend API is proxied through /__clerk", async () => {
   );
   assert.equal(cors.get("Access-Control-Allow-Origin"), "https://akilli-orman-gozlemcisi-software.vercel.app");
   assert.equal(cors.get("Access-Control-Allow-Credentials"), "true");
+  assert.equal(cors.get("content-encoding"), null);
+  assert.equal(cors.get("content-security-policy"), null);
   assert.equal(
     cors.get("Location"),
     "https://akilli-orman-gozlemcisi-software.vercel.app/__clerk/npm/@clerk/clerk-js@6.31.0/dist/clerk.browser.js",

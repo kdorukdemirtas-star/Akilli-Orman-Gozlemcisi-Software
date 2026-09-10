@@ -2,15 +2,15 @@ import { useClerk } from "@clerk/react";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 
-export function GithubInClerk() {
+export function GithubInClerk({ area = "page" }) {
   const clerk = useClerk();
   const [host, setHost] = useState(null);
+  const selector =
+    area === "modal" ? ".cl-modalContent .cl-main" : ".clerk-screen .cl-main";
 
   useEffect(() => {
     function pick() {
-      const main =
-        document.querySelector(".clerk-screen .cl-main") ||
-        document.querySelector(".cl-modalContent .cl-main");
+      const main = document.querySelector(selector);
       if (!main) {
         setHost(null);
         return;
@@ -26,7 +26,7 @@ export function GithubInClerk() {
     pick();
     const id = setInterval(pick, 250);
     return () => clearInterval(id);
-  }, []);
+  }, [selector]);
 
   if (!host || !clerk.loaded) return null;
 

@@ -18,6 +18,15 @@ const CORS_DROP = [
   "access-control-expose-headers",
 ];
 
+const RESPONSE_DROP = [
+  ...CORS_DROP,
+  "content-encoding",
+  "content-length",
+  "transfer-encoding",
+  "content-security-policy",
+  "content-security-policy-report-only",
+];
+
 const FAPI_ORIGIN = new URL(CLERK_FAPI).origin;
 
 export function clerkFapiDest(requestUrl) {
@@ -82,7 +91,7 @@ export function clerkFapiLocation(location) {
 
 export function clerkFapiResponseHeaders(upstream, request) {
   const out = new Headers(upstream);
-  for (const name of CORS_DROP) out.delete(name);
+  for (const name of RESPONSE_DROP) out.delete(name);
   const origin =
     request.headers.get("origin") || "https://akilli-orman-gozlemcisi-software.vercel.app";
   out.set("Access-Control-Allow-Origin", origin);

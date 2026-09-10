@@ -57,7 +57,7 @@ function SignedGate({ children, product, title, lead }) {
               <p>{lead}</p>
             </div>
             <div className="clerk-screen">
-              <GithubInClerk />
+              <GithubInClerk area="page" />
               <SignIn
                 routing="hash"
                 appearance={clerkAppearance}

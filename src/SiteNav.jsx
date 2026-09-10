@@ -36,7 +36,7 @@ function ClerkButtons() {
           Giriş
         </button>
       </SignInButton>
-      <GithubInClerk />
+      <GithubInClerk area="modal" />
       <SignUpButton mode="modal" appearance={clerkAppearance}>
         <button type="button" className="hit">
           Kayıt
