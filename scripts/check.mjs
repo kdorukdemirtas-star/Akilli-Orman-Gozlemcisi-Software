@@ -610,7 +610,7 @@ test("production Clerk Frontend API is proxied through /__clerk", async () => {
   const flag = readFileSync(join(here, "../src/clerkFlag.js"), "utf8");
   assert.match(flag, /\/__clerk/);
   assert.match(flag, /cdn\.jsdelivr\.net/);
-  assert.match(flag, /@clerk\/clerk-js@6\.15/);
+  assert.match(flag, /@clerk\/clerk-js@6/);
   assert.doesNotMatch(flag, /@clerk\/ui/);
   const vercelCsp = readFileSync(join(here, "../vercel.json"), "utf8");
   assert.match(vercelCsp, /cdn\.jsdelivr\.net/);

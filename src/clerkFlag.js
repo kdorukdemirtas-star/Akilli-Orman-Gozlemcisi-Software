@@ -10,7 +10,7 @@ export function clerkProxyUrl() {
 
 export function clerkJsUrl() {
   return clerkProxyUrl()
-    ? "https://cdn.jsdelivr.net/npm/@clerk/clerk-js@6.15.1/dist/clerk.browser.js"
+    ? "https://cdn.jsdelivr.net/npm/@clerk/clerk-js@6/dist/clerk.browser.js"
     : "";
 }
 
