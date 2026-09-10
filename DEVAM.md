@@ -42,8 +42,8 @@ Yazılım vekili: `/home/demir/aog-pi/chat_proxy.py`, gerçekler `/home/demir/ao
 - Production instance: `ins_3J6p8v8hOCnuo6LHPERH3m0Zjyi`
 - Geliştirme instance ayrı (`ins_3J6jomofFAhKuQ7dEsmpjfGxswf`); yarın production’a bak
 - FAPI: same-origin `/__clerk` → Edge `api/clerk-proxy` → `https://frontend-api.clerk.dev`
-- clerk-js: jsDelivr `@clerk/clerk-js@6`. `@clerk/react` 6.15 `clerkJSUrl` yok sayar; `__internal_clerkJSUrl` gerekir. Ayrı `@clerk/ui` yok (Google/Microsoft ikonlarını zorluyordu)
-- SW: `aog-shell-v6` (`/__clerk`, `/api/`, `/v1/` bypass)
+- clerk-js + UI: jsDelivr (`@clerk/clerk-js@6`, `@clerk/ui@1`). Ayrı UI şart; FAPI `/npm` yolu asistanı asılı bırakıyor. Google/Microsoft butonları `clerkAppearance` ile gizlenir; Development mode uyarısı da.
+- SW: `aog-shell-v7` (`/__clerk`, `/api/`, `/v1/` bypass)
 - Vercel env adları: `VITE_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`, `VITE_CLERK_PROXY_URL=/__clerk`, `VITE_CLERK_JS_URL`. Değerleri git’e koyma
 
 Yalnız GitHub SSO açık (Clerk dashboard’da). Google ve Microsoft `enabled: false`. Secret’ler git’te yok.

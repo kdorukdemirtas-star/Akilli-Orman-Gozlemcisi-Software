@@ -14,6 +14,24 @@ export function clerkJsUrl() {
     : "";
 }
 
+export function clerkUiUrl() {
+  return clerkProxyUrl()
+    ? "https://cdn.jsdelivr.net/npm/@clerk/ui@1/dist/ui.browser.js"
+    : "";
+}
+
+export const clerkAppearance = {
+  layout: {
+    unsafe_disableDevelopmentModeWarnings: true,
+  },
+  elements: {
+    socialButtonsIconButton__google: { display: "none" },
+    socialButtonsIconButton__microsoft: { display: "none" },
+    socialButtonsBlockButton__google: { display: "none" },
+    socialButtonsBlockButton__microsoft: { display: "none" },
+  },
+};
+
 export function useClerkFlag() {
   return Boolean(clerkPublishableKey());
 }
