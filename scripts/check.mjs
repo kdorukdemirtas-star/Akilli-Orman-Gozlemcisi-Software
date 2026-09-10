@@ -498,15 +498,12 @@ test("chat kips hide model names and map tokens", () => {
   const nav = readFileSync(join(here, "../src/SiteNav.jsx"), "utf8");
   assert.match(nav, /SignUpButton/);
   assert.match(nav, /SignInButton/);
-  assert.match(nav, /GithubSignIn/);
+  assert.doesNotMatch(nav, /GithubSignIn/);
   const gate = readFileSync(join(here, "../src/RequireAuth.jsx"), "utf8");
-  assert.match(gate, /SignUpButton/);
-  assert.match(gate, /GithubSignIn/);
-  assert.match(gate, /auth-gate/);
-  assert.match(gate, /auth-github/);
+  assert.match(gate, /<SignIn/);
+  assert.match(gate, /clerk-screen/);
   assert.match(gate, /appearance=\{clerkAppearance\}/);
-  const github = readFileSync(join(here, "../src/GithubAuth.jsx"), "utf8");
-  assert.match(github, /oauth_github/);
+  assert.doesNotMatch(gate, /GithubSignIn/);
   assert.match(app, /sso-callback/);
   assert.match(app, /AuthenticateWithRedirectCallback/);
   assert.doesNotMatch(gate, /CLERK_SECRET_KEY/);
@@ -612,8 +609,8 @@ test("production Clerk Frontend API is proxied through /__clerk", async () => {
   assert.match(edge, /matcher: "\/__clerk\/:path\*"/);
   assert.match(edge, /process\.env\.CLERK_SECRET_KEY/);
   assert.match(sw, /pathname\.startsWith\("\/__clerk"\)/);
-  assert.match(sw, /aog-shell-v9/);
-  assert.doesNotMatch(sw, /aog-shell-v8/);
+  assert.match(sw, /aog-shell-v10/);
+  assert.doesNotMatch(sw, /aog-shell-v9/);
   assert.match(proxy + fapi, /frontend-api\.clerk\.dev/);
   assert.doesNotMatch(proxy + fapi, /sk_live_|sk_test_/);
   const flag = readFileSync(join(here, "../src/clerkFlag.js"), "utf8");
@@ -626,11 +623,12 @@ test("production Clerk Frontend API is proxied through /__clerk", async () => {
   assert.match(flag, /socialButtonsIconButton__google/);
   assert.match(flag, /socialButtonsIconButton__microsoft/);
   const css = readFileSync(join(here, "../src/site.css"), "utf8");
-  assert.match(css, /\.auth-gate/);
+  assert.match(css, /\.clerk-screen/);
   assert.match(css, /\.cl-modalBackdrop/);
   assert.match(css, /unstable__developmentFooter/);
   const vercelCsp = readFileSync(join(here, "../vercel.json"), "utf8");
   assert.match(vercelCsp, /cdn\.jsdelivr\.net/);
+  assert.match(vercelCsp, /https:\/\/github\.com/);
   const main = readFileSync(join(here, "../src/main.jsx"), "utf8");
   assert.match(main, /proxyUrl=\{proxyUrl\}/);
   assert.match(main, /clerkJSUrl=\{clerkJSUrl\}/);
@@ -644,7 +642,7 @@ test("production Clerk Frontend API is proxied through /__clerk", async () => {
   const example = readFileSync(join(here, "../.env.example"), "utf8");
   assert.match(example, /CLERK_SECRET_KEY=/);
   assert.match(example, /VITE_CLERK_PROXY_URL=/);
-  const { clerkFapiDest, clerkFapiHeaders, clerkFapiResponseHeaders } = await import("../clerkFapi.js");
+  const { clerkFapiDest, clerkFapiHeaders, clerkFapiRequestInit, clerkFapiResponseHeaders } = await import("../clerkFapi.js");
   assert.equal(
     clerkFapiDest("https://akilli-orman-gozlemcisi-software.vercel.app/__clerk/v1/environment").href,
     "https://frontend-api.clerk.dev/v1/environment",
@@ -686,6 +684,24 @@ test("production Clerk Frontend API is proxied through /__clerk", async () => {
     cors.get("Location"),
     "https://akilli-orman-gozlemcisi-software.vercel.app/__clerk/npm/@clerk/clerk-js@6.31.0/dist/clerk.browser.js",
   );
+  assert.match(proxy + edge, /clerkFapiRequestInit/);
+  const posted = await clerkFapiRequestInit(
+    new Request("https://akilli-orman-gozlemcisi-software.vercel.app/__clerk/v1/client/sign_ins", {
+      method: "POST",
+      headers: { "content-type": "application/x-www-form-urlencoded" },
+      body: "strategy=oauth_github",
+    }),
+    "sk_placeholder",
+  );
+  assert.equal(posted.method, "POST");
+  assert.equal(posted.redirect, "manual");
+  assert.ok(posted.body instanceof ArrayBuffer);
+  assert.equal(new TextDecoder().decode(posted.body), "strategy=oauth_github");
+  const got = await clerkFapiRequestInit(
+    new Request("https://akilli-orman-gozlemcisi-software.vercel.app/__clerk/v1/environment"),
+    "sk_placeholder",
+  );
+  assert.equal(got.body, undefined);
 });
 
 test("gizlilik and cerezler routes are public", () => {

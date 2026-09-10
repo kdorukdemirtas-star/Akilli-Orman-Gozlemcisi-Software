@@ -1,4 +1,4 @@
-import { clerkFapiDest, clerkFapiHeaders, clerkFapiResponseHeaders } from "./clerkFapi.js";
+import { clerkFapiDest, clerkFapiRequestInit, clerkFapiResponseHeaders } from "./clerkFapi.js";
 
 export const config = {
   matcher: "/__clerk/:path*",
@@ -17,17 +17,7 @@ export default async function middleware(request) {
     return new Response("Clerk dest yok.", { status: 400 });
   }
 
-  const headers = clerkFapiHeaders(request, secret);
-  const init = {
-    method: request.method,
-    headers,
-    redirect: "manual",
-  };
-  if (request.method !== "GET" && request.method !== "HEAD") {
-    init.body = request.body;
-  }
-
-  const up = await fetch(dest, init);
+  const up = await fetch(dest, await clerkFapiRequestInit(request, secret));
   return new Response(up.body, {
     status: up.status,
     headers: clerkFapiResponseHeaders(up.headers, request),

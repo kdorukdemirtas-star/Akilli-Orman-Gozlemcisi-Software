@@ -1892,19 +1892,18 @@ html[data-surface="ha"] .qr-mark {
   justify-content: center;
   width: 100%;
 }
-.auth-gate {
+.clerk-screen {
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--space-md);
+  justify-content: center;
   width: 100%;
 }
-.auth-github {
-  min-width: 14rem;
+.clerk-screen .cl-rootBox,
+.clerk-screen .cl-cardBox,
+.clerk-screen .cl-card {
+  margin-inline: auto;
 }
 
 [data-localization-key="unstable__developmentFooter"],
-.cl-footer,
 .cl-internal-b3fm6y {
   display: none !important;
 }
@@ -1912,9 +1911,12 @@ html[data-surface="ha"] .qr-mark {
   align-items: center !important;
   justify-content: center !important;
 }
-.cl-socialButtons,
-.cl-socialButtonsProviderIcon__github {
+.cl-socialButtons {
   justify-content: center !important;
+}
+.cl-socialButtonsIconButton,
+.cl-socialButtonsBlockButton {
+  margin-inline: auto;
 }
 .coat-stage {
   display: grid;

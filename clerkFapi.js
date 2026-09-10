@@ -58,6 +58,19 @@ export function clerkFapiHeaders(request, secret) {
   return headers;
 }
 
+export async function clerkFapiRequestInit(request, secret) {
+  const headers = clerkFapiHeaders(request, secret);
+  const init = {
+    method: request.method,
+    headers,
+    redirect: "manual",
+  };
+  if (request.method !== "GET" && request.method !== "HEAD") {
+    init.body = await request.arrayBuffer();
+  }
+  return init;
+}
+
 export function clerkFapiFollow(method, dest) {
   return method === "GET" && dest.pathname.startsWith("/npm/");
 }

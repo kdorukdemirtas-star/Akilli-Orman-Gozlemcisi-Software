@@ -1,5 +1,5 @@
-import { SignInButton, SignUpButton, useUser } from "@clerk/react";
-import { GithubSignIn } from "./GithubAuth.jsx";
+import { SignIn, useUser } from "@clerk/react";
+import { useLocation } from "react-router-dom";
 import { Shell } from "./SiteNav.jsx";
 import { clerkAppearance, useClerkFlag } from "./clerkFlag.js";
 import "./site.css";
@@ -36,6 +36,7 @@ export function RequireAuth({
 
 function SignedGate({ children, product, title, lead }) {
   const { isLoaded, isSignedIn } = useUser();
+  const location = useLocation();
   if (!isLoaded) {
     return (
       <Shell product={product} footer={false}>
@@ -54,20 +55,13 @@ function SignedGate({ children, product, title, lead }) {
               <h1>{title}</h1>
               <p>{lead}</p>
             </div>
-            <div className="auth-gate">
-              <GithubSignIn className="hit auth-github" />
-              <p className="nav-auth">
-                <SignInButton mode="modal" appearance={clerkAppearance}>
-                  <button type="button" className="hit ghost">
-                    Giriş
-                  </button>
-                </SignInButton>
-                <SignUpButton mode="modal" appearance={clerkAppearance}>
-                  <button type="button" className="hit">
-                    Kayıt
-                  </button>
-                </SignUpButton>
-              </p>
+            <div className="clerk-screen">
+              <SignIn
+                routing="hash"
+                appearance={clerkAppearance}
+                forceRedirectUrl={location.pathname}
+                fallbackRedirectUrl={location.pathname}
+              />
             </div>
           </header>
         </article>
