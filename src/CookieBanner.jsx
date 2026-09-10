@@ -74,7 +74,8 @@ export function CookieBanner() {
         <p id={titleId}>Çerez ve yurt dışı aktarım</p>
         <p>
           Zorunlu çerezler hesap ve sohbet içindir. Yazı tipi (Google) ve harita karosu
-          (OpenStreetMap) için 6698 / BTK açık rızası gerekir.{" "}
+          (OpenStreetMap) için 6698 / BTK açık rızası gerekir. Tercihi Çerezler sayfasından
+          değiştirirsin.{" "}
           <Link to="/gizlilik">Gizlilik</Link>
           {" · "}
           <Link to="/cerezler">Çerezler</Link>

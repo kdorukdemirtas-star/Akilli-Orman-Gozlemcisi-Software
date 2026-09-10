@@ -19,7 +19,12 @@ import { looksLikeInjection } from "../src/chatGuard.js";
 import { pairHref, parseStation, STATION_STORAGE_KEY } from "../src/stationPair.js";
 import { NAV_PACKS, DESKTOP_TABS } from "../src/navPacks.js";
 import { CONSENT_KEY, defaultConsent, hasConsent, readConsent, writeConsent } from "../src/consentStore.js";
-import { privacyBlob } from "../src/privacyCopy.js";
+import {
+  COOKIE_ROWS,
+  DATA_ROWS,
+  PROCESSOR_ROWS,
+  privacyBlob,
+} from "../src/privacyCopy.js";
 import { exportPersonalData, wipePersonalData } from "../src/accountData.js";
 
 test("parseStation accepts a raw station id", () => {
@@ -528,7 +533,44 @@ test("kvkk notice covers controllers, chats, cookies, and US sale ban", () => {
   assert.match(blob, /GDPR|GDPR \(AB\)/i);
   assert.match(blob, /satılmaz/);
   assert.match(blob, /Kaliforniya|CCPA/);
+  assert.match(blob, /md\.\s*10/);
+  assert.match(blob, /md\.\s*11/);
+  assert.match(blob, /taşınabilirlik/);
+  assert.match(blob, /30 gün/);
+  assert.match(blob, /aog-consent-v1/);
   assert.doesNotMatch(blob, /sertifikal|GDPR certified|ISO 27001/i);
+  assert.doesNotMatch(blob, /kvkk@|privacy@|dpo@/i);
+});
+
+test("privacy tables name keep times and processors", () => {
+  assert.ok(DATA_ROWS.length >= 6);
+  assert.ok(PROCESSOR_ROWS.some((row) => /Clerk/.test(row.name)));
+  assert.ok(COOKIE_ROWS.some((row) => /OpenStreetMap/.test(row.name)));
+  for (const row of [...DATA_ROWS, ...COOKIE_ROWS]) {
+    assert.ok(String(row.keep || "").trim());
+  }
+  for (const row of COOKIE_ROWS) {
+    assert.ok(row.name && row.kind && row.why);
+  }
+});
+
+test("gizlilik and cerezler pages use a toc, tables, and clerk appearance", () => {
+  const here = dirname(fileURLToPath(import.meta.url));
+  const giz = readFileSync(join(here, "../src/Gizlilik.jsx"), "utf8");
+  const cerez = readFileSync(join(here, "../src/Cerezler.jsx"), "utf8");
+  const table = readFileSync(join(here, "../src/legalUi.jsx"), "utf8");
+  assert.match(giz, /İçindekiler/);
+  assert.match(giz, /DATA_ROWS/);
+  assert.match(giz, /PROCESSOR_ROWS/);
+  assert.match(giz, /appearance=\{clerkAppearance\}/);
+  assert.match(giz, /Hesap okunuyor…/);
+  assert.match(cerez, /COOKIE_ROWS/);
+  assert.match(cerez, /caption=/);
+  assert.match(cerez, /openConsentPanel/);
+  assert.match(table, /<caption/);
+  assert.match(table, /scope="col"/);
+  assert.match(table, /scope="row"/);
+  assert.match(table, /data-label/);
 });
 
 test("optional cookies stay off until the visitor decides", () => {

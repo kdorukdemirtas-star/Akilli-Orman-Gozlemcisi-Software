@@ -2,10 +2,32 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { SignInButton, useUser } from "@clerk/react";
 import { exportPersonalData, wipePersonalData } from "./accountData.js";
-import { useClerkFlag } from "./clerkFlag.js";
-import { CONTROLLER, PRIVACY_SECTIONS } from "./privacyCopy.js";
+import { clerkAppearance, useClerkFlag } from "./clerkFlag.js";
+import {
+  CONTROLLER,
+  DATA_ROWS,
+  NOTICE_DATE,
+  PRIVACY_SECTIONS,
+  PROCESSOR_ROWS,
+} from "./privacyCopy.js";
+import { LegalSection, LegalTable } from "./legalUi.jsx";
 import { Shell } from "./SiteNav.jsx";
 import "./site.css";
+
+const DATA_COLUMNS = [
+  { key: "category", label: "Kategori" },
+  { key: "examples", label: "Örnek" },
+  { key: "purpose", label: "Amaç" },
+  { key: "basis", label: "Hukuki sebep" },
+  { key: "keep", label: "Saklama" },
+];
+
+const PROCESSOR_COLUMNS = [
+  { key: "name", label: "İşleyen" },
+  { key: "job", label: "Ne" },
+  { key: "where", label: "Nerede" },
+  { key: "note", label: "Not" },
+];
 
 function downloadDump(userId) {
   const blob = new Blob([JSON.stringify(exportPersonalData(userId), null, 2)], {
@@ -25,19 +47,19 @@ function SignedRights() {
   if (!isLoaded) {
     return (
       <p className="boot" role="status">
-        Hesap okunuyor.
+        Hesap okunuyor…
       </p>
     );
   }
   if (!isSignedIn) {
     return (
       <p className="nav-auth">
-        <SignInButton mode="modal">
+        <SignInButton mode="modal" appearance={clerkAppearance}>
           <button type="button" className="hit ghost">
             Giriş
           </button>
         </SignInButton>
-        Haklar için giriş gerekir.
+        İndirme ve silme için giriş gerekir. Soru için GitHub deposu yeter.
       </p>
     );
   }
@@ -100,14 +122,62 @@ export default function Gizlilik() {
             </p>
           </div>
         </header>
+        <dl className="legal-meta">
+          <dt>Güncelleme</dt>
+          <dd>{NOTICE_DATE}</dd>
+          <dt>Veri sorumlusu</dt>
+          <dd>{CONTROLLER.name}</dd>
+          <dt>Ürün</dt>
+          <dd>{CONTROLLER.product}</dd>
+          <dt>Başvuru</dt>
+          <dd>
+            Bu sayfadaki haklar ·{" "}
+            <a href={CONTROLLER.github}>GitHub</a>
+          </dd>
+        </dl>
+        <nav className="legal-toc" aria-labelledby="legal-toc-label">
+          <p id="legal-toc-label">İçindekiler</p>
+          <ol>
+            {PRIVACY_SECTIONS.map((row) => (
+              <li key={row.id}>
+                <a href={`#${row.id}`}>{row.title}</a>
+              </li>
+            ))}
+            <li>
+              <a href="#basvuru">Başvuru</a>
+            </li>
+          </ol>
+        </nav>
         {PRIVACY_SECTIONS.map((row) => (
-          <section key={row.id} id={row.id}>
-            <h2>{row.title}</h2>
-            <p>{row.body}</p>
-          </section>
+          <LegalSection
+            key={row.id}
+            id={row.id}
+            title={row.title}
+            paragraphs={row.paragraphs}
+            list={row.list}
+          >
+            {row.id === "neden" ? (
+              <LegalTable
+                caption="İşlenen kişisel veri kategorileri"
+                columns={DATA_COLUMNS}
+                rows={DATA_ROWS}
+              />
+            ) : null}
+            {row.id === "aktarim" ? (
+              <LegalTable
+                caption="İşleyenler ve aktarım"
+                columns={PROCESSOR_COLUMNS}
+                rows={PROCESSOR_ROWS}
+              />
+            ) : null}
+          </LegalSection>
         ))}
         <section id="basvuru">
           <h2>Başvuru</h2>
+          <p>
+            KVKK md. 13 başvurusu bu araçlarla veya GitHub üzerinden yapılır. Cevap süresi 30
+            gündür.
+          </p>
           <DataRights />
           <p>
             <Link to="/cerezler">Çerez bildirimi</Link>
