@@ -6,7 +6,7 @@
 
 1. Pi’de yığını ayağa kaldır (aşağıdaki komutlar).
 2. `aog-try-llm` logundan yeni `trycloudflare` hostname’ini oku. `vercel.json` içindeki `/v1` hedefi dönmüş olabilir; 502 olursa hedefi güncelle, commit, push.
-3. GitHub / Google / Microsoft OAuth uygulama kimliklerini Clerk production’a yaz. Turuncu **Development mode** `oauth_pending` yüzünden duruyor; `pk_live` zaten çalışıyor.
+3. GitHub OAuth Clerk production’da. Google ve Microsoft kapalı. Secret git’te yok.
 4. Güvenlik HIGH maddelerine dokunma (bu duraklamada bilinçli). Düzeltme ayrı iş.
 
 ## Pi (LAN `192.168.68.61`, kullanıcı `demir`)
@@ -46,7 +46,7 @@ Yazılım vekili: `/home/demir/aog-pi/chat_proxy.py`, gerçekler `/home/demir/ao
 - SW: `aog-shell-v5` (`/__clerk`, `/api/`, `/v1/` bypass)
 - Vercel env adları: `VITE_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`, `VITE_CLERK_PROXY_URL=/__clerk`, `VITE_CLERK_JS_URL`. Değerleri git’e koyma
 
-SSO bağlantıları açık, `client_id` / `client_secret` boş. `gh` mevcut yetkiyle GitHub OAuth App oluşturamıyor. Kullanıcı üç sağlayıcıda uygulama açıp Clerk’e yazar.
+Yalnız GitHub SSO açık (Clerk dashboard’da). Google ve Microsoft `enabled: false`. Secret’ler git’te yok.
 
 Homepage / origin:
 
@@ -67,9 +67,9 @@ Kimlikler girdikten sonra (değerleri sohbete yapıştırma):
 npx clerk config patch --instance ins_3J6p8v8hOCnuo6LHPERH3m0Zjyi --json '{"connection_oauth_github":{"enabled":true,"client_id":"…","client_secret":"…"}}'
 ```
 
-Aynı gövde `connection_oauth_google` ve `connection_oauth_microsoft` için. `clerk whoami` production’ı `null` gösterebilir; tam instance id kullan.
+`clerk whoami` production’ı `null` gösterebilir; tam instance id kullan.
 
-Doğrulama: `/asistan` → Giriş / Kayıt → GitHub, Google, Microsoft. `Clerk.loaded === true`, `pk_live_`. Turuncu banner SSO dolunca düşer.
+Doğrulama: `/asistan` → Giriş / Kayıt → yalnız GitHub. `Clerk.loaded === true`, `pk_live_`.
 
 ## Kilit ürün kuralları (rastgele değiştirme)
 
