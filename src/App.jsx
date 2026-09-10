@@ -1,5 +1,6 @@
 import { lazy, Suspense } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
+import { AuthenticateWithRedirectCallback } from "@clerk/react";
 import { Home } from "./Home.jsx";
 import { Device } from "./Device.jsx";
 import { Shell } from "./SiteNav.jsx";
@@ -147,6 +148,7 @@ export default function App() {
       <Route path="/cihaz/:kind" element={<CihazGate />} />
       <Route path="/yerel/ios" element={<Navigate to="/cihaz/ios" replace />} />
       <Route path="/yerel/android" element={<Navigate to="/cihaz/android" replace />} />
+      <Route path="/sso-callback" element={<AuthenticateWithRedirectCallback />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

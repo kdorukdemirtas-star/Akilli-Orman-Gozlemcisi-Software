@@ -1,4 +1,5 @@
 import { SignInButton, SignUpButton, useUser } from "@clerk/react";
+import { GithubSignIn } from "./GithubAuth.jsx";
 import { Shell } from "./SiteNav.jsx";
 import { useClerkFlag } from "./clerkFlag.js";
 import "./site.css";
@@ -60,6 +61,7 @@ function SignedGate({ children, product, title, lead }) {
                 Giriş
               </button>
             </SignInButton>
+            <GithubSignIn />
             <SignUpButton mode="modal">
               <button type="button" className="hit">
                 Kayıt
