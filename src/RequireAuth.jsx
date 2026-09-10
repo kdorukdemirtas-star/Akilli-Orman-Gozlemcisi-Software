@@ -1,6 +1,5 @@
 import { SignIn, useUser } from "@clerk/react";
 import { useLocation } from "react-router-dom";
-import { GithubInClerk } from "./GithubAuth.jsx";
 import { Shell } from "./SiteNav.jsx";
 import { clerkAppearance, useClerkFlag } from "./clerkFlag.js";
 import "./site.css";
@@ -57,7 +56,6 @@ function SignedGate({ children, product, title, lead }) {
               <p>{lead}</p>
             </div>
             <div className="clerk-screen">
-              <GithubInClerk area="page" />
               <SignIn
                 routing="hash"
                 appearance={clerkAppearance}

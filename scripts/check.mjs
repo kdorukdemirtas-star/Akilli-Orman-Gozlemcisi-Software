@@ -498,15 +498,12 @@ test("chat kips hide model names and map tokens", () => {
   const nav = readFileSync(join(here, "../src/SiteNav.jsx"), "utf8");
   assert.match(nav, /SignUpButton/);
   assert.match(nav, /SignInButton/);
-  assert.match(nav, /GithubInClerk/);
+  assert.doesNotMatch(nav, /GithubInClerk/);
   const gate = readFileSync(join(here, "../src/RequireAuth.jsx"), "utf8");
   assert.match(gate, /<SignIn/);
   assert.match(gate, /clerk-screen/);
-  assert.match(gate, /GithubInClerk/);
   assert.match(gate, /appearance=\{clerkAppearance\}/);
-  const github = readFileSync(join(here, "../src/GithubAuth.jsx"), "utf8");
-  assert.match(github, /oauth_github/);
-  assert.match(github, /area === "modal"/);
+  assert.doesNotMatch(gate, /GithubInClerk/);
   assert.match(app, /sso-callback/);
   assert.match(app, /AuthenticateWithRedirectCallback/);
   assert.doesNotMatch(gate, /CLERK_SECRET_KEY/);
