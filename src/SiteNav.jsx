@@ -137,6 +137,14 @@ export function SiteNav({ product = "demo" }) {
           >
             <span className="hex-face">Menü</span>
           </button>
+          <NavLink
+            to="/destek"
+            className={({ isActive }) =>
+              ["hud-support", isActive ? "is-on" : undefined].filter(Boolean).join(" ")
+            }
+          >
+            Destek
+          </NavLink>
         </div>
       </header>
       <dialog
@@ -207,6 +215,7 @@ export function SiteNav({ product = "demo" }) {
             </span>
             <Link to="/gizlilik">Gizlilik</Link>
             <Link to="/cerezler">Çerezler</Link>
+            <Link to="/destek">Destek</Link>
           </div>
         </div>
       </dialog>
@@ -223,6 +232,7 @@ export function SiteFooter() {
       <nav className="legal-end" aria-label="Yasal">
         <Link to="/gizlilik">Gizlilik</Link>
         <Link to="/cerezler">Çerezler</Link>
+        <Link to="/destek">Destek</Link>
       </nav>
     </footer>
   );

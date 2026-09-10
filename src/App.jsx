@@ -17,6 +17,7 @@ const Makine = lazy(() => import("./Makine.jsx"));
 const Pair = lazy(() => import("./Pair.jsx"));
 const Gizlilik = lazy(() => import("./Gizlilik.jsx"));
 const Cerezler = lazy(() => import("./Cerezler.jsx"));
+const Destek = lazy(() => import("./Destek.jsx"));
 
 function BoardFallback({ product }) {
   return (
@@ -141,6 +142,14 @@ export default function App() {
         element={
           <Suspense fallback={<PageFallback product="software" />}>
             <Cerezler />
+          </Suspense>
+        }
+      />
+      <Route
+        path="/destek"
+        element={
+          <Suspense fallback={<PageFallback product="software" />}>
+            <Destek />
           </Suspense>
         }
       />

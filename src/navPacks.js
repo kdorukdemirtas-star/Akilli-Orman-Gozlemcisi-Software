@@ -43,6 +43,13 @@ export const NAV_PACKS = [
     tabs: [{ to: "/cihaz", label: "Cihaz", tone: "tone-dev" }],
     specs: SPECS,
   },
+  {
+    id: "destek",
+    label: "Destek",
+    tone: "tone-muted",
+    tabs: [],
+    overlay: [{ to: "/destek", label: "Destek", tone: "tone-muted" }],
+  },
 ];
 
 export const DESKTOP_TABS = NAV_PACKS.flatMap((pack) => pack.tabs);

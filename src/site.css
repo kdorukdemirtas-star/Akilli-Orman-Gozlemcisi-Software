@@ -212,6 +212,10 @@
 .tone-dev {
   color: var(--color-ember);
 }
+.nav-pack.tone-muted,
+.tone-muted {
+  color: oklch(46% 0.01 145);
+}
 .nav-specs {
   margin: var(--space-md) 0 0;
   padding: 0;
@@ -1403,6 +1407,27 @@ html[data-surface="ha"] .qr-mark {
   min-width: 0;
   max-width: 100%;
   pointer-events: auto;
+}
+.hud-support {
+  display: grid;
+  place-items: center;
+  min-height: 48px;
+  padding: 0 var(--space-sm);
+  color: oklch(46% 0.01 145);
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
+  font-weight: 800;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.hud-support.is-on {
+  background: color-mix(in oklch, currentColor 16%, var(--color-paper));
+  box-shadow: inset 0 0 0 var(--rule-hair) color-mix(in oklch, currentColor 35%, transparent);
+  border-radius: var(--radius-pill);
+}
+.hud-support:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
 }
 .hud-end .nav-auth {
   justify-content: flex-end;

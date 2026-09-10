@@ -25,6 +25,7 @@ import {
   PROCESSOR_ROWS,
   privacyBlob,
 } from "../src/privacyCopy.js";
+import { destekBlob } from "../src/destekCopy.js";
 import { exportPersonalData, wipePersonalData } from "../src/accountData.js";
 
 test("parseStation accepts a raw station id", () => {
@@ -542,6 +543,19 @@ test("kvkk notice covers controllers, chats, cookies, and US sale ban", () => {
   assert.doesNotMatch(blob, /kvkk@|privacy@|dpo@/i);
 });
 
+test("destek copy refuses donations and points at the MIT repo", () => {
+  const blob = destekBlob();
+  assert.match(blob, /Akıllı Orman Gözlemcisi \(AOG\)/);
+  assert.match(blob, /Defenders Of Green \(DOG\)/);
+  assert.match(blob, /kar amacı gütmez/);
+  assert.match(blob, /Bağış veya para kabul etmeyiz/);
+  assert.match(blob, /MIT/);
+  assert.match(blob, /yıldızlayın/);
+  assert.match(blob, /Teşekkürler/);
+  assert.match(blob, /kdorukdemirtas-star\/Akilli-Orman-Gozlemcisi-Software/);
+  assert.doesNotMatch(blob, /Patreon|PayPal|bağış yap|donate/i);
+});
+
 test("privacy tables name keep times and processors", () => {
   assert.ok(DATA_ROWS.length >= 6);
   assert.ok(PROCESSOR_ROWS.some((row) => /Clerk/.test(row.name)));
@@ -756,8 +770,11 @@ test("gizlilik and cerezler routes are public", () => {
   const app = readFileSync(join(here, "../src/App.jsx"), "utf8");
   assert.match(app, /path="\/gizlilik"/);
   assert.match(app, /path="\/cerezler"/);
+  assert.match(app, /path="\/destek"/);
   const giz = app.split('path="/gizlilik"')[1]?.split("path=")[0] ?? "";
   assert.doesNotMatch(giz, /RequireAuth/);
+  const dest = app.split('path="/destek"')[1]?.split("path=")[0] ?? "";
+  assert.doesNotMatch(dest, /RequireAuth/);
   const html = readFileSync(join(here, "../index.html"), "utf8");
   assert.doesNotMatch(html, /fonts\.googleapis\.com/);
   const main = readFileSync(join(here, "../src/main.jsx"), "utf8");
@@ -765,6 +782,8 @@ test("gizlilik and cerezler routes are public", () => {
   const nav = readFileSync(join(here, "../src/SiteNav.jsx"), "utf8");
   assert.match(nav, /to="\/gizlilik"/);
   assert.match(nav, /to="\/cerezler"/);
+  assert.match(nav, /to="\/destek"/);
+  assert.match(nav, /hud-support/);
 });
 
 test("pano requires Clerk sign-in", () => {
@@ -854,13 +873,17 @@ test("stationFromUser reads Clerk unsafe metadata", () => {
 test("nav packs split product watch and hardware with tones", () => {
   assert.deepEqual(
     NAV_PACKS.map((pack) => pack.id),
-    ["urun", "izle", "kutu"],
+    ["urun", "izle", "kutu", "destek"],
   );
   assert.equal(NAV_PACKS[0].tone, "tone-box");
   assert.equal(NAV_PACKS[1].tone, "tone-pan");
   assert.equal(NAV_PACKS[2].tone, "tone-dev");
+  assert.equal(NAV_PACKS[3].tone, "tone-muted");
   assert.ok(DESKTOP_TABS.some((tab) => tab.to === "/asistan"));
   assert.equal(DESKTOP_TABS.some((tab) => tab.to === "/makine"), false);
+  assert.equal(DESKTOP_TABS.some((tab) => tab.to === "/destek"), false);
   const izle = NAV_PACKS.find((pack) => pack.id === "izle");
   assert.ok(izle.overlay.some((item) => item.to === "/makine"));
+  const destek = NAV_PACKS.find((pack) => pack.id === "destek");
+  assert.ok(destek.overlay.some((item) => item.to === "/destek"));
 });
