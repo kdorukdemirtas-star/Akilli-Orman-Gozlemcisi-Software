@@ -1,34 +1,9 @@
 import { useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { MODULES } from "./catalog.js";
+import { useLang } from "./lang.js";
 import { Shell } from "./SiteNav.jsx";
 import "./site.css";
-
-const SLOGAN =
-  "Kül Olmaya Mahkum Değil, AOG ile Korumaya Alınmış Yeşil Bir Gelecek!";
-
-const MOD_GAINS = [
-  {
-    title: "IP-67 gövde",
-    body: "Alüminyum kutu, conta yuvası ve kablo rakoru hazır gelir. Güneş paneli bu kabuğa oturur.",
-    icon: "box",
-  },
-  {
-    title: "Dört ölçüm",
-    body: "MAX6675, NEO GPS, MQ-9 (A3) ve iki kızılötesi göz (D8/D9) aynı döngüde bakılır.",
-    icon: "sensor",
-  },
-  {
-    title: "Alarm AND kuralı",
-    body: "Sıcaklık 100 °C ve üstü ve alev birlikte olunca yazılır. Biri tek başına yetmez.",
-    icon: "alert",
-  },
-  {
-    title: "LoRa 433 MHz",
-    body: "Orman kutusu Wi-Fi taşımaz. Paket Ra-02 ile alıcıya çıkar.",
-    icon: "radio",
-  },
-];
 
 function Photo({ src, w, h, alt, priority, cutout, className }) {
   const cls = ["media", cutout ? "media-cutout" : null, className]
@@ -103,32 +78,14 @@ function ModIcon({ name }) {
   );
 }
 
-const FOLD_CHIPS = [
-  {
-    title: "LoRa izleme",
-    body: "Kutu ormanı eve bağlar. Paket Ra-02 433 MHz ile alıcıya çıkar.",
-    icon: "radio",
-  },
-  {
-    title: "Güvenilir alarm",
-    body: "Ekip gerçek yangında çağrılır. Güneş ısısı yangın sayılmaz.",
-    icon: "alert",
-  },
-  {
-    title: "Pasif kaplama",
-    body: "Alevin yüzeye oturmasını yavaşlatır. Ekip yetişecek zamanı kazanır.",
-    icon: "leaf",
-  },
-];
-
-const PANO_TICKS = [
-  "Telefonundan ormanı görürsün: sıcaklık, gaz, alev, konum.",
-  "Kutuya Wi-Fi gerekmez. Paket LoRa ile çıkar.",
-  "Kaplama alevi yavaşlatır. Ekip yetişecek zamanı kazanır.",
-  "Son 24 saat elde durur. Sahaya gitmeden bakılır.",
-];
-
 function Hero() {
+  const { copy } = useLang();
+  const h = copy.home;
+  const chips = [
+    { title: h.chipLora, body: h.chipLoraBody, icon: "radio" },
+    { title: h.chipAlarm, body: h.chipAlarmBody, icon: "alert" },
+    { title: h.chipCoat, body: h.chipCoatBody, icon: "leaf" },
+  ];
   return (
     <article className="fold">
       <section className="fold-hero" aria-labelledby="hero-title">
@@ -138,17 +95,13 @@ function Hero() {
             <span className="hero-line">Akıllı Orman</span>
             <span className="hero-goz">Gözlemcisi</span>
           </h1>
-          <p className="hero-slogan">{SLOGAN}</p>
-          <p className="fold-lede">
-            LoRa tabanlı aktif izleme ile doğal yangın geciktirici pasif kaplama
-            aynı üründedir. Pano sıcaklık, alev, MQ-9 ve konumu son 24 saatte
-            gösterir.
-          </p>
+          <p className="hero-slogan">{h.slogan}</p>
+          <p className="fold-lede">{h.lede}</p>
           <Link className="fold-go" to="/sistem">
-            Sistemi incele
+            {h.sisteme}
           </Link>
           <ul className="fold-chips">
-            {FOLD_CHIPS.map((chip) => (
+            {chips.map((chip) => (
               <li key={chip.title}>
                 <span className="fold-ico">
                   <ModIcon name={chip.icon} />
@@ -164,53 +117,40 @@ function Hero() {
             src="/fold/field.jpg"
             width="1536"
             height="1024"
-            alt="Güneş panelli orman kutusu ve gövdeye sürülmüş kaplama bandı."
+            alt={h.fieldAlt}
             fetchPriority="high"
           />
         </figure>
       </section>
 
-      <section className="fold-pair" aria-label="Pano ve donanım">
+      <section className="fold-pair" aria-label={h.panoPair}>
         <article className="fold-card is-shot is-phone">
           <figure className="fold-phone">
-            <img
-              src="/fold/phone.jpg"
-              width="1024"
-              height="1536"
-              alt="Pano telefon görünümü."
-            />
+            <img src="/fold/phone.jpg" width="1024" height="1536" alt={h.phoneAlt} />
           </figure>
           <ul className="fold-ticks">
-            {PANO_TICKS.map((tick) => (
+            {h.panoTicks.map((tick) => (
               <li key={tick}>{tick}</li>
             ))}
           </ul>
         </article>
         <article className="fold-card is-shot">
-          <Photo
-            src="/fold/guts.jpg"
-            w={1200}
-            h={800}
-            alt="Açık orman kutusu. Kartlar turuncu conta yuvasının içinde."
-          />
-          <h2>Güneş panelli gövde</h2>
+          <Photo src="/fold/guts.jpg" w={1200} h={800} alt={h.gutsAlt} />
+          <h2>{h.gutsTitle}</h2>
           <Link className="fold-go is-ghost" to="/moduller">
-            Modüllere git
+            {h.modsGo}
           </Link>
         </article>
       </section>
 
       <div className="coat-close">
-        <p className="coat-banner">
-          AOG, LoRa tabanlı aktif izleme sistemi ile doğal yangın geciktirici pasif
-          kaplamayı bir araya getiren hibrit bir çözümdür.
-        </p>
-        <nav className="coat-next" aria-label="Sonraki adım">
+        <p className="coat-banner">{h.banner}</p>
+        <nav className="coat-next" aria-label={h.next}>
           <Link className="fold-go" to="/sistem">
-            Sistemi incele
+            {h.sisteme}
           </Link>
           <Link className="fold-go is-ghost" to="/asistan">
-            Asistan
+            {h.asistan}
           </Link>
         </nav>
       </div>
@@ -218,24 +158,37 @@ function Hero() {
   );
 }
 
+function modsFor(copy) {
+  return MODULES.map((mod) => {
+    const over = copy.modules?.[mod.id];
+    return over ? { ...mod, ...over } : mod;
+  });
+}
+
 function Mods() {
+  const { copy } = useLang();
+  const h = copy.home;
+  const mods = modsFor(copy);
+  const gains = [
+    { title: h.gainBox, body: h.gainBoxBody, icon: "box" },
+    { title: h.gainFour, body: h.gainFourBody, icon: "sensor" },
+    { title: h.gainAlert, body: h.calendar, icon: "alert" },
+    { title: h.gainRadio, body: h.gainRadioBody, icon: "radio" },
+  ];
   return (
     <article className="coat-page">
       <header className="coat-hero">
         <div className="coat-hero-copy">
           <p className="coat-badge">
             <ModIcon name="chip" />
-            Donanım
+            {h.hwBadge}
           </p>
-          <h1 id="mods-title">Modüller</h1>
-          <p>
-            Kutuda MAX6675, NEO GPS, MQ-9, iki kızılötesi göz ve Ra-02 LoRa vardır.
-            Orman düğümü Wi-Fi taşımaz. Satılan ürün Akıllı Orman Gözlemcisi'dir.
-          </p>
+          <h1 id="mods-title">{h.modsTitle}</h1>
+          <p>{h.modsLede}</p>
         </div>
-        <figure className="coat-stage coat-stage-flow" aria-label="Kutudaki altı parça.">
+        <figure className="coat-stage coat-stage-flow" aria-label={h.modsList}>
           <ol>
-            {MODULES.map((mod, index) => (
+            {mods.map((mod, index) => (
               <li key={mod.id}>
                 <b aria-hidden="true">{index + 1}</b>
                 {mod.name}
@@ -246,7 +199,7 @@ function Mods() {
       </header>
 
       <ul className="coat-gains">
-        {MOD_GAINS.map((gain) => (
+        {gains.map((gain) => (
           <li key={gain.title}>
             <span className="coat-ico">
               <ModIcon name={gain.icon} />
@@ -260,10 +213,10 @@ function Mods() {
       <section className="coat-block" aria-labelledby="mod-list-title">
         <h2 id="mod-list-title">
           <ModIcon name="box" />
-          Parça listesi
+          {h.modsList}
         </h2>
         <ul className="coat-mods">
-          {MODULES.map((mod) => (
+          {mods.map((mod) => (
             <li key={mod.id} id={mod.id}>
               <Photo src={mod.src} alt={mod.alt} cutout={mod.cutout !== false} />
               <strong>{mod.name}</strong>
@@ -274,16 +227,13 @@ function Mods() {
       </section>
 
       <div className="coat-close">
-        <p className="coat-banner">
-          Altı modül tek kutuda toplanır; paket LoRa ile ağ geçidine, oradan panoya
-          ulaşır.
-        </p>
-        <nav className="coat-next" aria-label="Sonraki adım">
+        <p className="coat-banner">{h.modsBanner}</p>
+        <nav className="coat-next" aria-label={h.next}>
           <Link className="fold-go" to="/sistem">
-            Veri akışını gör
+            {h.flowGo}
           </Link>
           <Link className="fold-go is-ghost" to="/dashboard">
-            Panoyu aç
+            {h.panoGo}
           </Link>
         </nav>
       </div>

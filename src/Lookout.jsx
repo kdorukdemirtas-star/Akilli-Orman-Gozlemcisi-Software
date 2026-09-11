@@ -11,6 +11,7 @@ import { ntfyPollUrl, parseNtfyFeed } from "./ntfyFeed.js";
 import { flameLabel, flameNote, flameOn, gpsLabel, gpsNote, hopLabel, mq9Label, packetHop, packetRssi, rssiLabel } from "./packetView.js";
 import { chartLayout, clockLabel } from "./tempChart.js";
 import { BoardPlugins } from "./BoardPlugins.jsx";
+import { useLang } from "./lang.js";
 import "./ops.css";
 
 const MapCard = lazy(() => import("./MapCard.jsx"));
@@ -115,13 +116,13 @@ function useNarrow() {
   return narrow;
 }
 
-function TempChart({ rows, loading }) {
+function TempChart({ rows, loading, copy }) {
   const narrow = useNarrow();
   const chart = chartLayout(rows, Date.now(), narrow ? { w: 360, h: 260 } : { w: 640, h: 260 });
   if (chart.empty) {
     return (
       <p className="ops-empty">
-        {loading ? "Sıcaklık paketleri okunuyor." : "Son 24 saatte sıcaklık paketi yok."}
+        {loading ? copy.tempLoad : copy.tempEmpty}
       </p>
     );
   }
@@ -228,26 +229,28 @@ function IcoMl() {
   );
 }
 
-function alertCopy({ loading, silent, alertOn, fire, mode }) {
-  if (loading) return "Paket okunuyor.";
-  if (silent) return "Son 24 saatte paket gelmedi. Kutunun açık olduğunu kontrol et.";
-  if (mode === "yalniz_ml" && !alertOn) return "Skor 0,5 altında.";
+function alertCopy({ loading, silent, alertOn, fire, mode, t }) {
+  if (loading) return t.loading;
+  if (silent) return t.silent;
+  if (mode === "yalniz_ml" && !alertOn) return t.scoreLow;
   if (alertOn) {
-    if (mode === "takvim") return "Takvim eşiği.";
-    if (mode === "yalniz_ml") return "Skor ≥ 0,5.";
-    return "Eşik: 100 °C ve alev.";
+    if (mode === "takvim") return t.calendarHit;
+    if (mode === "yalniz_ml") return t.mlHit;
+    return t.fixedHit;
   }
-  if (fire) return "Alev var, sıcaklık eşiğin altındadır.";
-  return "Eşik yok.";
+  if (fire) return t.irOnly;
+  return t.quiet;
 }
 
-function alertTitle(mode) {
-  if (mode === "takvim") return "Takvim eşiği";
-  if (mode === "yalniz_ml") return "Öğrenme eşiği";
-  return "Eşik: 100 °C ve alev";
+function alertTitle(mode, t) {
+  if (mode === "takvim") return t.calendarTitle;
+  if (mode === "yalniz_ml") return t.mlTitle;
+  return t.fixedTitle;
 }
 
 export function Lookout({ stationId, kicker, lede }) {
+  const { copy } = useLang();
+  const t = copy.lookout;
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
@@ -436,15 +439,15 @@ export function Lookout({ stationId, kicker, lede }) {
   const noticeList = notes.length
     ? notes.map((n) => ({
         id: n.id || `${n.time}-${n.message}`,
-        title: n.title || "Bildirim",
+        title: n.title || t.notice,
         body: n.message || "",
         when: sinceUnix(n.time),
         hot: true,
       }))
     : packetAlerts.map((p) => ({
         id: p.id,
-        title: alertTitle(alarmMode),
-        body: `Sıcaklık ${fmt(p.t, 0)} °C. Sayaç ${p.n ?? "-"}.`,
+        title: alertTitle(alarmMode, t),
+        body: `${t.temp} ${fmt(p.t, 0)} °C. ${p.n ?? "-"}.`,
         when: since(p.created_at),
         hot: true,
       }));
@@ -454,7 +457,7 @@ export function Lookout({ stationId, kicker, lede }) {
       <header className="ops-top">
         <div>
           {kicker ? <p className="ops-kicker">{kicker}</p> : null}
-          <h1>Pano</h1>
+          <h1>{t.h1}</h1>
           {lede ? <p className="ops-lede">{lede}</p> : null}
         </div>
         <p
@@ -468,6 +471,7 @@ export function Lookout({ stationId, kicker, lede }) {
             alertOn,
             fire,
             mode: alarmMode,
+            t,
           })}
         </p>
       </header>
@@ -476,31 +480,31 @@ export function Lookout({ stationId, kicker, lede }) {
         <div className="err-block" role="alert">
           <p className="err">{packetLoadHint(err)}</p>
           <button type="button" className="ops-btn ghost" onClick={() => setReloadTick((n) => n + 1)}>
-            Yeniden dene
+            {t.retry}
           </button>
         </div>
       ) : null}
 
-      <section className="ops-metrics" aria-label="Sensörler">
-        <Metric tone="is-blue" title="Sıcaklık" value={tempLabel} note={loading ? "Okunuyor" : ageLabel}>
+      <section className="ops-metrics" aria-label={t.sensors}>
+        <Metric tone="is-blue" title={t.temp} value={tempLabel} note={loading ? t.reading : ageLabel}>
           <IcoTemp />
         </Metric>
-        <Metric tone="is-warn" title="MQ-9" value={loading ? "-" : mq9Label(latest)} note={loading ? "Okunuyor" : ageLabel}>
+        <Metric tone="is-warn" title={t.gas} value={loading ? "-" : mq9Label(latest)} note={loading ? t.reading : ageLabel}>
           <IcoGas />
         </Metric>
         <Metric
           tone={fire ? "is-warn" : "is-moss"}
-          title="Alev"
+          title={t.flame}
           value={loading ? "-" : flameLabel(latest)}
-          note={loading ? "D8 ve D9" : flameNote(latest)}
+          note={loading ? t.d89 : flameNote(latest)}
         >
           <IcoFlame />
         </Metric>
         <Metric
           tone="is-moss"
-          title="GPS"
+          title={t.gps}
           value={loading && !DISPLAY_PIN ? "-" : gpsLabel(shown)}
-          note={loading && !DISPLAY_PIN ? "Konum" : DISPLAY_PIN?.note || gpsNote(shown)}
+          note={loading && !DISPLAY_PIN ? t.loc : DISPLAY_PIN?.note || gpsNote(shown)}
         >
           <IcoGps />
         </Metric>
@@ -510,10 +514,10 @@ export function Lookout({ stationId, kicker, lede }) {
           value={loading ? "-" : rssiLabel(packetRssi(latest) != null ? latest : lastRssi != null ? { rssi: lastRssi } : latest)}
           note={
             packetRssi(latest) != null || lastRssi != null
-              ? "Alıcı LoRa"
+              ? t.rssiRx
               : loading
-                ? "Okunuyor"
-                : "Paket bekleniyor"
+                ? t.reading
+                : t.rssiWait
           }
         >
           <IcoRssi />
@@ -522,13 +526,13 @@ export function Lookout({ stationId, kicker, lede }) {
           <Metric
             tone="is-moss"
             title="Skor"
-            value={loading ? "-" : mlModel ? fmt(mlScore, 3) : "—"}
+            value={loading ? "-" : mlModel ? fmt(mlScore, 3) : "-"}
             note={
               mlModel === "logreg-wait"
-                ? "bekliyor"
+                ? copy.makine.bekliyor
                 : mlModel === "logreg"
-                  ? "eğitildi"
-                  : "yok"
+                  ? copy.makine.egitildi
+                  : copy.makine.yok
             }
           >
             <IcoMl />
@@ -542,7 +546,7 @@ export function Lookout({ stationId, kicker, lede }) {
             note={
               packetHop(latest) != null
                 ? plug.hopNote || "Mesh"
-                : plug.hopNote || "Doğrudan"
+                : plug.hopNote || t.hopDirect
             }
           >
             <IcoRssi />
@@ -553,16 +557,16 @@ export function Lookout({ stationId, kicker, lede }) {
       <section className="ops-mid">
         <article className="ops-card">
           <header className="ops-card-h">
-            <h2>Sıcaklık grafiği</h2>
+            <h2>{t.tempLine}</h2>
           </header>
-          <TempChart rows={rows} loading={loading} />
+          <TempChart rows={rows} loading={loading} copy={t} />
         </article>
         <article className="ops-card">
           <header className="ops-card-h">
-            <h2>Harita</h2>
+            <h2>{t.map}</h2>
           </header>
           <div className="ops-map">
-            <Suspense fallback={<p className="ops-empty">Harita yükleniyor.</p>}>
+            <Suspense fallback={<p className="ops-empty">{t.mapLoad}</p>}>
               <MapCard
                 lat={shown?.lat}
                 lon={shown?.lon}
@@ -575,14 +579,14 @@ export function Lookout({ stationId, kicker, lede }) {
         </article>
       </section>
 
-      <section className="ops-plugs" aria-label="Eklentiler">
+      <section className="ops-plugs" aria-label={copy.eklenti.h1}>
         <BoardPlugins plug={plug} onChange={setPlug} />
       </section>
 
       <section className="ops-bot">
         <article className="ops-card">
           <header className="ops-card-h">
-            <h2>Son uyarılar</h2>
+            <h2>{t.last}</h2>
           </header>
           {noticeList.length ? (
             <ul className="ops-notes">
@@ -595,22 +599,22 @@ export function Lookout({ stationId, kicker, lede }) {
               ))}
             </ul>
           ) : (
-            <p className="ops-empty">Liste boş.</p>
+            <p className="ops-empty">{t.empty}</p>
           )}
         </article>
 
         <article className="ops-card">
           <header className="ops-card-h">
-            <h2>Kaplama durumu</h2>
+            <h2>{t.coat}</h2>
             <button type="button" className="ops-btn" onClick={markRenewed}>
-              Karışım yenilendi
+              {t.coatRenew}
             </button>
           </header>
           <p className="ops-coat-v">%{coat.pct}</p>
           <div
             className="ops-bar"
             role="meter"
-            aria-label="Kaplama kalan ömrü"
+            aria-label={t.coatMeter}
             aria-valuemin={0}
             aria-valuemax={100}
             aria-valuenow={coat.pct}
@@ -619,15 +623,15 @@ export function Lookout({ stationId, kicker, lede }) {
           </div>
           <ul className="ops-stages">
             <li className={coat.stage === "yeni" ? "is-on" : undefined}>
-              <strong>Yeni kaplama</strong>
+              <strong>{t.coatNew}</strong>
               <span>0-30 gün</span>
             </li>
             <li className={coat.stage === "orta" ? "is-on" : undefined}>
-              <strong>Orta süre</strong>
+              <strong>{t.coatMid}</strong>
               <span>30-60 gün</span>
             </li>
             <li className={coat.stage === "yenileme" ? "is-on" : undefined}>
-              <strong>Yenileme gerekli</strong>
+              <strong>{t.coatNeed}</strong>
               <span>60-90 gün</span>
             </li>
           </ul>

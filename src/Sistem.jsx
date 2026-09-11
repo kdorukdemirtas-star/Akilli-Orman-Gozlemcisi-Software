@@ -1,71 +1,7 @@
 import { Link } from "react-router-dom";
+import { useLang } from "./lang.js";
 import { Shell } from "./SiteNav.jsx";
 import "./site.css";
-
-const CHAIN = [
-  "Sensör Ölçümü",
-  "Veri Toplama",
-  "LoRa 433 MHz",
-  "Supabase",
-  "100 °C ve Alev",
-  "Pano ve ntfy",
-];
-
-const GAINS = [
-  {
-    title: "Ormanda Wi-Fi yok",
-    body: "Düğümde Wi-Fi yoktur. Paket Ra-02 LoRa 433 MHz ile alıcıya çıkar.",
-    icon: "radio",
-  },
-  {
-    title: "Dört ölçüm bir döngü",
-    body: "MAX6675, NEO GPS, MQ-9 (A3) ve iki kızılötesi göz (D8/D9) birlikte bakılır.",
-    icon: "sensor",
-  },
-  {
-    title: "Alarm AND kuralı",
-    body: "Sıcaklık ≥ 100 °C ve alev. Eşik tek başına 60 °C değildir.",
-    icon: "alert",
-  },
-  {
-    title: "Son 24 saat",
-    body: "Pano TTL 24 saattir. Yeni paket eski özeti ezer. Eski satırlar listeden düşer.",
-    icon: "clock",
-  },
-];
-
-const STEPS = [
-  {
-    title: "Sensör Ölçümü",
-    body: "Orman düğümü sıcaklığı MAX6675 ile okur. GPS, MQ-9 gaz ve iki kızılötesi göz (D8/D9) aynı döngüde bakılır. Düğümde Wi-Fi yoktur.",
-    icon: "sensor",
-  },
-  {
-    title: "Veri Toplama",
-    body: "Deneyap Kart 1A v2 şu alanları paketler: n, t, gps, lat, lon, mq9, a8, a9. Alev, a8 veya a9 sıfır olduğunda yanar (pull-up; boşta 1).",
-    icon: "chip",
-  },
-  {
-    title: "Veri İletimi",
-    body: "Ra-02 LoRa 433 MHz paketi alıcıya yollar. Gönderici MAC: f4:12:fa:de:f3:c. Alıcı internete bağlıdır; orman kutusu bağlı değildir.",
-    icon: "radio",
-  },
-  {
-    title: "Veri Merkezi",
-    body: "Alıcı satırı Supabase public.packets tablosuna yazar. İstasyon kodu: AOG-DEMO-1. Pano son 24 saati çeker.",
-    icon: "db",
-  },
-  {
-    title: "Analiz ve Alarm",
-    body: "Alarm AND kuralıdır: sıcaklık ≥ 100 °C ve alev. Grafikteki \"yalnız sıcaklık\" sadeleştirmesi üründe yoktur. Eşik tutunca ekibin ntfy.sh konusuna düşer.",
-    icon: "alert",
-  },
-  {
-    title: "Bildirim ve Uyarı",
-    body: "Web panosu canlı kanalı INSERT ile yeniler. Iphone ve Android aynı siteyi PWA olarak ana ekrana alır. Döngü kesilmez; yeni paket eski özeti ezer.",
-    icon: "bell",
-  },
-];
 
 function SysIcon({ name }) {
   return (
@@ -137,6 +73,22 @@ function SysIcon({ name }) {
 }
 
 export default function Sistem({ product = "demo" }) {
+  const { copy } = useLang();
+  const s = copy.sistem;
+  const gains = [
+    { title: s.gainWifi, body: s.gainWifiBody, icon: "radio" },
+    { title: s.gainFour, body: s.gainFourBody, icon: "sensor" },
+    { title: s.gainAlert, body: copy.home.calendar, icon: "alert" },
+    { title: s.gainDay, body: s.gainDayBody, icon: "clock" },
+  ];
+  const steps = [
+    { title: s.step1, body: s.step1Body, icon: "sensor" },
+    { title: s.step2, body: s.step2Body, icon: "chip" },
+    { title: s.step3, body: s.step3Body, icon: "radio" },
+    { title: s.step4, body: s.step4Body, icon: "db" },
+    { title: s.step5, body: s.step5Body, icon: "alert" },
+    { title: s.step6, body: s.step6Body, icon: "bell" },
+  ];
   return (
     <Shell product={product}>
       <article className="coat-page">
@@ -144,18 +96,14 @@ export default function Sistem({ product = "demo" }) {
           <div className="coat-hero-copy">
             <p className="coat-badge">
               <SysIcon name="radio" />
-              Aktif izleme
+              {s.badge}
             </p>
-            <h1>Ölçümden uyarıya</h1>
-            <p>
-              Akış şeması altı adımı gösterir. Ürün o adımları sıcaklık, gaz, konum
-              ve alev ile doldurur. Orman kutusu internete bağlı değildir; alıcı
-              bağlıdır. Eşik tek başına 60 °C değildir.
-            </p>
+            <h1>{s.h1}</h1>
+            <p>{s.lede}</p>
           </div>
-          <figure className="coat-stage coat-stage-flow" aria-label="Altı adımlık sistem zinciri.">
+          <figure className="coat-stage coat-stage-flow" aria-label={s.h1}>
             <ol>
-              {CHAIN.map((item, index) => (
+              {s.chain.map((item, index) => (
                 <li key={item}>
                   <b aria-hidden="true">{index + 1}</b>
                   {item}
@@ -166,7 +114,7 @@ export default function Sistem({ product = "demo" }) {
         </header>
 
         <ul className="coat-gains">
-          {GAINS.map((gain) => (
+          {gains.map((gain) => (
             <li key={gain.title}>
               <span className="coat-ico">
                 <SysIcon name={gain.icon} />
@@ -180,25 +128,23 @@ export default function Sistem({ product = "demo" }) {
         <section className="coat-block" aria-labelledby="flow-title">
           <h2 id="flow-title">
             <SysIcon name="flow" />
-            İşleyiş şeması
+            {s.flowTitle}
           </h2>
           <figure className="coat-diagram">
             <img
               src="/sistem/akis.png"
-              alt="AOG sistemi işleyiş akış şeması: sensör, Deneyap Kart, LoRa, Supabase, ntfy, mobil ve web."
+              alt={s.flowAlt}
               width={900}
               height={1600}
             />
-            <figcaption>
-              AOG sistemi işleyiş akış şeması. Adımlar 1-6'dır; ardından sürekli güncelleme gelir.
-            </figcaption>
+            <figcaption>{s.flowCap}</figcaption>
           </figure>
         </section>
 
         <section className="coat-block" aria-labelledby="how-title">
-          <h2 id="how-title">Nasıl çalışır?</h2>
+          <h2 id="how-title">{s.how}</h2>
           <ol className="coat-steps is-six">
-            {STEPS.map((step, index) => (
+            {steps.map((step, index) => (
               <li key={step.title}>
                 <span className="coat-ico">
                   <SysIcon name={step.icon} />
@@ -213,16 +159,13 @@ export default function Sistem({ product = "demo" }) {
         </section>
 
         <div className="coat-close">
-          <p className="coat-banner">
-            Sistem paketi gönderir, pano 24 saat tutar. Asistan aynı sitededir; alarm
-            açmaz. Alevi geciktiren gövdedeki kaplamadır.
-          </p>
-          <nav className="coat-next" aria-label="Sonraki adım">
+          <p className="coat-banner">{s.close}</p>
+          <nav className="coat-next" aria-label={copy.home.next}>
             <Link className="fold-go" to="/karisim">
-              Karışımı incele
+              {s.next}
             </Link>
             <Link className="fold-go is-ghost" to="/asistan">
-              Asistan
+              {copy.home.asistan}
             </Link>
           </nav>
         </div>

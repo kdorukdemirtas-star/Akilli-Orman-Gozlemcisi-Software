@@ -5,9 +5,10 @@ import { isStandaloneDisplay } from "./pwa.js";
 import { clerkAppearance, useClerkFlag } from "./clerkFlag.js";
 import { CookieBanner, FontConsent } from "./CookieBanner.jsx";
 import { LEGAL_LINKS } from "./legalPagesCopy.js";
-import { DESKTOP_TABS, NAV_PACKS, overlayLinks } from "./navPacks.js";
+import { navPacks, overlayLinks } from "./navPacks.js";
+import { useLang } from "./lang.js";
 
-export { DESKTOP_TABS, NAV_PACKS };
+export { DESKTOP_TABS, NAV_PACKS } from "./navPacks.js";
 
 function TabLinks({ tabs, onPick }) {
   return tabs.map((tab) => (
@@ -27,18 +28,19 @@ function TabLinks({ tabs, onPick }) {
 
 function ClerkButtons() {
   const { isLoaded, isSignedIn } = useUser();
-  if (!isLoaded) return <span>Hesap</span>;
+  const { copy } = useLang();
+  if (!isLoaded) return <span>{copy.chrome.hesap}</span>;
   if (isSignedIn) return <UserButton afterSignOutUrl="/" />;
   return (
     <div className="nav-auth">
       <SignInButton mode="modal" appearance={clerkAppearance}>
         <button type="button" className="hit ghost">
-          Giriş
+          {copy.chrome.giris}
         </button>
       </SignInButton>
       <SignUpButton mode="modal" appearance={clerkAppearance}>
         <button type="button" className="hit">
-          Kayıt
+          {copy.chrome.kayit}
         </button>
       </SignUpButton>
     </div>
@@ -54,6 +56,12 @@ export function SiteNav({ product = "demo" }) {
   const dialogRef = useRef(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [standalone, setStandalone] = useState(false);
+  const { lang, setLang, copy } = useLang();
+  const packsAll = navPacks(lang);
+  const legal = LEGAL_LINKS.map((item) => ({
+    ...item,
+    label: copy.legal[item.id] || item.label,
+  }));
 
   useEffect(() => {
     setStandalone(
@@ -65,13 +73,15 @@ export function SiteNav({ product = "demo" }) {
   }, []);
 
   const packs = standalone
-    ? NAV_PACKS.flatMap((pack) => {
+    ? packsAll.flatMap((pack) => {
         const tabs = pack.tabs.filter((tab) => tab.to !== "/cihaz");
         const overlay = (pack.overlay || pack.tabs).filter((tab) => tab.to !== "/cihaz");
         if (!tabs.length && !overlay.length && !pack.specs) return [];
         return [{ ...pack, tabs, overlay }];
       })
-    : NAV_PACKS;
+    : packsAll;
+  const barPacks = packs.filter((pack) => pack.id !== "kutu");
+  const kutuPack = packs.find((pack) => pack.id === "kutu");
 
   useEffect(() => {
     return () => {
@@ -106,17 +116,17 @@ export function SiteNav({ product = "demo" }) {
   return (
     <>
       <a className="skip" href="#icerik">
-        İçeriğe atla
+        {copy.nav.skip}
       </a>
       <header className="hud">
-        <Link className="brand" to="/" aria-label="Akıllı Orman Gözlemcisi ana sayfası">
+        <Link className="brand" to="/" aria-label={copy.nav.brand}>
           <img src="/logo.png" alt="AOG" width="240" height="44" />
         </Link>
-        <nav className="hud-tabs" aria-label="Sayfalar">
-          {packs.map((pack, i) =>
+        <nav className="hud-tabs" aria-label={copy.nav.sayfalar}>
+          {barPacks.map((pack, i) =>
             pack.tabs.length ? (
               <Fragment key={pack.id}>
-                {i > 0 && packs[i - 1].tabs.length ? (
+                {i > 0 && barPacks[i - 1].tabs.length ? (
                   <span className="hud-gap" aria-hidden="true" />
                 ) : null}
                 <div className="hud-pack" role="group" aria-label={pack.label}>
@@ -126,8 +136,21 @@ export function SiteNav({ product = "demo" }) {
             ) : null,
           )}
         </nav>
+        {kutuPack?.tabs.length ? (
+          <nav className="hud-kutu" aria-label={kutuPack.label}>
+            <TabLinks tabs={kutuPack.tabs} />
+          </nav>
+        ) : null}
         <div className="hud-end">
           <ClerkAuth />
+          <button
+            type="button"
+            className="hud-lang"
+            aria-label={copy.nav.langAria}
+            onClick={() => setLang(lang === "en" ? "tr" : "en")}
+          >
+            {copy.nav.lang}
+          </button>
           <button
             type="button"
             className="hex"
@@ -136,16 +159,8 @@ export function SiteNav({ product = "demo" }) {
             aria-controls="site-menu"
             onClick={openMenu}
           >
-            <span className="hex-face">Menü</span>
+            <span className="hex-face">{copy.nav.menu}</span>
           </button>
-          <NavLink
-            to="/destek"
-            className={({ isActive }) =>
-              ["hud-support", isActive ? "is-on" : undefined].filter(Boolean).join(" ")
-            }
-          >
-            Destek
-          </NavLink>
         </div>
       </header>
       <dialog
@@ -157,16 +172,16 @@ export function SiteNav({ product = "demo" }) {
       >
         <div className="nav-sheet">
           <div className="nav-hud">
-            <Link className="brand" to="/" onClick={closeMenu} aria-label="Ana sayfa">
+            <Link className="brand" to="/" onClick={closeMenu} aria-label={copy.nav.anaSayfa}>
               <img src="/logo.png" alt="" width="240" height="44" />
             </Link>
-            <button type="button" className="hex" onClick={closeMenu} aria-label="Menüyü kapat">
-              <span className="hex-face">Kapat</span>
+            <button type="button" className="hex" onClick={closeMenu} aria-label={copy.nav.kapat}>
+              <span className="hex-face">{copy.nav.kapat}</span>
             </button>
           </div>
           <div className="nav-body">
             <h2 id="nav-title" className="visually-hidden">
-              Site menüsü
+              {copy.nav.siteMenu}
             </h2>
             {packs.map((pack) => {
               const links = overlayLinks(pack);
@@ -212,9 +227,9 @@ export function SiteNav({ product = "demo" }) {
           </div>
           <div className="nav-foot">
             <span>
-              {product === "software" ? "Yazılım" : "Akıllı Orman Gözlemcisi"}
+              {product === "software" ? copy.nav.yazilim : "Akıllı Orman Gözlemcisi"}
             </span>
-            {LEGAL_LINKS.map((item) => (
+            {legal.map((item) => (
               <Link key={item.to} to={item.to} onClick={closeMenu}>
                 {item.label}
               </Link>
@@ -227,13 +242,18 @@ export function SiteNav({ product = "demo" }) {
 }
 
 export function SiteFooter() {
+  const { copy } = useLang();
+  const legal = LEGAL_LINKS.map((item) => ({
+    ...item,
+    label: copy.legal[item.id] || item.label,
+  }));
   return (
     <footer className="site-end">
       <span>Defenders Of Green</span>
       <span>Akıllı Orman Gözlemcisi</span>
       <span>TEKNOFEST 2026</span>
-      <nav className="legal-end" aria-label="Yasal">
-        {LEGAL_LINKS.map((item) => (
+      <nav className="legal-end" aria-label={copy.nav.yasal}>
+        {legal.map((item) => (
           <Link key={item.to} to={item.to}>
             {item.label}
           </Link>

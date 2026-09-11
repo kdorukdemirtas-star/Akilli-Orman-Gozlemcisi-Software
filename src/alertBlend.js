@@ -11,8 +11,8 @@ export function monthsSince(iso, now = Date.now()) {
 export function blendWeights(months) {
   const m = Math.max(0, Number(months) || 0);
   if (m < 2) return { fixed: 1, dynamic: 0, ml: 0 };
-  if (m < 6) return { fixed: 0.75, dynamic: 0.2, ml: 0.05 };
-  if (m < 10) return { fixed: 0, dynamic: 0.55, ml: 0.45 };
+  if (m < 6) return { fixed: 0, dynamic: 1, ml: 0 };
+  if (m < 8) return { fixed: 0, dynamic: 0.75, ml: 0.25 };
   if (m < 12) return { fixed: 0, dynamic: 0.5, ml: 0.5 };
   return { fixed: 0, dynamic: 0, ml: 1 };
 }

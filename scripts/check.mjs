@@ -17,6 +17,7 @@ import { packetLoadHint } from "../src/packetHint.js";
 import { chatLoadHint } from "../src/chatHint.js";
 import { looksLikeInjection } from "../src/chatGuard.js";
 import { pairHref, parseStation, STATION_STORAGE_KEY } from "../src/stationPair.js";
+import { COPY } from "../src/uiCopy.js";
 import { NAV_PACKS, DESKTOP_TABS } from "../src/navPacks.js";
 import { CONSENT_KEY, defaultConsent, hasConsent, readConsent, writeConsent } from "../src/consentStore.js";
 import {
@@ -398,6 +399,12 @@ test("chat kips hide model names and map tokens", () => {
   assert.match(facts, /1–5 km/);
   assert.doesNotMatch(facts, /IP65|powerbank/i);
   assert.doesNotMatch(facts, /100 °C|t≥100|AND kuralı|alev birlikte/);
+  assert.doesNotMatch(facts, /Supabase/);
+  assert.doesNotMatch(facts, /eşik|Eşik/);
+  assert.match(facts, /İkinci aydan sonra dinamik/);
+  assert.match(facts, /Altıncı aydan sonra/);
+  assert.match(facts, /sekizinci aya/);
+  assert.match(facts, /On ikinci ay/);
   const blob = systemPrompt("hizli") + systemPrompt("orta") + systemPrompt("derin");
   assert.doesNotMatch(blob, /Qwen|DeepSeek|Llama|Gemma/);
   assert.match(blob, /sklearn/);
@@ -453,7 +460,8 @@ test("chat kips hide model names and map tokens", () => {
     /Qwen|DeepSeek|0\.8B|1\.5B|https?:\/\//i,
   );
   assert.match(PLUGIN_CATALOG.find((item) => item.id === "pi").body, /Asistan alarm yazmaz/);
-  assert.match(PLUGIN_CATALOG.find((item) => item.id === "ml").body, /100 °C ve alev/);
+  assert.match(PLUGIN_CATALOG.find((item) => item.id === "ml").body, /dinamik|öğrenme|takvim/);
+  assert.doesNotMatch(PLUGIN_CATALOG.find((item) => item.id === "ml").body, /100 °C|eşik/i);
   assert.doesNotMatch(PLUGIN_CATALOG.find((item) => item.id === "ml").body, /sklearn|LogReg/i);
   assert.equal(titleFromQuestion("alarm kuralı nedir acaba burada"), "alarm kuralı nedir acaba burada");
   const here = dirname(fileURLToPath(import.meta.url));
@@ -542,6 +550,7 @@ test("kvkk notice covers controllers, chats, cookies, and US sale ban", () => {
   assert.match(blob, /aog-consent-v1/);
   assert.doesNotMatch(blob, /sertifikal|GDPR certified|ISO 27001/i);
   assert.doesNotMatch(blob, /kvkk@|privacy@|dpo@/i);
+  assert.doesNotMatch(blob, /Supabase/);
 });
 
 test("destek copy refuses donations and points at the MIT repo", () => {
@@ -555,6 +564,37 @@ test("destek copy refuses donations and points at the MIT repo", () => {
   assert.match(blob, /Teşekkürler/);
   assert.match(blob, /kdorukdemirtas-star\/Akilli-Orman-Gozlemcisi-Software/);
   assert.doesNotMatch(blob, /Patreon|PayPal|bağış yap|donate/i);
+});
+
+test("public pages drop supabase brand, threshold word, and 100 C rule", () => {
+  const here = dirname(fileURLToPath(import.meta.url));
+  const files = [
+    "src/Home.jsx",
+    "src/Sistem.jsx",
+    "src/catalog.js",
+    "src/Lookout.jsx",
+    "src/pluginStore.js",
+    "src/privacyCopy.js",
+    "src/Makine.jsx",
+    "src/uiCopy.js",
+    "README.md",
+    "CONTRIBUTING.md",
+  ];
+  for (const file of files) {
+    const text = readFileSync(join(here, "../", file), "utf8");
+    assert.doesNotMatch(text, /Supabase/, file);
+    assert.doesNotMatch(text, /100 °C/, file);
+    assert.doesNotMatch(text, /eşik|Eşik/, file);
+  }
+});
+
+test("english copy covers nav and the decision calendar", () => {
+  assert.equal(COPY.en.nav.destek, "Support");
+  assert.equal(COPY.en.nav.cihaz, "Device");
+  assert.match(COPY.en.home.calendar, /After month six/i);
+  assert.match(COPY.tr.home.calendar, /İkinci aydan sonra dinamik/);
+  assert.equal(COPY.en.karisim.h1, "Passive coat");
+  assert.match(COPY.en.modules.flame.body, /infrared reading/i);
 });
 
 test("eula keeps MIT rights and drops store-template bans", () => {
@@ -821,9 +861,11 @@ test("gizlilik and cerezler routes are public", () => {
   assert.doesNotMatch(html, /fonts\.googleapis\.com/);
   const main = readFileSync(join(here, "../src/main.jsx"), "utf8");
   assert.match(main, /telemetry=\{false\}/);
+  assert.match(main, /LangProvider/);
   const nav = readFileSync(join(here, "../src/SiteNav.jsx"), "utf8");
   assert.match(nav, /LEGAL_LINKS/);
-  assert.match(nav, /hud-support/);
+  assert.match(nav, /setLang/);
+  assert.match(nav, /hud-kutu/);
   const links = readFileSync(join(here, "../src/legalPagesCopy.js"), "utf8");
   for (const path of ["/gizlilik", "/cerezler", "/destek", "/eula", "/dmca", "/erisilebilirlik"]) {
     assert.match(links, new RegExp(`to: "${path}"`));
@@ -865,11 +907,11 @@ test("addPlugin and removePlugin toggle catalog entries", () => {
   assert.equal(alarmModeFor(readPlugins()), "sabit");
 });
 
-test("blendWeights follow the 2 / 6 / 10 / 12 month table", () => {
+test("blendWeights follow the 2 / 6 / 8 / 12 month table", () => {
   assert.deepEqual(blendWeights(0), { fixed: 1, dynamic: 0, ml: 0 });
-  assert.deepEqual(blendWeights(3), { fixed: 0.75, dynamic: 0.2, ml: 0.05 });
-  assert.deepEqual(blendWeights(7), { fixed: 0, dynamic: 0.55, ml: 0.45 });
-  assert.deepEqual(blendWeights(10.5), { fixed: 0, dynamic: 0.5, ml: 0.5 });
+  assert.deepEqual(blendWeights(3), { fixed: 0, dynamic: 1, ml: 0 });
+  assert.deepEqual(blendWeights(7), { fixed: 0, dynamic: 0.75, ml: 0.25 });
+  assert.deepEqual(blendWeights(10), { fixed: 0, dynamic: 0.5, ml: 0.5 });
   assert.deepEqual(blendWeights(12), { fixed: 0, dynamic: 0, ml: 1 });
 });
 
@@ -923,19 +965,22 @@ test("stationFromUser reads Clerk unsafe metadata", () => {
 test("nav packs split product watch and hardware with tones", () => {
   assert.deepEqual(
     NAV_PACKS.map((pack) => pack.id),
-    ["urun", "izle", "kutu", "destek"],
+    ["urun", "izle", "kutu"],
   );
   assert.equal(NAV_PACKS[0].tone, "tone-box");
   assert.equal(NAV_PACKS[1].tone, "tone-pan");
   assert.equal(NAV_PACKS[2].tone, "tone-dev");
-  assert.equal(NAV_PACKS[3].tone, "tone-muted");
   assert.ok(DESKTOP_TABS.some((tab) => tab.to === "/asistan"));
   assert.equal(DESKTOP_TABS.some((tab) => tab.to === "/makine"), false);
-  assert.equal(DESKTOP_TABS.some((tab) => tab.to === "/destek"), false);
+  assert.ok(DESKTOP_TABS.some((tab) => tab.to === "/destek"));
   assert.equal(DESKTOP_TABS.some((tab) => tab.to === "/eula"), false);
   assert.equal(DESKTOP_TABS.some((tab) => tab.to === "/erisilebilirlik"), false);
   const izle = NAV_PACKS.find((pack) => pack.id === "izle");
   assert.ok(izle.overlay.some((item) => item.to === "/makine"));
-  const destek = NAV_PACKS.find((pack) => pack.id === "destek");
-  assert.ok(destek.overlay.some((item) => item.to === "/destek"));
+  const kutu = NAV_PACKS.find((pack) => pack.id === "kutu");
+  assert.deepEqual(
+    kutu.tabs.map((tab) => tab.to),
+    ["/cihaz", "/destek"],
+  );
+  assert.equal(kutu.tabs[1].tone, "hud-support");
 });

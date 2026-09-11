@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Shell } from "./SiteNav.jsx";
+import { useLang } from "./lang.js";
 import {
   PLUGIN_CATALOG,
   addPlugin,
@@ -43,6 +44,9 @@ function PlugIcon({ name }) {
 }
 
 export default function Eklentiler({ product = "software" }) {
+  const { copy } = useLang();
+  const e = copy.eklenti;
+  const plugCopy = e.plugins || {};
   const [plug, setPlug] = useState(() => readPlugins());
   const [note, setNote] = useState("");
   const idle = PLUGIN_CATALOG.filter((item) => !pluginAdded(plug, item.id));
@@ -50,23 +54,23 @@ export default function Eklentiler({ product = "software" }) {
   function save(patch) {
     const next = writePlugins(patch);
     setPlug(next);
-    setNote("Kaydedildi.");
+    setNote(e.kaydedildi);
   }
 
   function add(id) {
     const next = addPlugin(id);
     setPlug(next);
-    setNote("Eklendi.");
+    setNote(e.eklendi);
   }
 
   function remove(id) {
     const next = removePlugin(id);
     setPlug(next);
-    setNote("Çıkarıldı.");
+    setNote(e.cikarildi);
   }
 
-  function saveHop(e) {
-    e.preventDefault();
+  function saveHop(ev) {
+    ev.preventDefault();
     save({ hopNote: String(plug.hopNote || "").trim().slice(0, 80) });
   }
 
@@ -77,9 +81,9 @@ export default function Eklentiler({ product = "software" }) {
           <div className="coat-hero-copy">
             <p className="coat-badge">
               <PlugIcon name="chip" />
-              Yazılım
+              {e.badge}
             </p>
-            <h1>Eklentiler</h1>
+            <h1>{e.h1}</h1>
           </div>
         </header>
 
@@ -89,7 +93,7 @@ export default function Eklentiler({ product = "software" }) {
               <span className="coat-ico">
                 <PlugIcon name="radio" />
               </span>
-              <strong>Mesh sistemi</strong>
+              <strong>{plugCopy.hop?.title || "Mesh sistemi"}</strong>
               <form className="plug-actions topic-row" onSubmit={saveHop}>
                 <button
                   type="button"
@@ -97,24 +101,24 @@ export default function Eklentiler({ product = "software" }) {
                   aria-pressed={plug.hopOn}
                   onClick={() => save({ hopOn: !plug.hopOn })}
                 >
-                  {plug.hopOn ? "Açık" : "Kapalı"}
+                  {plug.hopOn ? e.acik : e.kapali}
                 </button>
                 <label className="visually-hidden" htmlFor="hop-note">
-                  S3 MAC notu
+                  {e.macNote}
                 </label>
                 <input
                   id="hop-note"
                   value={plug.hopNote}
-                  onChange={(e) => setPlug({ ...plug, hopNote: e.target.value })}
-                  placeholder="S3 MAC"
+                  onChange={(ev) => setPlug({ ...plug, hopNote: ev.target.value })}
+                  placeholder={e.macPlaceholder}
                   autoComplete="off"
                   spellCheck="false"
                 />
                 <button type="submit" className="hit ghost">
-                  Notu yaz
+                  {e.notuYaz}
                 </button>
                 <button type="button" className="hit ghost" onClick={() => remove("hop")}>
-                  Çıkar
+                  {e.cikar}
                 </button>
               </form>
             </li>
@@ -124,13 +128,13 @@ export default function Eklentiler({ product = "software" }) {
               <span className="coat-ico">
                 <PlugIcon name="chip" />
               </span>
-              <strong>Asistan</strong>
+              <strong>{plugCopy.pi?.title || "Asistan"}</strong>
               <div className="plug-actions">
                 <Link className="hit" to="/asistan">
-                  Asistanı aç
+                  {e.asistanAc}
                 </Link>
                 <button type="button" className="hit ghost" onClick={() => remove("pi")}>
-                  Çıkar
+                  {e.cikar}
                 </button>
               </div>
             </li>
@@ -140,13 +144,13 @@ export default function Eklentiler({ product = "software" }) {
               <span className="coat-ico">
                 <PlugIcon name="alert" />
               </span>
-              <strong>Makine öğrenmesi</strong>
+              <strong>{plugCopy.ml?.title || "Makine öğrenmesi"}</strong>
               <div className="plug-actions">
                 <Link className="hit" to="/makine">
-                  Ayar sayfası
+                  {e.ayar}
                 </Link>
                 <button type="button" className="hit ghost" onClick={() => remove("ml")}>
-                  Çıkar
+                  {e.cikar}
                 </button>
               </div>
             </li>
@@ -162,15 +166,15 @@ export default function Eklentiler({ product = "software" }) {
                     name={item.id === "hop" ? "radio" : item.id === "pi" ? "chip" : "alert"}
                   />
                 </span>
-                <strong>{item.title}</strong>
+                <strong>{plugCopy[item.id]?.title || item.title}</strong>
                 <div className="plug-actions">
                   {item.id === "ml" ? (
                     <Link className="hit" to="/makine">
-                      Ayar sayfası
+                      {e.ayar}
                     </Link>
                   ) : (
                     <button type="button" className="hit" onClick={() => add(item.id)}>
-                      Ekle
+                      {e.ekle}
                     </button>
                   )}
                 </div>
@@ -182,12 +186,12 @@ export default function Eklentiler({ product = "software" }) {
         {note ? <p role="status">{note}</p> : null}
 
         <div className="coat-close">
-          <nav className="coat-next" aria-label="Sonraki adım">
+          <nav className="coat-next" aria-label={copy.home.next}>
             <Link className="fold-go" to="/dashboard">
-              Panoyu aç
+              {copy.home.panoGo}
             </Link>
             <Link className="fold-go is-ghost" to="/asistan">
-              Asistan
+              {copy.nav.asistan}
             </Link>
           </nav>
         </div>

@@ -1,5 +1,6 @@
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { useLang } from "./lang.js";
 import { Shell } from "./SiteNav.jsx";
 import "./site.css";
 
@@ -58,17 +59,7 @@ const SAMPLES = [
   },
 ];
 
-const SECTIONS = [
-  { id: "ftir", label: "FTIR", title: "FTIR analizi" },
-  { id: "tga", label: "TGA-DSC", title: "TGA-DSC analizi" },
-  { id: "raporlar", label: "Raporlar", title: "Raporlar" },
-];
-
-const NOTES = {
-  ftir: "Doğal içerikli yangın geciktirici kaplamamızın kimyasal yapısını FTIR analizi ile inceliyoruz.",
-  tga: "Doğal içerikli yangın geciktirici kaplamamızın ısıl davranışını TGA ve DSC ile inceliyoruz.",
-  raporlar: "Ham ölçüm tabloları Yıldız Teknik Üniversitesi Merkezi Araştırma Laboratuvarı çıktılarıdır.",
-};
+const SECTION_IDS = ["ftir", "tga", "raporlar"];
 
 function IconChart() {
   return (
@@ -155,7 +146,7 @@ function sectionFromHash(hash) {
   return "ftir";
 }
 
-function GraphCard({ sample, src, alt, onZoom }) {
+function GraphCard({ sample, src, alt, onZoom, zoomLabel }) {
   return (
     <article className={`lab-card tone-${sample.id}`}>
       <header className="lab-card-head">
@@ -169,7 +160,7 @@ function GraphCard({ sample, src, alt, onZoom }) {
           type="button"
           className="lab-icon-btn"
           onClick={() => onZoom({ src, alt })}
-          aria-label={`${sample.letter} ${sample.name} grafiğini büyüt`}
+          aria-label={`${sample.letter} ${sample.name} ${zoomLabel}`}
         >
           <IconSearch />
         </button>
@@ -182,6 +173,8 @@ function GraphCard({ sample, src, alt, onZoom }) {
 }
 
 export default function Analizler({ product = "demo" }) {
+  const { copy } = useLang();
+  const a = copy.analizler;
   const overlayId = useId();
   const location = useLocation();
   const navigate = useNavigate();
@@ -190,6 +183,11 @@ export default function Analizler({ product = "demo" }) {
   const [pick, setPick] = useState("all");
   const [overlay, setOverlay] = useState(true);
   const [zoom, setZoom] = useState(null);
+  const samples = SAMPLES.map((sample) => ({
+    ...sample,
+    name: a.samples[sample.id],
+  }));
+  const sections = SECTION_IDS.map((id) => ({ id, ...a.sections[id] }));
 
   useEffect(() => {
     setSection(sectionFromHash(location.hash));
@@ -202,12 +200,9 @@ export default function Analizler({ product = "demo" }) {
     if (!zoom && dialog.open) dialog.close();
   }, [zoom]);
 
-  const visible = useMemo(
-    () => (pick === "all" ? SAMPLES : SAMPLES.filter((sample) => sample.id === pick)),
-    [pick],
-  );
+  const visible = pick === "all" ? samples : samples.filter((sample) => sample.id === pick);
 
-  const current = SECTIONS.find((item) => item.id === section) || SECTIONS[0];
+  const current = sections.find((item) => item.id === section) || sections[0];
   const stacked = overlay && section !== "raporlar" && visible.length > 1;
 
   function goSection(id) {
@@ -237,9 +232,9 @@ export default function Analizler({ product = "demo" }) {
       <div className="lab-page">
         <div className="lab-shell">
           <aside className="lab-side">
-            <p className="lab-kicker">ANALİZLER</p>
-            <nav className="lab-nav" aria-label="Analiz bölümleri">
-              {SECTIONS.map((item) => (
+            <p className="lab-kicker">{a.kicker}</p>
+            <nav className="lab-nav" aria-label={a.navAria}>
+              {sections.map((item) => (
                 <button
                   key={item.id}
                   type="button"
@@ -256,9 +251,9 @@ export default function Analizler({ product = "demo" }) {
             </nav>
 
             <section className="lab-legend" aria-labelledby="lab-legend-title">
-              <h2 id="lab-legend-title">Numune açıklamaları</h2>
+              <h2 id="lab-legend-title">{a.legend}</h2>
               <ol>
-                {SAMPLES.map((sample) => (
+                {samples.map((sample) => (
                   <li key={sample.id} className={`tone-${sample.id}`}>
                     <span className="lab-dot" aria-hidden="true">
                       {sample.letter}
@@ -271,7 +266,7 @@ export default function Analizler({ product = "demo" }) {
               </ol>
               <p className="lab-note">
                 <IconCheck />
-                {NOTES[section]}
+                {a.notes[section]}
               </p>
             </section>
           </aside>
@@ -281,16 +276,16 @@ export default function Analizler({ product = "demo" }) {
               <h1>{current.title}</h1>
               {section !== "raporlar" ? (
                 <div className="lab-tools">
-                  <div className="lab-tabs" role="group" aria-label="Numune filtresi">
+                  <div className="lab-tabs" role="group" aria-label={a.filterAria}>
                     <button
                       type="button"
                       aria-pressed={pick === "all"}
                       className={pick === "all" ? "is-on" : undefined}
                       onClick={() => setPick("all")}
                     >
-                      Tüm grafikler
+                      {a.all}
                     </button>
-                    {SAMPLES.map((sample) => (
+                    {samples.map((sample) => (
                       <button
                         key={sample.id}
                         type="button"
@@ -298,13 +293,13 @@ export default function Analizler({ product = "demo" }) {
                         className={pick === sample.id ? "is-on" : undefined}
                         onClick={() => setPick(sample.id)}
                       >
-                        {sample.letter} numune
+                        {sample.letter} {a.sample}
                       </button>
                     ))}
                   </div>
                   <div className="lab-tools-end">
                     <label className="lab-switch" htmlFor={overlayId}>
-                      <span>Üst üste göster</span>
+                      <span>{a.overlay}</span>
                       <input
                         id={overlayId}
                         type="checkbox"
@@ -316,7 +311,7 @@ export default function Analizler({ product = "demo" }) {
                       type="button"
                       className="lab-icon-btn"
                       onClick={expandAll}
-                      aria-label="Grafikleri genişlet"
+                      aria-label={a.expand}
                     >
                       <IconExpand />
                     </button>
@@ -327,7 +322,7 @@ export default function Analizler({ product = "demo" }) {
 
             {section === "raporlar" ? (
               <ul className="lab-reports">
-                {SAMPLES.map((sample) => (
+                {samples.map((sample) => (
                   <li key={sample.id}>
                     <a
                       className={`lab-report tone-${sample.id}`}
@@ -356,6 +351,7 @@ export default function Analizler({ product = "demo" }) {
                     src={sample[section]}
                     alt={sample[`${section}Alt`]}
                     onZoom={openZoom}
+                    zoomLabel={a.zoomBtn}
                   />
                 ))}
               </div>
@@ -363,8 +359,7 @@ export default function Analizler({ product = "demo" }) {
 
             <p className="lab-foot">
               <IconInfo />
-              Tüm analizler Yıldız Teknik Üniversitesi Merkezi Araştırma Laboratuvarı'nda
-              yapılmıştır.
+              {a.foot}
             </p>
           </div>
         </div>
@@ -374,7 +369,7 @@ export default function Analizler({ product = "demo" }) {
         ref={zoomRef}
         className="lab-zoom"
         onClose={() => setZoom(null)}
-        aria-label="Büyütülmüş grafik"
+        aria-label={a.zoomAria}
       >
         {zoom?.stack ? (
           <div className={zoom.blend ? "lab-stack" : "lab-zoom-list"}>
@@ -387,7 +382,7 @@ export default function Analizler({ product = "demo" }) {
         ) : null}
         <form method="dialog">
           <button type="submit" className="hit">
-            Kapat
+            {a.close}
           </button>
         </form>
       </dialog>

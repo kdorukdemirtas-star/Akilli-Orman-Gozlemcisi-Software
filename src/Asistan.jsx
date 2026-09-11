@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useUser } from "@clerk/react";
+import { useLang } from "./lang.js";
 import { Shell } from "./SiteNav.jsx";
 import {
   asChatKip,
   CHAT_KIPS,
   chatModel,
-  kipLabel,
   kipTemp,
   kipTokens,
   newThreadId,
@@ -64,6 +64,7 @@ function isAbort(err) {
 }
 
 export default function Asistan({ product = "software" }) {
+  const { copy } = useLang();
   const { user } = useUser();
   const userId = user?.id || "";
   const [params, setParams] = useSearchParams();
@@ -265,7 +266,7 @@ export default function Asistan({ product = "software" }) {
                   aria-pressed={kip === id}
                   onClick={() => pickKip(id)}
                 >
-                  {kipLabel(id)}
+                  {copy.asistan[id]}
                 </button>
               ))}
             </div>

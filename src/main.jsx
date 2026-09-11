@@ -6,6 +6,7 @@ import "leaflet/dist/leaflet.css";
 import App from "./App.jsx";
 import { clerkAppearance, clerkPublishableKey, clerkProxyUrl, clerkJsUrl, clerkUiUrl } from "./clerkFlag.js";
 import { ErrorBoundary } from "./ErrorBoundary.jsx";
+import { LangProvider } from "./lang.js";
 import { registerPwa } from "./pwa.js";
 import "./index.css";
 
@@ -16,7 +17,9 @@ const clerkUIUrl = clerkUiUrl() || undefined;
 const tree = (
   <ErrorBoundary>
     <BrowserRouter>
-      <App />
+      <LangProvider>
+        <App />
+      </LangProvider>
     </BrowserRouter>
   </ErrorBoundary>
 );

@@ -1,6 +1,7 @@
 import { useUser } from "@clerk/react";
 import { STATION_ID } from "./config.js";
 import { Lookout } from "./Lookout.jsx";
+import { useLang } from "./lang.js";
 import { Shell } from "./SiteNav.jsx";
 import { useClerkFlag } from "./clerkFlag.js";
 import { stationFromUser } from "./stationBind.js";
@@ -20,7 +21,8 @@ function SignedBoard() {
   const bound = stationFromUser(user);
   const stationId = bound || STATION_ID;
   const lede = bound || undefined;
-  if (!isLoaded) return <p className="boot" role="status">Pano açılıyor.</p>;
+  const { copy } = useLang();
+  if (!isLoaded) return <p className="boot" role="status">{copy.chrome.panoAciliyor}</p>;
   return <BoardLookout stationId={stationId} lede={lede} />;
 }
 

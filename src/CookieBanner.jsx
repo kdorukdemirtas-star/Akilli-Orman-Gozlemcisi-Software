@@ -1,6 +1,7 @@
 import { useEffect, useId, useState } from "react";
 import { Link } from "react-router-dom";
 import { hasConsent, readConsent, writeConsent } from "./consentStore.js";
+import { useLang } from "./lang.js";
 
 const FONT_HREF =
   "https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@800&family=Figtree:wght@400;800&family=IBM+Plex+Mono:wght@400;800&display=swap";
@@ -44,6 +45,8 @@ export function FontConsent() {
 
 export function CookieBanner() {
   const titleId = useId();
+  const { copy } = useLang();
+  const c = copy.cookie;
   const [open, setOpen] = useState(() => !readConsent().decided);
   const [fonts, setFonts] = useState(() => hasConsent("fonts"));
   const [map, setMap] = useState(() => hasConsent("map"));
@@ -71,17 +74,15 @@ export function CookieBanner() {
   return (
     <aside className="cookie-bar" role="region" aria-labelledby={titleId}>
       <div className="cookie-bar-copy">
-        <p id={titleId}>Çerez ve yurt dışı aktarım</p>
+        <p id={titleId}>{c.title}</p>
         <p>
-          Zorunlu çerezler hesap ve sohbet içindir. Yazı tipi (Google) ve harita karosu
-          (OpenStreetMap) için 6698 / BTK açık rızası gerekir. Tercihi Çerezler sayfasından
-          değiştirirsin.{" "}
-          <Link to="/gizlilik">Gizlilik</Link>
+          {c.body}{" "}
+          <Link to="/gizlilik">{copy.legal.gizlilik}</Link>
           {" · "}
-          <Link to="/cerezler">Çerezler</Link>
+          <Link to="/cerezler">{copy.legal.cerezler}</Link>
         </p>
         <fieldset className="cookie-picks">
-          <legend>İsteğe bağlı</legend>
+          <legend>{c.optional}</legend>
           <label htmlFor="aog-cookie-fonts">
             <input
               id="aog-cookie-fonts"
@@ -89,7 +90,7 @@ export function CookieBanner() {
               checked={fonts}
               onChange={(e) => setFonts(e.target.checked)}
             />
-            Yazı tipleri
+            {c.fonts}
           </label>
           <label htmlFor="aog-cookie-map">
             <input
@@ -98,19 +99,19 @@ export function CookieBanner() {
               checked={map}
               onChange={(e) => setMap(e.target.checked)}
             />
-            Harita karoları
+            {c.map}
           </label>
         </fieldset>
       </div>
       <p className="nav-auth cookie-bar-hits">
         <button type="button" className="hit ghost" onClick={() => save(false, false)}>
-          Reddet
+          {c.reject}
         </button>
         <button type="button" className="hit ghost" onClick={() => save(fonts, map)}>
-          Kaydet
+          {c.save}
         </button>
         <button type="button" className="hit" onClick={() => save(true, true)}>
-          Kabul et
+          {c.accept}
         </button>
       </p>
     </aside>

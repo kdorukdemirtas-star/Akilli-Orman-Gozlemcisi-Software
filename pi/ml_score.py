@@ -118,7 +118,7 @@ def main() -> int:
     url = (env.get("VITE_SUPABASE_URL") or "").rstrip("/")
     key = env.get("SUPABASE_SERVICE_ROLE_KEY") or env.get("VITE_SUPABASE_ANON_KEY") or ""
     if not url or not key:
-        raise SystemExit("Supabase URL / anahtar eksik")
+        raise SystemExit("Paket tablosu URL / anahtar eksik")
     rows = rest(
         url,
         key,

@@ -37,7 +37,7 @@ Doğrulama: `/asistan` → Clerk kartı → Continue with GitHub → `github.com
 ## Kilit ürün kuralları
 
 - Tokenlar `src/tokens.css`. HUD’u yeniden stil etme
-- Pano alarm AND: `t >= 100` ve alev
+- `fixedAlert` ve firmware AND kuralını değiştirme
 - Asistan gerçekleri `pi/AOG.md` + `AOG_FACTS` birebir. Chat `fetch("/v1/chat/completions")`
 - Kip: Hızlı / Orta / Derin cevaplar. Hop: Mesh sistemi
 - Testler: sklearn, StandardScaler, LoRa, 0x2A, Mesh sistemi, Clerk. Lab pik 399 °C

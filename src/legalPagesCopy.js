@@ -3,12 +3,12 @@ import { CONTROLLER } from "./privacyCopy.js";
 export const LEGAL_DATE = "11 Eylül 2026";
 
 export const LEGAL_LINKS = [
-  { to: "/gizlilik", label: "Gizlilik" },
-  { to: "/cerezler", label: "Çerezler" },
-  { to: "/eula", label: "EULA" },
-  { to: "/dmca", label: "DMCA" },
-  { to: "/erisilebilirlik", label: "Erişilebilirlik" },
-  { to: "/destek", label: "Destek" },
+  { to: "/gizlilik", label: "Gizlilik", id: "gizlilik" },
+  { to: "/cerezler", label: "Çerezler", id: "cerezler" },
+  { to: "/eula", label: "EULA", id: "eula" },
+  { to: "/dmca", label: "DMCA", id: "dmca" },
+  { to: "/erisilebilirlik", label: "Erişilebilirlik", id: "erisim" },
+  { to: "/destek", label: "Destek", id: "destek" },
 ];
 
 export const EULA_LEAD =

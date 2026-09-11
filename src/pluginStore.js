@@ -16,7 +16,7 @@ export const PLUGIN_CATALOG = [
   {
     id: "ml",
     title: "Makine öğrenmesi",
-    body: "Etiket: 100 °C ve alev. Kip ayarı Öğrenme sayfasında.",
+    body: "Karar takvimi Öğrenme sayfasındadır. İlk iki ay sabit karar kullanılır. İkinci aydan sonra dinamik algoritma, altıncı aydan sonra öğrenme kararlara katılır; sekizinci aya kadar payı artar. On ikinci ayda sabit karar ve dinamik algoritma kapanır.",
   },
 ];
 

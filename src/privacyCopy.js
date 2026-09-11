@@ -41,7 +41,7 @@ export const DATA_ROWS = [
     examples: "Sıcaklık, gaz, alev, RSSI",
     purpose: "Pano izleme",
     basis: "Meşru menfaat (KVKK md. 5/1-f): orman istasyonu. Kişi sayısı tutulmaz",
-    keep: "Supabase paket tablosunda 24 saat",
+    keep: "İşletmecinin Pi paket tablosunda 24 saat",
   },
   {
     category: "Paket GPS",
@@ -100,10 +100,10 @@ export const PROCESSOR_ROWS = [
     note: "Soru metni tünelden Pi'ye gider",
   },
   {
-    name: "Supabase",
-    job: "Paket tablosu",
-    where: "İşletmecinin projesi",
-    note: "Pano 24 saat",
+    name: "Raspberry Pi (işletmeci)",
+    job: "Asistan yanıtı, istasyon köprüsü ve paket kaydı",
+    where: "Yerel ağ",
+    note: "Pano 24 saat. İstemci sistem metni ve sohbet geçmişi gönderilmez",
   },
   {
     name: "ntfy.sh",
@@ -122,12 +122,6 @@ export const PROCESSOR_ROWS = [
     job: "Harita karosu",
     where: "OSM sunucuları",
     note: "Yalnız açık rıza varsa. Paket GPS'i panoda açılmaz",
-  },
-  {
-    name: "Raspberry Pi (işletmeci)",
-    job: "Asistan yanıtı ve istasyon köprüsü",
-    where: "Yerel ağ",
-    note: "İstemci sistem metni ve sohbet geçmişi gönderilmez",
   },
 ];
 
@@ -176,7 +170,7 @@ export const PRIVACY_SECTIONS = [
     paragraphs: [
       "6698 sayılı Kişisel Verilerin Korunması Kanunu md. 10 uyarınca aydınlatma metnidir. GDPR (AB) md. 13/14 bilgisi aynı sayfadadır.",
       "Veri sorumlusu Defenders Of Green takımıdır. Ürün Akıllı Orman Gözlemcisi, TEKNOFEST 2026. Site: https://akilli-orman-gozlemcisi-software.vercel.app.",
-      "Tescilli ticaret unvanı, VERBIS numarası, veri koruma görevlisi ve AB'de yerleşik temsilci bu metinde yoktur. Başvuru bu sayfadaki haklar bölümünden veya GitHub deposu üzerinden yapılır. Ayrı bir e-posta veya KEP adresi yayımlanmaz.",
+      "Tescilli ticaret unvanı, VERBIS numarası, veri koruma görevlisi ve AB temsilcisi bu metinde yoktur. Başvuru bu sayfadaki haklar bölümünden veya GitHub deposu üzerinden yapılır. Ayrı bir e-posta veya KEP adresi yayımlanmaz.",
     ],
   },
   {
@@ -185,7 +179,7 @@ export const PRIVACY_SECTIONS = [
     paragraphs: [
       "Hesap Clerk e-posta, oturum ve isteğe bağlı ad ile kurulur. İstasyon kodu Clerk unsafeMetadata içinde durur; kutu QR ile hesaba bağlanır.",
       "Asistan: soru metni ve yanıt bu tarayıcıda hesaba yazılır. Soru, asistan yanıtı için Cloudflare tüneli üzerinden işletmecinin Raspberry Pi makinelerine gider; istemci sistem metni ve sohbet geçmişi gönderilmez.",
-      "Pano: istasyon paketleri (sıcaklık, gaz, alev, RSSI) Supabase'te 24 saat bakılır. Paketteki GPS veri tabanında durabilir; pano haritası paket GPS'ini göstermez. ntfy konusu alarm metnini çeker.",
+      "Pano: istasyon paketleri (sıcaklık, gaz, alev, RSSI) işletmecinin Pi paket tablosunda 24 saat bakılır. Paketteki GPS veri tabanında durabilir; pano haritası paket GPS'ini göstermez. ntfy konusu alarm metnini çeker.",
       "Eklenti, cihaz türü ve kaplama tarihi bu tarayıcıda, hesaba bağlı olmadan durabilir. Sohbet silme bunları silmez; tarayıcı verisini temizleyerek kalkar.",
     ],
   },
@@ -202,7 +196,7 @@ export const PRIVACY_SECTIONS = [
     id: "aktarim",
     title: "Yurt dışı aktarım ve işleyenler",
     paragraphs: [
-      "Clerk, Inc. (ABD) hesabı tutar. Vercel barındırır. Supabase paket tablosunu tutar. ntfy.sh alarm konusunu barındırır. Cloudflare hem Clerk bot koruması hem asistan tünelidir. Google Fonts ve OpenStreetMap yalnız açık rıza varsa çağrılır.",
+      "Clerk, Inc. (ABD) hesabı tutar. Vercel barındırır. Paket tablosu işletmecinin Raspberry Pi makinelerinde durur. ntfy.sh alarm konusunu barındırır. Cloudflare hem Clerk bot koruması hem asistan tünelidir. Google Fonts ve OpenStreetMap yalnız açık rıza varsa çağrılır.",
       "KVKK md. 8 ve md. 9 kapsamında bu aktarımlar hizmetin sunulması için yapılır. ABD'de CLOUD Act kapsamı Clerk ve Vercel için geçerlidir; ayrı bir Adequacy kararı bu metinde iddia edilmez. Clerk veya Vercel'in kendi DPA metinleri bu ürünün imzaladığı bir sözleşme gibi yazılmaz.",
     ],
   },

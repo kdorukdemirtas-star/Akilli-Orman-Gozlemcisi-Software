@@ -12,7 +12,7 @@ export const MODULES = [
     src: "/hardware/mod-max6675.jpg",
     cutout: false,
     alt: "MAX6675 K-tipi termokupl dönüştürücü ve çelik problu kablo.",
-    body: "K-tipi termokupl, orman yangınında plastik gövdeli bir sıcaklık çipinin dayanamayacağı ısılara çıkar. MAX6675 soğuk bağlantı telafisiyle analog gerilimi SPI üzerinden sayıya çevirir. Paketteki t= alanı buradan gelir. Pano eşiği: 100 °C ve alev. Sıcaklık tek başına, alev tek başına alarm yazmaz.",
+    body: "K-tipi termokupl, orman yangınında plastik gövdeli bir sıcaklık çipinin dayanamayacağı ısılara çıkar. MAX6675 soğuk bağlantı telafisiyle analog gerilimi SPI üzerinden sayıya çevirir. Paketteki t= alanı buradan gelir.",
   },
   {
     id: "gps",
@@ -26,14 +26,14 @@ export const MODULES = [
     name: "MQ-9",
     src: "/hardware/mod-mq9.png",
     alt: "MQ-9 karbonmonoksit ve yanıcı gaz sensörü.",
-    body: "MQ-9 karbonmonoksit ve yanıcı gazlara duyarlı bir yarıiletken kafestir. Analog çıkış Deneyap'ın A3 pinine gider. Paket mq9= ham ADC değeridir; ppm iddiası yoktur. Isıtıcı eleman birkaç dakikada ısınır. Potansiyometre dijital eşiği ayarlar. Yazılım alarmı gazdan değil, sıcaklık ve alevden kurar.",
+    body: "MQ-9 karbonmonoksit ve yanıcı gazlara duyarlı bir yarıiletken kafestir. Analog çıkış Deneyap'ın A3 pinine gider. Paket mq9= ham ADC değeridir; ppm iddiası yoktur. Isıtıcı eleman birkaç dakikada ısınır. Potansiyometre dijital karşılaştırıcıyı ayarlar. Yazılım alarmı gazdan kurmaz.",
   },
   {
     id: "flame",
     name: "Kızılötesi alev",
     src: "/hardware/mod-flame.png",
     alt: "Kızılötesi alev modülü, LM393 karşılaştırıcı ve ayar trimeri.",
-    body: "Modül alevin kızılötesi ışımasını fototransistörle görür. LM393 karşılaştırıcı dijital çıkar. Kutuda iki kızılötesi göz vardır. Pano bunları ayrı ürün gibi göstermez; tek ateş kararı verir. Eşik 100 °C ve alev birlikte sağlanınca ntfy gider.",
+    body: "Modül alevin kızılötesi ışımasını fototransistörle görür. LM393 karşılaştırıcı dijital çıkar. Kutuda iki kızılötesi göz vardır. Pano bunları ayrı ürün gibi göstermez; tek kızılötesi okuma verir. Karar takvimi Öğrenme sayfasındadır.",
   },
   {
     id: "lora",

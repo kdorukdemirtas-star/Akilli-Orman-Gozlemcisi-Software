@@ -104,11 +104,11 @@ REPLY_SYSTEMS = (
     "Kutu ormanda ölçer, paket LoRa 433 MHz ile çıkar, evdeki pano okur. Yangını kaplama söndürmez, alevi yavaşlatır. Mesh sistemi ayrı bir hop eklentisidir.",
 )
 REPLY_ALARM = (
-    "Alarmı kutu kuralı yazar. Asistan ntfy atmaz. Eşik bu kaynakta derece olarak yazılmaz."
+    "Alarmı kutu kuralı yazar. Asistan ntfy atmaz. Karar takvimi /makine sayfasındadır."
 )
 REPLY_ALARMS = (
     REPLY_ALARM,
-    "Asistan alarm açmaz. Pano haberi gösterir; eşik derece bu kaynakta yoktur.",
+    "Asistan alarm açmaz. Pano haberi gösterir. İlk iki ay sabit karar, ikinci aydan sonra dinamik, altıncı aydan sonra öğrenme katılır.",
     "Yangın bitini asistan kurmaz. Kutu kuralı panodadır.",
 )
 REPLY_USERS = (

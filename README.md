@@ -86,9 +86,11 @@ Ağırlık dosyaları ve asistan sunucusu ikilisi depoda yoktur. Pi kurulumu: `p
 
 ## Ne işe yarar
 
-- **LoRa izleme:** kutu ormanı eve bağlar. Paket Ra-02 433 MHz ile alıcıya çıkar. Orman düğümünde Wi-Fi yoktur.
-- **Güvenilir alarm:** ekip gerçek yangında çağrılır. Güneş ısısı yangın sayılmaz. Yazılımdaki kural AND'dir: sıcaklık **100 °C ve üstü** ve **alev** birlikte olunca ntfy gider. Sıcaklık tek başına, alev tek başına alarm yazmaz. Asistan alarm açmaz.
-- **Pasif kaplama:** alevin yüzeye oturmasını yavaşlatır. Yangını söndürmez. Ekip yetişecek zamanı kazanır.
+LoRa izleme: kutu ormanı eve bağlar. Paket Ra-02 433 MHz ile alıcıya çıkar. Orman düğümünde Wi-Fi yoktur.
+
+Karar takvimi: güneş ısısı yangın sayılmaz. Kurulumdan sonra ilk iki ay sabit karar kullanılır. İkinci aydan sonra dinamik karar algoritması devreye girer. Altıncı aydan sonra makine öğrenmesi kararlara katılır; sekizinci aya kadar payı artar. On ikinci ayda sabit karar ve dinamik algoritma kapanır, öğrenme sistemi tek başına kalır. Asistan alarm açmaz.
+
+Pasif kaplama: alevin yüzeye oturmasını yavaşlatır. Yangını söndürmez. Ekip yetişecek zamanı kazanır.
 
 ## Aktif izleme: orman kutusu
 
@@ -99,12 +101,12 @@ Kutu IP-67 alüminyum gövdedir. Conta yuvası, kablo rakoru ve güneş paneli b
 | MAX6675 + K-tipi termokupl | Sıcaklık. Paketteki `t=` buradan gelir. |
 | GY-GPSV3-NEO | Konum. Fix yoksa `gps=0`; harita işaret koymaz. |
 | MQ-9 | Karbonmonoksit ve yanıcı gaz, ham ADC. Alarm gazdan kurulmaz. |
-| İki kızılötesi göz | Alev. Pano bunları ayrı ürün gibi göstermez; tek ateş kararı verir. |
+| İki kızılötesi göz | Alev. Pano bunları ayrı ürün gibi göstermez; tek kızılötesi okuma verir. |
 | Ra-02 LoRa (SX1278, 433 MHz) | Paketi alıcıya taşır. Orman kutusu internete bağlı değildir. |
 
 Paket alanları: `n`, `t`, `gps`, `lat`, `lon`, `mq9`, `a8`, `a9`. Alev, `a8` veya `a9` sıfır olduğunda yanar (pull-up; boşta 1).
 
-Alıcı internete bağlıdır. Satırı Supabase `public.packets` tablosuna yazar. Pano son **24 saati** çeker. Yeni paket eski özeti ezer; eski satırlar listeden düşer.
+Alıcı internete bağlıdır. Satırı paket tablosuna yazar. Pano son 24 saati çeker. Yeni paket eski özeti ezer; eski satırlar listeden düşer.
 
 ## Pasif kaplama: gövdedeki karışım
 
@@ -128,9 +130,9 @@ Yazılımın jüriye ve operatöre gösterdiği yüz budur.
 - **Ana / Modüller / Sistem / Karışım / Analizler** ürünü anlatır. Analizler FTIR, TGA-DSC grafikleri ve xlsx raporlarıdır.
 - **Pano** kutunun son 24 saatini gösterir: sıcaklık grafiği, harita, alev, RSSI, kaplama durumu, ntfy listesi.
 - **Asistan** (`/asistan`) aynı sitededir. Adres yazılmaz. Kip: Hızlı cevaplar / Orta cevaplar / Derin cevaplar. Model adı yoktur. Alarm açmaz.
-- **Öğrenme** (`/makine`) alarm kipini ayarlar: Sabit, Takvim, Yalnız skor. Panoda tek tuşla kip değişmez.
+- **Öğrenme** (`/makine`) karar kipini ayarlar: Sabit, Takvim, Yalnız skor. Panoda tek tuşla kip değişmez.
 - **Eklenti** Mesh sistemi, Asistan ve makine öğrenmesi katalogudur.
-- **Cihaz** PWA kurulumunu ve istasyon eşlemeyi anlatır.
+- **Cihaz** PWA kurulumunu ve istasyon eşlemeyi anlatır. **Destek** Cihaz'ın yanındadır; bağış yoktur, MIT kaynak yıldızı yeter.
 
 Clerk anahtarı varsa pano hesaba bağlı istasyonu okur. Anahtar yoksa demo istasyonu `AOG-DEMO-1` açılır. iPhone ve Android aynı siteyi PWA olarak ana ekrana alır. Kotlin veya Swift kabuğu yoktur.
 
@@ -141,7 +143,7 @@ Clerk anahtarı varsa pano hesaba bağlı istasyonu okur. Anahtar yoksa demo ist
 | Site ve pano | JavaScript | React 19, Vite 7, React Router, Clerk |
 | Görünüm | CSS | `src/tokens.css`, `site.css`, `ops.css` |
 | Verici / alıcı | Arduino C++ | `firmware/AOG_Verici.ino`, `firmware/AOG_Alici.ino` |
-| Veri | SQL | Postgres, Supabase (RLS, realtime INSERT) |
+| Veri | SQL | Postgres paket tablosu (RLS, realtime INSERT) |
 | Bildirim | ntfy.sh | Konu adı ortam değişkenidir; koda gömülmez |
 | Asistan vekili | Python | `pi/chat_proxy.py`; Vite `PI_CHAT_URL` ile `/v1` vekiller |
 

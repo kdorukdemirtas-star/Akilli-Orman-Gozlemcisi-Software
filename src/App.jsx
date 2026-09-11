@@ -3,6 +3,7 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import { AuthenticateWithRedirectCallback } from "@clerk/react";
 import { Home } from "./Home.jsx";
 import { Device } from "./Device.jsx";
+import { useLang } from "./lang.js";
 import { Shell } from "./SiteNav.jsx";
 import { RequireAuth } from "./RequireAuth.jsx";
 import "./site.css";
@@ -23,27 +24,30 @@ const Dmca = lazy(() => import("./Dmca.jsx"));
 const Erisilebilirlik = lazy(() => import("./Erisilebilirlik.jsx"));
 
 function BoardFallback({ product }) {
+  const { copy } = useLang();
   return (
     <Shell product={product} footer={false}>
-      <p className="boot" role="status">Pano açılıyor.</p>
+      <p className="boot" role="status">{copy.chrome.panoAciliyor}</p>
     </Shell>
   );
 }
 
 function PageFallback({ product }) {
+  const { copy } = useLang();
   return (
     <Shell product={product} footer={false}>
-      <p className="boot" role="status">Sayfa açılıyor.</p>
+      <p className="boot" role="status">{copy.chrome.sayfaAciliyor}</p>
     </Shell>
   );
 }
 
 function CihazGate() {
+  const { copy } = useLang();
   return (
     <RequireAuth
       product="software"
-      title="Cihaz"
-      lead="Kutu ve cihaz sayfası hesaba bağlıdır. Giriş yapmadan cihaz ekranı açılmaz."
+      title={copy.nav.cihaz}
+      lead={copy.auth.cihazLead}
     >
       <Device product="software" />
     </RequireAuth>

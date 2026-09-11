@@ -1,85 +1,7 @@
 import { Link } from "react-router-dom";
+import { useLang } from "./lang.js";
 import { Shell } from "./SiteNav.jsx";
 import "./site.css";
-
-const PARTS = [
-  {
-    name: "Aloe vera jeli",
-    short: "Aloe vera jeli",
-    role: "Su tutar; yüzeyi ıslak ve yapışkan tutar.",
-    mark: "aloe",
-  },
-  {
-    name: "Pirinç kabuğu külü (ince ve kalın)",
-    short: "Pirinç kabuğu külü",
-    role: "Silisli iskelet sağlar. İnce toz boşluğu doldurur; kalın taneler kabuğu tutar.",
-    mark: "ash",
-  },
-  {
-    name: "Yumurta kabuğu tozu",
-    short: "Yumurta kabuğu tozu",
-    role: "Kalsiyum karbonattır. Isıda gaz çıkarır; char tabakasını destekler.",
-    mark: "shell",
-  },
-  {
-    name: "Ksantan gam",
-    short: "Ksantan gam",
-    role: "Karışımı ağaca yapıştırır. Yağmurda hemen akmaması içindir.",
-    mark: "gum",
-  },
-];
-
-const GAINS = [
-  {
-    title: "Doğal içerik",
-    body: "Sıfır atık tarifidir. Kimyasal yangın geciktirici iddiası yoktur.",
-    icon: "leaf",
-  },
-  {
-    title: "Yüzeye tutunur",
-    body: "Jel ve gam, kabuğu ağaca yapıştırır.",
-    icon: "shield",
-  },
-  {
-    title: "Yayılmayı yavaşlatır",
-    body: "Amaç kesmek değil, alevin yüzeye oturmasını yavaşlatmaktır.",
-    icon: "fire",
-  },
-  {
-    title: "Zaman kazandırır",
-    body: "Kazanılan süre tahliye ve müdahale içindir.",
-    icon: "clock",
-  },
-];
-
-const STEPS = [
-  {
-    title: "Uygulama",
-    body: "Karışım gövdeye eşit sürülür.",
-    icon: "brush",
-  },
-  {
-    title: "Koruyucu tabaka",
-    body: "Yapışkan koruyucu bir tabaka oluşur.",
-    icon: "shield",
-  },
-  {
-    title: "Alev temasını geciktirme",
-    body: "Isı geçişini ve alevin yüzeye oturmasını yavaşlatır.",
-    icon: "fire",
-  },
-  {
-    title: "Müdahale süresi",
-    body: "Tahliye ve müdahale için süre kazandırır.",
-    icon: "clock",
-  },
-];
-
-const TEMPS = [
-  { value: "399 °C", label: "Kaplamasız ağaç" },
-  { value: "424 °C", label: "Taze kaplama" },
-  { value: "438 °C", label: "3,5 ay yaşlanmış kaplama" },
-];
 
 function CoatIcon({ name }) {
   return (
@@ -174,6 +96,8 @@ function MixMark({ mark }) {
 }
 
 export default function Karisim({ product = "demo" }) {
+  const { copy } = useLang();
+  const k = copy.karisim;
   return (
     <Shell product={product}>
       <article className="coat-page">
@@ -181,27 +105,22 @@ export default function Karisim({ product = "demo" }) {
           <div className="coat-hero-copy">
             <p className="coat-badge">
               <CoatIcon name="leaf" />
-              Pasif koruma
+              {k.badge}
             </p>
-            <h1>Pasif kaplama</h1>
-            <p>
-              Karışım yangını söndürmez. AOG'nin pasif kaplaması doğal bir yangın
-              geciktiricidir: alevin yüzeye oturmasını yavaşlatır, tahliye ve müdahale
-              için süre kazandırır. Formülasyon TEKNOFEST 2026 sunumundaki sıfır atık
-              tarifidir.
-            </p>
+            <h1>{k.h1}</h1>
+            <p>{k.lede}</p>
           </div>
-          <figure className="coat-stage coat-stage-log" aria-label="Kaplama bandı ve dört bileşen.">
+          <figure className="coat-stage coat-stage-log" aria-label={k.stage}>
             <img
               className="coat-log-photo"
               src="/karisim/coat-log.jpg"
               width="720"
               height="1400"
-              alt="Çam gövdesinde açık renk pasif kaplama bandı."
+              alt={k.logAlt}
             />
             <div className="coat-log-side">
               <ul>
-                {PARTS.map((part) => (
+                {k.parts.map((part) => (
                   <li key={part.short}>{part.short}</li>
                 ))}
               </ul>
@@ -210,7 +129,7 @@ export default function Karisim({ product = "demo" }) {
         </header>
 
         <ul className="coat-gains">
-          {GAINS.map((gain) => (
+          {k.gains.map((gain) => (
             <li key={gain.title}>
               <span className="coat-ico">
                 <CoatIcon name={gain.icon} />
@@ -224,10 +143,10 @@ export default function Karisim({ product = "demo" }) {
         <section className="coat-block" aria-labelledby="mix-title">
           <h2 id="mix-title">
             <CoatIcon name="leaf" />
-            Karışım bileşenleri
+            {k.partsTitle}
           </h2>
           <ul className="coat-parts">
-            {PARTS.map((part) => (
+            {k.parts.map((part) => (
               <li key={part.name} className={`is-${part.mark}`}>
                 <span className="coat-orb">
                   <MixMark mark={part.mark} />
@@ -240,9 +159,9 @@ export default function Karisim({ product = "demo" }) {
         </section>
 
         <section className="coat-block" aria-labelledby="how-title">
-          <h2 id="how-title">Nasıl çalışır?</h2>
+          <h2 id="how-title">{k.howTitle}</h2>
           <ol className="coat-steps">
-            {STEPS.map((step, index) => (
+            {k.steps.map((step, index) => (
               <li key={step.title}>
                 <span className="coat-ico">
                   <CoatIcon name={step.icon} />
@@ -259,11 +178,11 @@ export default function Karisim({ product = "demo" }) {
         <section className="coat-block" aria-labelledby="lab-title">
           <h2 id="lab-title">
             <CoatIcon name="beaker" />
-            Laboratuvar bulguları (YTÜ)
+            {k.labTitle}
           </h2>
           <div className="coat-lab">
             <ul className="coat-temps">
-              {TEMPS.map((temp) => (
+              {k.temps.map((temp) => (
                 <li key={temp.label}>
                   <strong>{temp.value}</strong>
                   <span>{temp.label}</span>
@@ -271,33 +190,23 @@ export default function Karisim({ product = "demo" }) {
               ))}
             </ul>
             <blockquote>
+              <p>{k.labBody}</p>
               <p>
-                TGA-DSC ölçümünde ana yanma sıcaklığı kaplamasız ağaçta 399 °C, taze
-                kaplamada 424 °C, 3,5 ay yaşlanmış kaplamada 438 °C bulunmuştur. Sunum,
-                maksimum kütle kaybı hızının kabaca üç kat düştüğünü yazar. FTIR,
-                yüzeyin örtüldüğünü ve yaşlanmayla etkinin kısmen zayıfladığını gösterir.
-              </p>
-              <p>
-                Ham spektrumlar <Link to="/analizler">Analizler</Link> sayfasındadır.
+                {k.labLead} <Link to="/analizler">{copy.nav.analizler}</Link> {k.labTail}
               </p>
             </blockquote>
           </div>
-          <p className="coat-cap">
-            Analizler Yıldız Teknik Üniversitesi Merkezi Araştırma Laboratuvarı'nda
-            gerçekleştirilmiştir.
-          </p>
+          <p className="coat-cap">{k.labCap}</p>
         </section>
 
         <div className="coat-close">
-          <p className="coat-banner">
-            Kaplama alevi geciktirir; sensörler haber verir. İkisi birlikte AOG'dir.
-          </p>
-          <nav className="coat-next" aria-label="Sonraki adım">
+          <p className="coat-banner">{k.banner}</p>
+          <nav className="coat-next" aria-label={k.next}>
             <Link className="fold-go" to="/analizler">
-              Analizlere geç
+              {k.nextLabs}
             </Link>
             <Link className="fold-go is-ghost" to="/dashboard">
-              Panoyu aç
+              {k.nextBoard}
             </Link>
           </nav>
         </div>

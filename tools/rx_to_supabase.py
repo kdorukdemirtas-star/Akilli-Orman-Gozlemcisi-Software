@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""USB serial gateway: AOG alici -> Supabase packets.
+"""USB serial gateway: AOG alici -> packet table.
 
 Reads LoRa lines from the RX Deneyap, posts AOG-DEMO-1 rows.
 Keeps GPS TX/RX on the transmitter; this process only opens the RX port.

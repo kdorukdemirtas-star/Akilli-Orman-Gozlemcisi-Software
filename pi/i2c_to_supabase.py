@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Pi I2C master: Deneyap alici (0x2A) -> Supabase packets.
+"""Pi I2C master: Deneyap alici (0x2A) -> packet table.
 
 Deneyap is the I2C slave. This process only reads 32-byte frames.
 """

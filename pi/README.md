@@ -49,4 +49,4 @@ Servis: `aog-chat.service` (eski `aog-asistan.service` durdurulur). PWA üst men
 
 ## ML
 
-`ml_score.py` + `aog-ml.timer`. sklearn `Pipeline`: `StandardScaler` + `LogisticRegression(class_weight="balanced")`. Etiket: 100 °C ve alev. Her sınıftan en az 3 örnek yoksa `logreg-wait` (skor 0). Çıktı `scores` (`model`: `logreg` veya `logreg-wait`). Ayar PWA `/makine`. Asistan ile aynı anda eğitme.
+`ml_score.py` + `aog-ml.timer`. sklearn `Pipeline`: `StandardScaler` + `LogisticRegression(class_weight="balanced")`. Etiket sabit karar örnekleridir. Her sınıftan en az 3 örnek yoksa `logreg-wait` (skor 0). Çıktı `scores` (`model`: `logreg` veya `logreg-wait`). Ayar PWA `/makine`. Asistan ile aynı anda eğitme.

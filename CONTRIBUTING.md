@@ -11,6 +11,6 @@ npm test
 npm run dev
 ```
 
-`.env`, `.env.local`, Pi şifresi ve ağırlık dosyaları commit edilmez. PWA metninde kip adları Hızlı cevaplar / Orta cevaplar / Derin cevaplar kalır; model adı yazılmaz. Alarm kuralı AND'dir: 100 °C ve alev.
+`.env`, `.env.local`, Pi şifresi ve ağırlık dosyaları commit edilmez. PWA metninde kip adları Hızlı cevaplar / Orta cevaplar / Derin cevaplar kalır; model adı yazılmaz. Karar takvimi Öğrenme sayfasındadır.
 
 Asistan vekili: `pi/README.md`.
