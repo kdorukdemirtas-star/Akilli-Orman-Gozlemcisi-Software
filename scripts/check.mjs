@@ -26,6 +26,7 @@ import {
   privacyBlob,
 } from "../src/privacyCopy.js";
 import { destekBlob } from "../src/destekCopy.js";
+import { a11yBlob, dmcaBlob, eulaBlob } from "../src/legalPagesCopy.js";
 import { exportPersonalData, wipePersonalData } from "../src/accountData.js";
 
 test("parseStation accepts a raw station id", () => {
@@ -556,6 +557,40 @@ test("destek copy refuses donations and points at the MIT repo", () => {
   assert.doesNotMatch(blob, /Patreon|PayPal|bağış yap|donate/i);
 });
 
+test("eula keeps MIT rights and drops store-template bans", () => {
+  const blob = eulaBlob();
+  assert.match(blob, /MIT/);
+  assert.match(blob, /AS IS|olduğu gibi/);
+  assert.match(blob, /kopyalama/);
+  assert.match(blob, /Clerk/);
+  assert.match(blob, /Vercel/);
+  assert.match(blob, /itfaiye/);
+  assert.match(blob, /kdorukdemirtas-star\/Akilli-Orman-Gozlemcisi-Software/);
+  assert.doesNotMatch(blob, /tersine mühendis|reverse.?engineer|paylaşamazsın|türetilemez/i);
+  assert.doesNotMatch(blob, /legal@|eula@|support@/i);
+});
+
+test("dmca points at GitHub and does not invent an agent mailbox", () => {
+  const blob = dmcaBlob();
+  assert.match(blob, /github\.com\/contact\/dmca/);
+  assert.match(blob, /kdorukdemirtas-star\/Akilli-Orman-Gozlemcisi-Software/);
+  assert.match(blob, /512/);
+  assert.match(blob, /kayıtlı/);
+  assert.doesNotMatch(blob, /dmca@|copyright@|legal@/i);
+  assert.doesNotMatch(blob, /tescil edilmiş temsilciyiz|registered copyright agent/i);
+});
+
+test("accessibility statement lists gaps and refuses WCAG certification", () => {
+  const blob = a11yBlob();
+  assert.match(blob, /İçeriğe atla/);
+  assert.match(blob, /klavye/);
+  assert.match(blob, /Clerk/);
+  assert.match(blob, /WCAG/);
+  assert.match(blob, /kdorukdemirtas-star\/Akilli-Orman-Gozlemcisi-Software/);
+  assert.doesNotMatch(blob, /tam uyumludur|fully conform|ADA compliant|ADA Title III uygun/i);
+  assert.doesNotMatch(blob, /sertifikal|ISO 27001|a11y@|accessibility@/i);
+});
+
 test("privacy tables name keep times and processors", () => {
   assert.ok(DATA_ROWS.length >= 6);
   assert.ok(PROCESSOR_ROWS.some((row) => /Clerk/.test(row.name)));
@@ -771,19 +806,34 @@ test("gizlilik and cerezler routes are public", () => {
   assert.match(app, /path="\/gizlilik"/);
   assert.match(app, /path="\/cerezler"/);
   assert.match(app, /path="\/destek"/);
+  assert.match(app, /path="\/eula"/);
+  assert.match(app, /path="\/dmca"/);
+  assert.match(app, /path="\/erisilebilirlik"/);
+  assert.match(app, /path="\/privacy"/);
+  assert.match(app, /path="\/accessibility"/);
   const giz = app.split('path="/gizlilik"')[1]?.split("path=")[0] ?? "";
   assert.doesNotMatch(giz, /RequireAuth/);
   const dest = app.split('path="/destek"')[1]?.split("path=")[0] ?? "";
   assert.doesNotMatch(dest, /RequireAuth/);
+  const eula = app.split('path="/eula"')[1]?.split("path=")[0] ?? "";
+  assert.doesNotMatch(eula, /RequireAuth/);
   const html = readFileSync(join(here, "../index.html"), "utf8");
   assert.doesNotMatch(html, /fonts\.googleapis\.com/);
   const main = readFileSync(join(here, "../src/main.jsx"), "utf8");
   assert.match(main, /telemetry=\{false\}/);
   const nav = readFileSync(join(here, "../src/SiteNav.jsx"), "utf8");
-  assert.match(nav, /to="\/gizlilik"/);
-  assert.match(nav, /to="\/cerezler"/);
-  assert.match(nav, /to="\/destek"/);
+  assert.match(nav, /LEGAL_LINKS/);
   assert.match(nav, /hud-support/);
+  const links = readFileSync(join(here, "../src/legalPagesCopy.js"), "utf8");
+  for (const path of ["/gizlilik", "/cerezler", "/destek", "/eula", "/dmca", "/erisilebilirlik"]) {
+    assert.match(links, new RegExp(`to: "${path}"`));
+  }
+  const css = readFileSync(join(here, "../src/site.css"), "utf8");
+  assert.match(css, /grid-template-rows:\s*minmax\(0,\s*1fr\)\s+auto/);
+  assert.match(css, /\.cookie-bar\s*\{[^}]*position:\s*relative/);
+  const ui = readFileSync(join(here, "../src/legalUi.jsx"), "utf8");
+  assert.match(ui, /startsWith\("https:\/\/"\)/);
+  assert.match(nav, /LEGAL_LINKS\.map[\s\S]*onClick=\{closeMenu\}/);
 });
 
 test("pano requires Clerk sign-in", () => {
@@ -882,6 +932,8 @@ test("nav packs split product watch and hardware with tones", () => {
   assert.ok(DESKTOP_TABS.some((tab) => tab.to === "/asistan"));
   assert.equal(DESKTOP_TABS.some((tab) => tab.to === "/makine"), false);
   assert.equal(DESKTOP_TABS.some((tab) => tab.to === "/destek"), false);
+  assert.equal(DESKTOP_TABS.some((tab) => tab.to === "/eula"), false);
+  assert.equal(DESKTOP_TABS.some((tab) => tab.to === "/erisilebilirlik"), false);
   const izle = NAV_PACKS.find((pack) => pack.id === "izle");
   assert.ok(izle.overlay.some((item) => item.to === "/makine"));
   const destek = NAV_PACKS.find((pack) => pack.id === "destek");

@@ -18,6 +18,9 @@ const Pair = lazy(() => import("./Pair.jsx"));
 const Gizlilik = lazy(() => import("./Gizlilik.jsx"));
 const Cerezler = lazy(() => import("./Cerezler.jsx"));
 const Destek = lazy(() => import("./Destek.jsx"));
+const Eula = lazy(() => import("./Eula.jsx"));
+const Dmca = lazy(() => import("./Dmca.jsx"));
+const Erisilebilirlik = lazy(() => import("./Erisilebilirlik.jsx"));
 
 function BoardFallback({ product }) {
   return (
@@ -153,6 +156,35 @@ export default function App() {
           </Suspense>
         }
       />
+      <Route
+        path="/eula"
+        element={
+          <Suspense fallback={<PageFallback product="software" />}>
+            <Eula />
+          </Suspense>
+        }
+      />
+      <Route
+        path="/dmca"
+        element={
+          <Suspense fallback={<PageFallback product="software" />}>
+            <Dmca />
+          </Suspense>
+        }
+      />
+      <Route
+        path="/erisilebilirlik"
+        element={
+          <Suspense fallback={<PageFallback product="software" />}>
+            <Erisilebilirlik />
+          </Suspense>
+        }
+      />
+      <Route path="/kullanim" element={<Navigate to="/eula" replace />} />
+      <Route path="/terms" element={<Navigate to="/eula" replace />} />
+      <Route path="/privacy" element={<Navigate to="/gizlilik" replace />} />
+      <Route path="/cookies" element={<Navigate to="/cerezler" replace />} />
+      <Route path="/accessibility" element={<Navigate to="/erisilebilirlik" replace />} />
       <Route path="/cihaz" element={<CihazGate />} />
       <Route path="/cihaz/:kind" element={<CihazGate />} />
       <Route path="/yerel/ios" element={<Navigate to="/cihaz/ios" replace />} />

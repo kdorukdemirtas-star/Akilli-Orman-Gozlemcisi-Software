@@ -35,17 +35,34 @@ export function LegalTable({ caption, columns, rows }) {
   );
 }
 
+function LinkedText({ text }) {
+  const parts = String(text).split(/(https:\/\/[^\s]+)/g);
+  return parts.map((part, index) =>
+    part.startsWith("https://") ? (
+      <a key={index} href={part}>
+        {part}
+      </a>
+    ) : (
+      part
+    ),
+  );
+}
+
 export function LegalSection({ id, title, paragraphs, list, children }) {
   return (
     <section id={id}>
       <h2>{title}</h2>
       {(paragraphs || []).map((text) => (
-        <p key={text}>{text}</p>
+        <p key={text}>
+          <LinkedText text={text} />
+        </p>
       ))}
       {list?.length ? (
         <ul>
           {list.map((item) => (
-            <li key={item}>{item}</li>
+            <li key={item}>
+              <LinkedText text={item} />
+            </li>
           ))}
         </ul>
       ) : null}

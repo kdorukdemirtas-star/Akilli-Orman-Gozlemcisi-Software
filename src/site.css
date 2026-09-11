@@ -1238,7 +1238,7 @@
 .app-shell {
   height: 100%;
   display: grid;
-  grid-template-rows: 1fr;
+  grid-template-rows: minmax(0, 1fr) auto;
   padding-top: calc(var(--hud-h) + env(safe-area-inset-top, 0px));
   min-height: 0;
   max-width: 100%;
@@ -2393,6 +2393,10 @@ html[data-surface="ha"] .qr-mark {
   gap: var(--space-sm);
   justify-content: center;
 }
+.legal-page .legal-end {
+  justify-content: flex-start;
+  margin-top: var(--space-lg);
+}
 .legal-end a,
 .cookie-bar a {
   color: inherit;
@@ -2527,8 +2531,7 @@ html[data-surface="ha"] .qr-mark {
   gap: var(--space-sm);
 }
 .cookie-bar {
-  position: fixed;
-  inset: auto 0 0 0;
+  position: relative;
   z-index: 60;
   display: grid;
   gap: var(--space-sm);

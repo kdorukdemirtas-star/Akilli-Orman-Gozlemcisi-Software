@@ -4,6 +4,7 @@ import { SignInButton, SignUpButton, UserButton, useUser } from "@clerk/react";
 import { isStandaloneDisplay } from "./pwa.js";
 import { clerkAppearance, useClerkFlag } from "./clerkFlag.js";
 import { CookieBanner, FontConsent } from "./CookieBanner.jsx";
+import { LEGAL_LINKS } from "./legalPagesCopy.js";
 import { DESKTOP_TABS, NAV_PACKS, overlayLinks } from "./navPacks.js";
 
 export { DESKTOP_TABS, NAV_PACKS };
@@ -213,9 +214,11 @@ export function SiteNav({ product = "demo" }) {
             <span>
               {product === "software" ? "Yazılım" : "Akıllı Orman Gözlemcisi"}
             </span>
-            <Link to="/gizlilik">Gizlilik</Link>
-            <Link to="/cerezler">Çerezler</Link>
-            <Link to="/destek">Destek</Link>
+            {LEGAL_LINKS.map((item) => (
+              <Link key={item.to} to={item.to} onClick={closeMenu}>
+                {item.label}
+              </Link>
+            ))}
           </div>
         </div>
       </dialog>
@@ -230,9 +233,11 @@ export function SiteFooter() {
       <span>Akıllı Orman Gözlemcisi</span>
       <span>TEKNOFEST 2026</span>
       <nav className="legal-end" aria-label="Yasal">
-        <Link to="/gizlilik">Gizlilik</Link>
-        <Link to="/cerezler">Çerezler</Link>
-        <Link to="/destek">Destek</Link>
+        {LEGAL_LINKS.map((item) => (
+          <Link key={item.to} to={item.to}>
+            {item.label}
+          </Link>
+        ))}
       </nav>
     </footer>
   );
