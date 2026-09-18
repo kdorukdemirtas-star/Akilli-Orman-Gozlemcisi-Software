@@ -4,7 +4,6 @@ import { Lookout } from "./Lookout.jsx";
 import { useLang } from "./lang.js";
 import { Shell } from "./SiteNav.jsx";
 import { useClerkFlag } from "./clerkFlag.js";
-import { stationFromUser } from "./stationBind.js";
 import "./site.css";
 
 function BoardLookout({ stationId, lede }) {
@@ -17,13 +16,10 @@ function BoardLookout({ stationId, lede }) {
 }
 
 function SignedBoard() {
-  const { isLoaded, user } = useUser();
-  const bound = stationFromUser(user);
-  const stationId = bound || STATION_ID;
-  const lede = bound || undefined;
+  const { isLoaded } = useUser();
   const { copy } = useLang();
   if (!isLoaded) return <p className="boot" role="status">{copy.chrome.panoAciliyor}</p>;
-  return <BoardLookout stationId={stationId} lede={lede} />;
+  return <BoardLookout stationId={STATION_ID} />;
 }
 
 export default function Dashboard() {
