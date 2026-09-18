@@ -1,9 +1,5 @@
 #!/usr/bin/env python3
-"""USB serial gateway: AOG alici -> packet table.
-
-Reads LoRa lines from the RX Deneyap, posts AOG-DEMO-1 rows.
-Keeps GPS TX/RX on the transmitter; this process only opens the RX port.
-"""
+"""USB serial gateway: AOG lines -> packet table."""
 
 from __future__ import annotations
 
@@ -66,16 +62,13 @@ def num(s: str | None):
     return v
 
 
-def is_tx_echo(line: str) -> bool:
-    """Transmitter USB repeats the AOG payload; RSSI exists only on the RX board."""
-    return "gitti" in line
-
-
 def parse_aog(line: str) -> dict | None:
     m = AOG_RE.search(line)
     if not m:
         return None
     t = num(m.group(2))
+    if t is None:
+        return None
     row = {
         "station_id": STATION,
         "n": int(m.group(1)),
@@ -155,7 +148,7 @@ def open_all_ports() -> tuple[dict[int, str], dict[int, bytes]]:
         except OSError as e:
             print(f"acma hatasi {path} {e}", flush=True)
     if not fds:
-        return fds
+        return {}, {}
     bufs = {fd: b"" for fd in fds}
     deadline = time.monotonic() + 0.9
     while time.monotonic() < deadline:
@@ -205,9 +198,7 @@ def main() -> int:
         raise SystemExit("VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY eksik")
     print(f"hedef {url} station={STATION}", flush=True)
     last_n = None
-    last_rssi = None
     posted = 0
-    pending = None
     try:
         while True:
             opened = open_all_ports()
@@ -219,25 +210,7 @@ def main() -> int:
             bufs = {fd: leftover.get(fd, b"") for fd in fds}
             try:
                 while True:
-                    timeout = 0.2
-                    if pending:
-                        timeout = max(0.05, pending[0] - time.monotonic())
-                    r, _, _ = select.select(list(fds), [], [], timeout)
-                    now = time.monotonic()
-                    if pending and now >= pending[0]:
-                        row = pending[1]
-                        pending = None
-                        if row["n"] != last_n:
-                            if last_rssi is not None and "v" not in row:
-                                row["v"] = last_rssi
-                            code = post_row(url, anon, row)
-                            if code in (200, 201):
-                                last_n = row["n"]
-                                posted += 1
-                                print(
-                                    f"yazildi #{posted} n={row['n']} t={row['t']} mq9={row['mq9']} rssi={row.get('v')} a8={row['a8']} a9={row['a9']}",
-                                    flush=True,
-                                )
+                    r, _, _ = select.select(list(fds), [], [], 0.2)
                     if r:
                         for fd in r:
                             try:
@@ -256,27 +229,15 @@ def main() -> int:
                         while b"\n" in bufs[fd]:
                             raw, bufs[fd] = bufs[fd].split(b"\n", 1)
                             line = raw.decode("utf-8", "replace").strip()
-                            rssi_m = RSSI_RE.search(line)
-                            if rssi_m:
-                                last_rssi = int(rssi_m.group(1))
                             row = parse_aog(line)
-                            if not row:
-                                continue
-                            if last_rssi is not None and "v" not in row:
-                                row["v"] = last_rssi
-                            if is_tx_echo(line):
-                                if row["n"] != last_n:
-                                    pending = (time.monotonic() + 0.45, row)
-                                continue
-                            pending = None
-                            if row["n"] == last_n:
+                            if not row or row["n"] == last_n:
                                 continue
                             code = post_row(url, anon, row)
                             if code in (200, 201):
                                 last_n = row["n"]
                                 posted += 1
                                 print(
-                                    f"yazildi #{posted} n={row['n']} t={row['t']} mq9={row['mq9']} rssi={row.get('v')} src={path} a8={row['a8']} a9={row['a9']}",
+                                    f"yazildi #{posted} n={row['n']} t={row['t']} mq9={row['mq9']} a8={row['a8']} a9={row['a9']} src={path}",
                                     flush=True,
                                 )
             except OSError as e:
