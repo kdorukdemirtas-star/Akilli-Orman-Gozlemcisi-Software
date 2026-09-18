@@ -343,7 +343,7 @@ def main() -> int:
             bufs = {fd: leftover.get(fd, b"") for fd in fds}
             pending = None
             pending_path = None
-            heard = time.monotonic()
+            heard = None
             try:
                 while True:
                     pump(fds, bufs, 0.05)
@@ -353,7 +353,7 @@ def main() -> int:
                         pending = row
                         pending_path = path
                         heard = now
-                    elif now - heard > 3:
+                    elif heard is not None and now - heard > 8:
                         raise OSError(6, "Device not configured")
                     if not pending:
                         continue
