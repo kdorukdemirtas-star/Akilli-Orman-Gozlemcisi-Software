@@ -29,6 +29,7 @@ bool maxVar = false;
 bool maxKenar = true;
 float lastIyi = NAN;
 uint8_t sicra = 0;
+uint8_t maxFail = 0;
 uint32_t n = 0;
 
 uint32_t gpsByte = 0;
@@ -126,11 +127,18 @@ uint16_t maxOku16(int cs, int sck, int so, bool onceYuksek) {
 }
 
 bool maxMakul(uint16_t ham) {
-  if (ham & 0x8002) return false;
   if (ham & 0x04) return false;
   if (ham == 0 || ham == 0xFFFF) return false;
+  if (ham & 0x8000) return false;
   float c = (ham >> 3) * 0.25f;
   return c >= 0.0f && c < 400.0f;
+}
+
+int mq9Oku() {
+  analogReadResolution(12);
+  analogSetPinAttenuation(PIN_MQ9, ADC_11db);
+  analogRead(PIN_MQ9);
+  return analogRead(PIN_MQ9);
 }
 
 float nmeaDerece(const char *raw, char hem) {
@@ -261,10 +269,8 @@ void setup() {
   gpsTara();
 
   pinMode(PIN_MQ9, INPUT);
-  analogReadResolution(12);
-  analogSetPinAttenuation(PIN_MQ9, ADC_11db);
   delay(20);
-  Serial.printf("MQ-9 A3 ham=%d\n", analogRead(PIN_MQ9));
+  Serial.printf("MQ-9 A3 ham=%d\n", mq9Oku());
 
   gpio_reset_pin((gpio_num_t)PIN_ATES1);
   pinMode(PIN_ATES1, INPUT_PULLUP);
@@ -300,10 +306,13 @@ void setup() {
 
 void loop() {
   gpsPompa();
+  int mq9 = mq9Oku();
+  int a8 = digitalRead(PIN_ATES1);
+  int a9 = digitalRead(PIN_ATES2);
   uint16_t ham = maxOku16(maxCs, maxSck, maxSo, maxKenar);
   bool ok = maxMakul(ham);
   float c = NAN;
-    if (ok) {
+  if (ok) {
     c = (ham >> 3) * 0.25f;
     if (isfinite(lastIyi) && (c - lastIyi) > 45.0f) {
       sicra++;
@@ -318,16 +327,16 @@ void loop() {
       sicra = 0;
     }
     maxVar = true;
+    maxFail = 0;
   } else {
-    maxKenar = !maxKenar;
-    if (isfinite(lastIyi)) {
-      c = lastIyi;
+    maxFail++;
+    if (maxFail >= 4) {
+      maxKenar = !maxKenar;
+      maxFail = 0;
     }
+    if (isfinite(lastIyi)) c = lastIyi;
   }
   gpsPompa();
-  int mq9 = analogRead(PIN_MQ9);
-  int a8 = digitalRead(PIN_ATES1);
-  int a9 = digitalRead(PIN_ATES2);
   n++;
 
   char paket[160];

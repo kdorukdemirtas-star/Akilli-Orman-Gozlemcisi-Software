@@ -41,7 +41,7 @@ DEMO_LAT = 37.9192
 DEMO_LON = 40.268
 POST_GAP = 1.0
 JUMP_T = 1.5
-JUMP_MQ9 = 80
+JUMP_MQ9 = 20
 SPIKE_T = 45.0
 
 
@@ -69,12 +69,10 @@ def num(s: str | None):
     return v
 
 
-def parse_aog(line: str, fallback_n: int) -> dict | None:
+def parse_aog(line: str, fallback_n: int, last_t: float | None = None) -> dict | None:
     m = AOG_RE.search(line)
     if m:
         t = num(m.group(2))
-        if t is None:
-            return None
         return {
             "station_id": STATION,
             "n": int(m.group(1)),
@@ -91,8 +89,6 @@ def parse_aog(line: str, fallback_n: int) -> dict | None:
     if not s:
         return None
     t = num(s.group(1))
-    if t is None:
-        return None
     return {
         "station_id": STATION,
         "n": fallback_n,
@@ -220,7 +216,10 @@ def pump(fds: dict[int, str], bufs: dict[int, bytes], wait: float) -> None:
 
 
 def newest_row(
-    fds: dict[int, str], bufs: dict[int, bytes], fallback_n: int
+    fds: dict[int, str],
+    bufs: dict[int, bytes],
+    fallback_n: int,
+    last_t: float | None = None,
 ) -> tuple[dict | None, str | None, bool]:
     latest = None
     src = None
@@ -233,9 +232,13 @@ def newest_row(
             if not line:
                 continue
             saw = True
-            row = parse_aog(line, n + 1)
+            row = parse_aog(line, n + 1, last_t)
             if not row:
                 continue
+            if row["t"] is None:
+                row["t"] = last_t
+            else:
+                last_t = row["t"]
             row["v"] = FIXED_RSSI
             row["lat"] = DEMO_LAT
             row["lon"] = DEMO_LON
@@ -247,16 +250,16 @@ def newest_row(
     return latest, src, saw
 
 
-def drop_spike(row: dict, last_t: float | None, spike_n: int) -> tuple[dict | None, int]:
+def drop_spike(row: dict, last_t: float | None, spike_n: int) -> tuple[dict, int]:
     t = row["t"]
-    if last_t is None:
-        return row, 0
-    if t <= last_t + SPIKE_T:
+    if t is None or last_t is None or t <= last_t + SPIKE_T:
         return row, 0
     spike_n += 1
     if spike_n >= 2:
         return row, 0
-    return None, spike_n
+    hold = dict(row)
+    hold["t"] = last_t
+    return hold, spike_n
 
 
 def should_post(
@@ -274,7 +277,7 @@ def should_post(
     _, last_t, last_mq9, last_a8, last_a9 = last_sig
     if row["a8"] != last_a8 or row["a9"] != last_a9:
         return True
-    if abs(row["t"] - last_t) >= JUMP_T:
+    if row["t"] is not None and last_t is not None and abs(row["t"] - last_t) >= JUMP_T:
         return True
     if abs(row["mq9"] - last_mq9) >= JUMP_MQ9:
         return True
@@ -347,12 +350,12 @@ def main() -> int:
             try:
                 while True:
                     pump(fds, bufs, 0.05)
-                    row, path, saw = newest_row(fds, bufs, last_n)
+                    last_t = last_sig[1] if last_sig else None
+                    row, path, saw = newest_row(fds, bufs, last_n, last_t)
                     now = time.monotonic()
                     if saw:
                         heard = now
                     if row:
-                        last_t = last_sig[1] if last_sig else None
                         row, spike_n = drop_spike(row, last_t, spike_n)
                     if row:
                         pending = row
