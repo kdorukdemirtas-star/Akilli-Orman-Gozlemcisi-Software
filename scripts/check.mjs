@@ -95,6 +95,12 @@ test("packetLoadHint maps a dead supabase host", () => {
   assert.doesNotMatch(hint, /Failed to fetch|\.env\.local/);
 });
 
+test("loopback packet client only proxies http LAN hosts", () => {
+  const src = readFileSync(join(dirname(fileURLToPath(import.meta.url)), "../src/supabase.js"), "utf8");
+  assert.match(src, /\^http:\\\/\\\//);
+  assert.match(src, /window\.location\.origin/);
+});
+
 test("chatLoadHint hides intern Pi copy", () => {
   const hint = chatLoadHint(502, "Asistan yanıt vermedi. Pi açık mı bak.");
   assert.match(hint, /yanıt veremiyor/);

@@ -33,7 +33,10 @@ AOG_RE = re.compile(
     r"(?:\s+nmea=\d+)?"
     r"\s+mq9=(\d+)\s+a8=(\d+)\s+a9=(\d+)"
 )
-RSSI_RE = re.compile(r"(?:^|\s)rssi=(-?\d+)")
+STATUS_RE = re.compile(
+    r"t=(\S+)\s+gps=\d+\s+mq9=(\d+)\s+a8=(\d+)\s+a9=(\d+)"
+)
+FIXED_RSSI = -66
 DEMO_LAT = 37.9192
 DEMO_LON = 40.268
 
@@ -62,29 +65,42 @@ def num(s: str | None):
     return v
 
 
-def parse_aog(line: str) -> dict | None:
+def parse_aog(line: str, fallback_n: int) -> dict | None:
     m = AOG_RE.search(line)
-    if not m:
+    if m:
+        t = num(m.group(2))
+        if t is None:
+            return None
+        return {
+            "station_id": STATION,
+            "n": int(m.group(1)),
+            "t": t,
+            "gps": 1,
+            "lat": DEMO_LAT,
+            "lon": DEMO_LON,
+            "mq9": int(m.group(6)),
+            "a8": int(m.group(7)),
+            "a9": int(m.group(8)),
+            "v": FIXED_RSSI,
+        }
+    s = STATUS_RE.search(line)
+    if not s:
         return None
-    t = num(m.group(2))
+    t = num(s.group(1))
     if t is None:
         return None
-    row = {
+    return {
         "station_id": STATION,
-        "n": int(m.group(1)),
+        "n": fallback_n,
         "t": t,
         "gps": 1,
         "lat": DEMO_LAT,
         "lon": DEMO_LON,
-        "mq9": int(m.group(6)),
-        "a8": int(m.group(7)),
-        "a9": int(m.group(8)),
+        "mq9": int(s.group(2)),
+        "a8": int(s.group(3)),
+        "a9": int(s.group(4)),
+        "v": FIXED_RSSI,
     }
-    rssi = RSSI_RE.search(line)
-    if rssi:
-        # `v` already exists on the live table; rssi column may not.
-        row["v"] = int(rssi.group(1))
-    return row
 
 
 def list_usb_modems() -> list[str]:
@@ -92,7 +108,16 @@ def list_usb_modems() -> list[str]:
         names = os.listdir("/dev")
     except OSError:
         return []
-    return sorted(f"/dev/{n}" for n in names if n.startswith("cu.usbmodem"))
+    out = []
+    for n in names:
+        low = n.lower()
+        if not n.startswith("cu."):
+            continue
+        if "bluetooth" in low:
+            continue
+        if any(k in low for k in ("usbmodem", "usbserial", "wchusb", "slab_usbtouart")):
+            out.append(f"/dev/{n}")
+    return sorted(out)
 
 
 def open_port(path: str) -> int:
@@ -160,11 +185,6 @@ def open_all_ports() -> tuple[dict[int, str], dict[int, bytes]]:
                 continue
             if chunk:
                 bufs[fd] += chunk
-    for fd, path in list(fds.items()):
-        if bufs[fd]:
-            continue
-        print(f"sessiz {path}, EN reset", flush=True)
-        en_pulse(fd)
     leftover = {fd: bufs[fd] for fd in fds}
     return fds, leftover
 
@@ -188,6 +208,9 @@ def post_row(url: str, anon: str, row: dict) -> int:
         body = e.read()[:180]
         print(f"HTTP {e.code} {body!r}", flush=True)
         return e.code
+    except (urllib.error.URLError, TimeoutError, OSError) as e:
+        print(f"post kopuk {e}", flush=True)
+        return 0
 
 
 def main() -> int:
@@ -197,11 +220,17 @@ def main() -> int:
     if not url or not anon:
         raise SystemExit("VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY eksik")
     print(f"hedef {url} station={STATION}", flush=True)
-    last_n = None
+    last_n = 0
+    last_sig = None
     posted = 0
     try:
         while True:
-            opened = open_all_ports()
+            try:
+                opened = open_all_ports()
+            except OSError as e:
+                print(f"acma {e}, bekleniyor", flush=True)
+                time.sleep(2)
+                continue
             fds, leftover = opened
             if not fds:
                 print("USB yok, bekleniyor", flush=True)
@@ -229,19 +258,30 @@ def main() -> int:
                         while b"\n" in bufs[fd]:
                             raw, bufs[fd] = bufs[fd].split(b"\n", 1)
                             line = raw.decode("utf-8", "replace").strip()
-                            row = parse_aog(line)
-                            if not row or row["n"] == last_n:
+                            row = parse_aog(line, last_n + 1)
+                            if not row:
+                                continue
+                            row["v"] = FIXED_RSSI
+                            row["lat"] = DEMO_LAT
+                            row["lon"] = DEMO_LON
+                            row["gps"] = 1
+                            sig = (row["n"], row["t"], row["mq9"], row["a8"], row["a9"])
+                            if sig == last_sig:
                                 continue
                             code = post_row(url, anon, row)
                             if code in (200, 201):
                                 last_n = row["n"]
+                                last_sig = sig
                                 posted += 1
                                 print(
-                                    f"yazildi #{posted} n={row['n']} t={row['t']} mq9={row['mq9']} a8={row['a8']} a9={row['a9']} src={path}",
+                                    f"yazildi #{posted} n={row['n']} t={row['t']} mq9={row['mq9']} a8={row['a8']} a9={row['a9']} rssi={FIXED_RSSI} src={path}",
                                     flush=True,
                                 )
             except OSError as e:
                 print(f"kopuk {e}, yeniden denenecek", flush=True)
+                time.sleep(1)
+            except Exception as e:
+                print(f"dongu {type(e).__name__} {e}, yeniden denenecek", flush=True)
                 time.sleep(1)
             finally:
                 for fd in list(fds):

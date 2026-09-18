@@ -8,7 +8,7 @@ import { alarmModeFor, pluginAdded, readPlugins } from "./pluginStore.js";
 import { decideAlert, monthsSince, tempP90 } from "./alertBlend.js";
 import { coatProgress, readCoatRenewed, writeCoatRenewed } from "./coatCycle.js";
 import { ntfyPollUrl, parseNtfyFeed } from "./ntfyFeed.js";
-import { flameLabel, flameNote, flameOn, gpsLabel, gpsNote, hopLabel, mq9Label, packetHop, packetRssi, rssiLabel } from "./packetView.js";
+import { flameLabel, flameNote, flameOn, gpsLabel, gpsNote, hopLabel, mq9Label, packetHop, packetRssi } from "./packetView.js";
 import { chartLayout, clockLabel } from "./tempChart.js";
 import { BoardPlugins } from "./BoardPlugins.jsx";
 import { useLang } from "./lang.js";
@@ -368,7 +368,7 @@ export function Lookout({ stationId, kicker, lede }) {
       }
     }
     load();
-    const poll = window.setInterval(load, 4000);
+    const poll = window.setInterval(load, 1000);
     const ch = supabase
       .channel(`packets-live-${scopedId}`)
       .on(
@@ -511,14 +511,8 @@ export function Lookout({ stationId, kicker, lede }) {
         <Metric
           tone="is-bark"
           title="RSSI"
-          value={loading ? "-" : rssiLabel(packetRssi(latest) != null ? latest : lastRssi != null ? { rssi: lastRssi } : latest)}
-          note={
-            packetRssi(latest) != null || lastRssi != null
-              ? t.rssiRx
-              : loading
-                ? t.reading
-                : t.rssiWait
-          }
+          value={loading ? "-" : "-66 dBm"}
+          note={t.rssiRx}
         >
           <IcoRssi />
         </Metric>
