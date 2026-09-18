@@ -42,6 +42,7 @@ DEMO_LON = 40.268
 POST_GAP = 1.0
 JUMP_T = 1.5
 JUMP_MQ9 = 80
+SPIKE_T = 45.0
 
 
 def load_env(path: Path) -> dict[str, str]:
@@ -251,6 +252,18 @@ def newest_row(
     return latest, src
 
 
+def drop_spike(row: dict, last_t: float | None, spike_n: int) -> tuple[dict | None, int]:
+    t = row["t"]
+    if last_t is None:
+        return row, 0
+    if abs(t - last_t) <= SPIKE_T:
+        return row, 0
+    spike_n += 1
+    if spike_n >= 3:
+        return row, 0
+    return None, spike_n
+
+
 def should_post(row: dict, last_sig: tuple | None, last_post_at: float, now: float) -> bool:
     if last_sig is None:
         return True
@@ -344,15 +357,19 @@ def main() -> int:
             pending = None
             pending_path = None
             heard = None
+            spike_n = 0
             try:
                 while True:
                     pump(fds, bufs, 0.05)
                     row, path = newest_row(fds, bufs, last_n)
                     now = time.monotonic()
                     if row:
+                        heard = now
+                        last_t = last_sig[1] if last_sig else None
+                        row, spike_n = drop_spike(row, last_t, spike_n)
+                    if row:
                         pending = row
                         pending_path = path
-                        heard = now
                     elif heard is not None and now - heard > 8:
                         raise OSError(6, "Device not configured")
                     if not pending:

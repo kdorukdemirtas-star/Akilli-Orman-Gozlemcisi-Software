@@ -12,6 +12,7 @@
 
 #include <SPI.h>
 #include <LoRa.h>
+#include <math.h>
 #include "driver/gpio.h"
 #include "esp_mac.h"
 
@@ -25,6 +26,8 @@ bool loraVar = false;
 int maxCs = D1, maxSck = A0, maxSo = A1;
 bool maxVar = false;
 bool maxKenar = true;
+float lastIyi = NAN;
+uint8_t sicra = 0;
 uint32_t n = 0;
 
 uint32_t gpsByte = 0;
@@ -122,10 +125,11 @@ uint16_t maxOku16(int cs, int sck, int so, bool onceYuksek) {
 }
 
 bool maxMakul(uint16_t ham) {
+  if (ham & 0x8002) return false;
   if (ham & 0x04) return false;
   if (ham == 0 || ham == 0xFFFF) return false;
   float c = (ham >> 3) * 0.25f;
-  return c > -20.0f && c < 1024.0f;
+  return c >= 0.0f && c < 400.0f;
 }
 
 float nmeaDerece(const char *raw, char hem) {
@@ -283,7 +287,9 @@ void setup() {
     Serial.flush();
     if (ok) {
       maxVar = true;
-      Serial.printf("MAX kilit t=%.2f\n", (ham >> 3) * 0.25f);
+      lastIyi = (ham >> 3) * 0.25f;
+      sicra = 0;
+      Serial.printf("MAX kilit t=%.2f\n", lastIyi);
     } else {
       bekle(220);
     }
@@ -294,14 +300,27 @@ void setup() {
 
 void loop() {
   gpsPompa();
-  uint16_t ham = 0;
-  bool ok = false;
+  uint16_t ham = maxOku16(maxCs, maxSck, maxSo, maxKenar);
+  bool ok = maxMakul(ham);
   float c = NAN;
-  ham = maxOku16(maxCs, maxSck, maxSo, maxKenar);
-  ok = maxMakul(ham);
   if (ok) {
-    maxVar = true;
     c = (ham >> 3) * 0.25f;
+    if (isfinite(lastIyi) && fabsf(c - lastIyi) > 45.0f) {
+      sicra++;
+      if (sicra < 3) {
+        c = lastIyi;
+      } else {
+        lastIyi = c;
+        sicra = 0;
+      }
+    } else {
+      lastIyi = c;
+      sicra = 0;
+    }
+    maxVar = true;
+  } else if (isfinite(lastIyi)) {
+    c = lastIyi;
+    ok = true;
   }
   gpsPompa();
   int mq9 = analogRead(PIN_MQ9);
