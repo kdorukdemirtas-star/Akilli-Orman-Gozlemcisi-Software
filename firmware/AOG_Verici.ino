@@ -4,7 +4,8 @@
  * MAX6675  CS D1  SCK A0  SO A1
  * GPS  Serial0 9600  modul TX->kart RX  RX->TX
  * MQ-9  AO A3  isitici 5V  AO<=3.3V
- * Ates  D8 ve D9  DO pullup  1=bos 0=alev  VCC=3V3
+ * Ates  D8 ve D14  DO pullup  1=bos 0=alev  VCC=3V3
+ * D9 RGB pini; ikinci goz orada surekli 0 okunur
  *
  * Paket (alici ayni stringi basar):
  *   AOG n= t= gps= lat= lon= mq9= a8= a9=
@@ -20,7 +21,7 @@ static const int LORA_SS = D4;
 static const int LORA_DIO0 = D13;
 static const int PIN_MQ9 = A3;
 static const int PIN_ATES1 = D8;
-static const int PIN_ATES2 = D9;
+static const int PIN_ATES2 = D14;
 
 bool loraVar = false;
 int maxCs = D1, maxSck = A0, maxSo = A1;
@@ -266,11 +267,10 @@ void setup() {
   Serial.printf("MQ-9 A3 ham=%d\n", analogRead(PIN_MQ9));
 
   gpio_reset_pin((gpio_num_t)PIN_ATES1);
-  gpio_reset_pin((gpio_num_t)PIN_ATES2);
   pinMode(PIN_ATES1, INPUT_PULLUP);
   pinMode(PIN_ATES2, INPUT_PULLUP);
   delay(10);
-  Serial.printf("ates D8=%d D9=%d  (1=bos 0=alev)\n",
+  Serial.printf("ates D8=%d D14=%d  (1=bos 0=alev)\n",
                 digitalRead(PIN_ATES1), digitalRead(PIN_ATES2));
   Serial.flush();
 
@@ -318,6 +318,11 @@ void loop() {
       sicra = 0;
     }
     maxVar = true;
+  } else {
+    maxKenar = !maxKenar;
+    if (isfinite(lastIyi)) {
+      c = lastIyi;
+    }
   }
   gpsPompa();
   int mq9 = analogRead(PIN_MQ9);
@@ -329,13 +334,12 @@ void loop() {
   snprintf(paket, sizeof(paket),
            "AOG n=%lu t=%.2f gps=%d lat=%.5f lon=%.5f mq9=%d a8=%d a9=%d",
            (unsigned long)n,
-           ok ? c : NAN,
+           ok || isfinite(c) ? c : NAN,
            1,
            37.91920f,
            40.26800f,
            mq9, a8, a9);
 
   Serial.println(paket);
-  Serial.flush();
   bekle(20);
 }

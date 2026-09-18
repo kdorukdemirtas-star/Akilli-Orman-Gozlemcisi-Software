@@ -197,16 +197,10 @@ def open_all_ports() -> tuple[dict[int, str], dict[int, bytes]]:
 
 def pump(fds: dict[int, str], bufs: dict[int, bytes], wait: float) -> None:
     timeout = wait
-    saw = False
     while True:
         r, _, _ = select.select(list(fds), [], [], timeout)
         if not r:
-            if not saw:
-                missing = [p for p in fds.values() if not os.path.exists(p)]
-                if missing:
-                    raise OSError(6, "Device not configured")
             return
-        saw = True
         timeout = 0
         got = False
         for fd in r:
@@ -222,22 +216,23 @@ def pump(fds: dict[int, str], bufs: dict[int, bytes], wait: float) -> None:
                 got = True
                 bufs[fd] += chunk
         if not got:
-            missing = [p for p in fds.values() if not os.path.exists(p)]
-            if missing:
-                raise OSError(6, "Device not configured")
             return
 
 
 def newest_row(
     fds: dict[int, str], bufs: dict[int, bytes], fallback_n: int
-) -> tuple[dict | None, str | None]:
+) -> tuple[dict | None, str | None, bool]:
     latest = None
     src = None
     n = fallback_n
+    saw = False
     for fd, path in fds.items():
         while b"\n" in bufs[fd]:
             raw, bufs[fd] = bufs[fd].split(b"\n", 1)
             line = raw.decode("utf-8", "replace").strip()
+            if not line:
+                continue
+            saw = True
             row = parse_aog(line, n + 1)
             if not row:
                 continue
@@ -249,7 +244,7 @@ def newest_row(
                 latest = row
                 src = path
             n = row["n"]
-    return latest, src
+    return latest, src, saw
 
 
 def drop_spike(row: dict, last_t: float | None, spike_n: int) -> tuple[dict | None, int]:
@@ -352,17 +347,20 @@ def main() -> int:
             try:
                 while True:
                     pump(fds, bufs, 0.05)
-                    row, path = newest_row(fds, bufs, last_n)
+                    row, path, saw = newest_row(fds, bufs, last_n)
                     now = time.monotonic()
-                    if row:
+                    if saw:
                         heard = now
+                    if row:
                         last_t = last_sig[1] if last_sig else None
                         row, spike_n = drop_spike(row, last_t, spike_n)
                     if row:
                         pending = row
                         pending_path = path
-                    elif heard is not None and now - heard > 8:
-                        raise OSError(6, "Device not configured")
+                    elif heard is not None and now - heard > 20:
+                        missing = [p for p in fds.values() if not os.path.exists(p)]
+                        if missing:
+                            raise OSError(6, "Device not configured")
                     if not pending:
                         continue
                     if not should_post(pending, last_sig, last_post_at, now, last_ok):
