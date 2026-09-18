@@ -124,7 +124,7 @@ bool maxMakul(uint16_t ham) {
   if (ham & 0x04) return false;
   if (ham == 0 || ham == 0xFFFF) return false;
   float c = (ham >> 3) * 0.25f;
-  return c > -20.0f && c < 800.0f;
+  return c > -20.0f && c < 1024.0f;
 }
 
 float nmeaDerece(const char *raw, char hem) {
@@ -293,13 +293,17 @@ void setup() {
 
 void loop() {
   gpsPompa();
-  uint16_t ham = 0;
-  bool ok = false;
-  float c = NAN;
-  if (maxVar) {
+  uint16_t ham = maxOku16(maxCs, maxSck, maxSo, maxKenar);
+  bool ok = maxMakul(ham);
+  if (!ok) {
+    maxKenar = !maxKenar;
     ham = maxOku16(maxCs, maxSck, maxSo, maxKenar);
     ok = maxMakul(ham);
-    if (ok) c = (ham >> 3) * 0.25f;
+  }
+  float c = NAN;
+  if (ok) {
+    maxVar = true;
+    c = (ham >> 3) * 0.25f;
   }
   gpsPompa();
   int mq9 = analogRead(PIN_MQ9);

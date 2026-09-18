@@ -379,7 +379,7 @@ export function Lookout({ stationId, kicker, lede }) {
     }
     loadPackets();
     loadScores();
-    const poll = window.setInterval(loadPackets, 400);
+    const poll = window.setInterval(loadPackets, 1000);
     const scorePoll = window.setInterval(loadScores, 5000);
     const ch = supabase
       .channel(`packets-live-${scopedId}`)
