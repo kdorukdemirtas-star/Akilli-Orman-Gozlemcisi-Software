@@ -256,10 +256,10 @@ def drop_spike(row: dict, last_t: float | None, spike_n: int) -> tuple[dict | No
     t = row["t"]
     if last_t is None:
         return row, 0
-    if abs(t - last_t) <= SPIKE_T:
+    if t <= last_t + SPIKE_T:
         return row, 0
     spike_n += 1
-    if spike_n >= 3:
+    if spike_n >= 2:
         return row, 0
     return None, spike_n
 

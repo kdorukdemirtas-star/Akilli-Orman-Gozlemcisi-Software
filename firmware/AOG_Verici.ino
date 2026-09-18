@@ -303,11 +303,11 @@ void loop() {
   uint16_t ham = maxOku16(maxCs, maxSck, maxSo, maxKenar);
   bool ok = maxMakul(ham);
   float c = NAN;
-  if (ok) {
+    if (ok) {
     c = (ham >> 3) * 0.25f;
-    if (isfinite(lastIyi) && fabsf(c - lastIyi) > 45.0f) {
+    if (isfinite(lastIyi) && (c - lastIyi) > 45.0f) {
       sicra++;
-      if (sicra < 3) {
+      if (sicra < 2) {
         c = lastIyi;
       } else {
         lastIyi = c;
