@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { lazy, memo, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "./supabase.js";
 import { NTFY_TOPIC } from "./config.js";
 import { DISPLAY_PIN, withDisplayPin } from "./displayPin.js";
@@ -116,9 +116,12 @@ function useNarrow() {
   return narrow;
 }
 
-function TempChart({ rows, loading, copy }) {
+const TempChart = memo(function TempChart({ rows, loading, copy }) {
   const narrow = useNarrow();
-  const chart = chartLayout(rows, Date.now(), narrow ? { w: 360, h: 260 } : { w: 640, h: 260 });
+  const chart = useMemo(
+    () => chartLayout(rows, Date.now(), narrow ? { w: 360, h: 260 } : { w: 640, h: 260 }),
+    [rows, narrow],
+  );
   if (chart.empty) {
     return (
       <p className="ops-empty">
@@ -165,7 +168,7 @@ function TempChart({ rows, loading, copy }) {
       </svg>
     </div>
   );
-}
+});
 
 function IcoTemp() {
   return (
@@ -381,29 +384,10 @@ export function Lookout({ stationId, kicker, lede }) {
     loadScores();
     const poll = window.setInterval(loadPackets, 1000);
     const scorePoll = window.setInterval(loadScores, 5000);
-    const ch = supabase
-      .channel(`packets-live-${scopedId}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "packets",
-          filter: `station_id=eq.${scopedId}`,
-        },
-        (payload) => {
-          if (ignore) return;
-          const row = payload.new;
-          if (!livePacket(row, scopedId)) return;
-          setRows((prev) => mergePacketRows(prev, [scrubPacket(row)], scopedId));
-        },
-      )
-      .subscribe();
     return () => {
       ignore = true;
       window.clearInterval(poll);
       window.clearInterval(scorePoll);
-      supabase.removeChannel(ch);
     };
   }, [stationId, reloadTick]);
 

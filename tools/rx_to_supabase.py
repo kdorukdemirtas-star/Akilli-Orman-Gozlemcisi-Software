@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import array
 import fcntl
+import http.client
 import json
 import math
 import os
@@ -13,9 +14,8 @@ import select
 import sys
 import termios
 import time
-import urllib.error
-import urllib.request
 from pathlib import Path
+from urllib.parse import urlparse
 
 PORT = os.environ.get("AOG_RX_PORT", "/dev/cu.usbmodem21401")
 TX_PORT = os.environ.get("AOG_TX_PORT", "/dev/cu.usbmodem21401")
@@ -39,6 +39,9 @@ STATUS_RE = re.compile(
 FIXED_RSSI = -66
 DEMO_LAT = 37.9192
 DEMO_LON = 40.268
+POST_GAP = 1.0
+JUMP_T = 1.5
+JUMP_MQ9 = 80
 
 
 def load_env(path: Path) -> dict[str, str]:
@@ -248,27 +251,67 @@ def newest_row(
     return latest, src
 
 
-def post_row(url: str, anon: str, row: dict) -> int:
-    req = urllib.request.Request(
-        f"{url}/rest/v1/packets",
-        data=json.dumps(row).encode("utf-8"),
-        method="POST",
-        headers={
-            "apikey": anon,
-            "Authorization": f"Bearer {anon}",
+def should_post(row: dict, last_sig: tuple | None, last_post_at: float, now: float) -> bool:
+    if last_sig is None:
+        return True
+    if now - last_post_at >= POST_GAP:
+        return True
+    _, last_t, last_mq9, last_a8, last_a9 = last_sig
+    if row["a8"] != last_a8 or row["a9"] != last_a9:
+        return True
+    if abs(row["t"] - last_t) >= JUMP_T:
+        return True
+    if abs(row["mq9"] - last_mq9) >= JUMP_MQ9:
+        return True
+    return False
+
+
+class Poster:
+    def __init__(self, url: str, anon: str):
+        self.parsed = urlparse(url)
+        self.anon = anon
+        self.conn: http.client.HTTPConnection | None = None
+
+    def close(self) -> None:
+        if self.conn is None:
+            return
+        try:
+            self.conn.close()
+        except OSError:
+            pass
+        self.conn = None
+
+    def _connect(self) -> None:
+        self.close()
+        host = self.parsed.hostname
+        if not host:
+            raise SystemExit("VITE_SUPABASE_URL host yok")
+        if self.parsed.scheme == "https":
+            self.conn = http.client.HTTPSConnection(host, self.parsed.port or 443, timeout=4)
+        else:
+            self.conn = http.client.HTTPConnection(host, self.parsed.port or 80, timeout=4)
+
+    def post(self, row: dict) -> int:
+        body = json.dumps(row).encode("utf-8")
+        headers = {
+            "apikey": self.anon,
+            "Authorization": f"Bearer {self.anon}",
             "Content-Type": "application/json",
             "Prefer": "return=minimal",
-        },
-    )
-    try:
-        with urllib.request.urlopen(req, timeout=4) as resp:
-            return resp.status
-    except urllib.error.HTTPError as e:
-        body = e.read()[:180]
-        print(f"HTTP {e.code} {body!r}", flush=True)
-        return e.code
-    except (urllib.error.URLError, TimeoutError, OSError) as e:
-        print(f"post kopuk {e}", flush=True)
+            "Connection": "keep-alive",
+        }
+        for _ in range(2):
+            try:
+                if self.conn is None:
+                    self._connect()
+                assert self.conn is not None
+                self.conn.request("POST", "/rest/v1/packets", body, headers)
+                resp = self.conn.getresponse()
+                resp.read()
+                return resp.status
+            except (http.client.HTTPException, OSError, TimeoutError) as e:
+                print(f"post kopuk {e}", flush=True)
+                self._connect()
         return 0
 
 
@@ -279,8 +322,10 @@ def main() -> int:
     if not url or not anon:
         raise SystemExit("VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY eksik")
     print(f"hedef {url} station={STATION}", flush=True)
+    poster = Poster(url, anon)
     last_n = 0
     last_sig = None
+    last_post_at = 0.0
     posted = 0
     try:
         while True:
@@ -303,13 +348,16 @@ def main() -> int:
                 while True:
                     pump(fds, bufs, 0.05)
                     row, path = newest_row(fds, bufs, last_n)
+                    now = time.monotonic()
                     if row:
                         pending = row
                         pending_path = path
-                        heard = time.monotonic()
-                    elif time.monotonic() - heard > 3:
+                        heard = now
+                    elif now - heard > 3:
                         raise OSError(6, "Device not configured")
                     if not pending:
+                        continue
+                    if not should_post(pending, last_sig, last_post_at, now):
                         continue
                     sig = (
                         pending["n"],
@@ -321,10 +369,11 @@ def main() -> int:
                     if sig == last_sig:
                         pending = None
                         continue
-                    code = post_row(url, anon, pending)
+                    code = poster.post(pending)
                     if code in (200, 201):
                         last_n = pending["n"]
                         last_sig = sig
+                        last_post_at = time.monotonic()
                         posted += 1
                         print(
                             f"yazildi #{posted} n={pending['n']} t={pending['t']} mq9={pending['mq9']} a8={pending['a8']} a9={pending['a9']} rssi={FIXED_RSSI} src={pending_path}",
@@ -346,6 +395,8 @@ def main() -> int:
     except KeyboardInterrupt:
         print(f"durdu posted={posted}", flush=True)
         return 0
+    finally:
+        poster.close()
 
 
 if __name__ == "__main__":
