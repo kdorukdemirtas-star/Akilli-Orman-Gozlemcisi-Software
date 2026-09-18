@@ -97,6 +97,7 @@ uint16_t maxOku16(int cs, int sck, int so, bool onceYuksek) {
   pinMode(sck, OUTPUT);
   pinMode(so, INPUT_PULLUP);
   digitalWrite(sck, LOW);
+  bekle(220);
   digitalWrite(cs, LOW);
   delayMicroseconds(5);
   uint16_t v = 0;
@@ -293,14 +294,11 @@ void setup() {
 
 void loop() {
   gpsPompa();
-  uint16_t ham = maxOku16(maxCs, maxSck, maxSo, maxKenar);
-  bool ok = maxMakul(ham);
-  if (!ok) {
-    maxKenar = !maxKenar;
-    ham = maxOku16(maxCs, maxSck, maxSo, maxKenar);
-    ok = maxMakul(ham);
-  }
+  uint16_t ham = 0;
+  bool ok = false;
   float c = NAN;
+  ham = maxOku16(maxCs, maxSck, maxSo, maxKenar);
+  ok = maxMakul(ham);
   if (ok) {
     maxVar = true;
     c = (ham >> 3) * 0.25f;
@@ -323,5 +321,5 @@ void loop() {
 
   Serial.println(paket);
   Serial.flush();
-  bekle(220);
+  bekle(20);
 }

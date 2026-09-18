@@ -65,12 +65,10 @@ def num(s: str | None):
     return v
 
 
-def parse_aog(line: str, fallback_n: int, last_t=None) -> dict | None:
+def parse_aog(line: str, fallback_n: int) -> dict | None:
     m = AOG_RE.search(line)
     if m:
         t = num(m.group(2))
-        if t is None:
-            t = last_t
         if t is None:
             return None
         return {
@@ -89,8 +87,6 @@ def parse_aog(line: str, fallback_n: int, last_t=None) -> dict | None:
     if not s:
         return None
     t = num(s.group(1))
-    if t is None:
-        t = last_t
     if t is None:
         return None
     return {
@@ -229,7 +225,7 @@ def pump(fds: dict[int, str], bufs: dict[int, bytes], wait: float) -> None:
 
 
 def newest_row(
-    fds: dict[int, str], bufs: dict[int, bytes], fallback_n: int, last_t=None
+    fds: dict[int, str], bufs: dict[int, bytes], fallback_n: int
 ) -> tuple[dict | None, str | None]:
     latest = None
     src = None
@@ -238,14 +234,13 @@ def newest_row(
         while b"\n" in bufs[fd]:
             raw, bufs[fd] = bufs[fd].split(b"\n", 1)
             line = raw.decode("utf-8", "replace").strip()
-            row = parse_aog(line, n + 1, last_t)
+            row = parse_aog(line, n + 1)
             if not row:
                 continue
             row["v"] = FIXED_RSSI
             row["lat"] = DEMO_LAT
             row["lon"] = DEMO_LON
             row["gps"] = 1
-            last_t = row["t"]
             if latest is None or row["n"] >= latest["n"]:
                 latest = row
                 src = path
@@ -307,7 +302,7 @@ def main() -> int:
             try:
                 while True:
                     pump(fds, bufs, 0.05)
-                    row, path = newest_row(fds, bufs, last_n, last_sig[1] if last_sig else None)
+                    row, path = newest_row(fds, bufs, last_n)
                     if row:
                         pending = row
                         pending_path = path
