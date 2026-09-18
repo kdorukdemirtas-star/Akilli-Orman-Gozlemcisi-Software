@@ -177,7 +177,7 @@ def open_all_ports() -> tuple[dict[int, str], dict[int, bytes]]:
     if not fds:
         return {}, {}
     bufs = {fd: b"" for fd in fds}
-    deadline = time.monotonic() + 0.9
+    deadline = time.monotonic() + 0.05
     while time.monotonic() < deadline:
         r, _, _ = select.select(list(fds), [], [], max(0.05, deadline - time.monotonic()))
         for fd in r:
@@ -189,6 +189,63 @@ def open_all_ports() -> tuple[dict[int, str], dict[int, bytes]]:
                 bufs[fd] += chunk
     leftover = {fd: bufs[fd] for fd in fds}
     return fds, leftover
+
+
+def pump(fds: dict[int, str], bufs: dict[int, bytes], wait: float) -> None:
+    timeout = wait
+    saw = False
+    while True:
+        r, _, _ = select.select(list(fds), [], [], timeout)
+        if not r:
+            if not saw:
+                missing = [p for p in fds.values() if not os.path.exists(p)]
+                if missing:
+                    raise OSError(6, "Device not configured")
+            return
+        saw = True
+        timeout = 0
+        got = False
+        for fd in r:
+            while True:
+                try:
+                    chunk = os.read(fd, 4096)
+                except BlockingIOError:
+                    break
+                except OSError:
+                    raise
+                if not chunk:
+                    break
+                got = True
+                bufs[fd] += chunk
+        if not got:
+            missing = [p for p in fds.values() if not os.path.exists(p)]
+            if missing:
+                raise OSError(6, "Device not configured")
+            return
+
+
+def newest_row(
+    fds: dict[int, str], bufs: dict[int, bytes], fallback_n: int
+) -> tuple[dict | None, str | None]:
+    latest = None
+    src = None
+    n = fallback_n
+    for fd, path in fds.items():
+        while b"\n" in bufs[fd]:
+            raw, bufs[fd] = bufs[fd].split(b"\n", 1)
+            line = raw.decode("utf-8", "replace").strip()
+            row = parse_aog(line, n + 1)
+            if not row:
+                continue
+            row["v"] = FIXED_RSSI
+            row["lat"] = DEMO_LAT
+            row["lon"] = DEMO_LON
+            row["gps"] = 1
+            if latest is None or row["n"] >= latest["n"]:
+                latest = row
+                src = path
+            n = row["n"]
+    return latest, src
 
 
 def post_row(url: str, anon: str, row: dict) -> int:
@@ -204,7 +261,7 @@ def post_row(url: str, anon: str, row: dict) -> int:
         },
     )
     try:
-        with urllib.request.urlopen(req, timeout=12) as resp:
+        with urllib.request.urlopen(req, timeout=4) as resp:
             return resp.status
     except urllib.error.HTTPError as e:
         body = e.read()[:180]
@@ -239,46 +296,37 @@ def main() -> int:
                 time.sleep(2)
                 continue
             bufs = {fd: leftover.get(fd, b"") for fd in fds}
+            pending = None
+            pending_path = None
             try:
                 while True:
-                    r, _, _ = select.select(list(fds), [], [], 0.2)
-                    if r:
-                        for fd in r:
-                            try:
-                                chunk = os.read(fd, 1024)
-                            except BlockingIOError:
-                                continue
-                            except OSError:
-                                raise
-                            if chunk:
-                                bufs[fd] += chunk
-                    else:
-                        missing = [p for p in fds.values() if not os.path.exists(p)]
-                        if missing:
-                            raise OSError(6, "Device not configured")
-                    for fd, path in fds.items():
-                        while b"\n" in bufs[fd]:
-                            raw, bufs[fd] = bufs[fd].split(b"\n", 1)
-                            line = raw.decode("utf-8", "replace").strip()
-                            row = parse_aog(line, last_n + 1)
-                            if not row:
-                                continue
-                            row["v"] = FIXED_RSSI
-                            row["lat"] = DEMO_LAT
-                            row["lon"] = DEMO_LON
-                            row["gps"] = 1
-                            sig = (row["n"], row["t"], row["mq9"], row["a8"], row["a9"])
-                            if sig == last_sig:
-                                continue
-                            code = post_row(url, anon, row)
-                            if code in (200, 201):
-                                last_n = row["n"]
-                                last_sig = sig
-                                posted += 1
-                                print(
-                                    f"yazildi #{posted} n={row['n']} t={row['t']} mq9={row['mq9']} a8={row['a8']} a9={row['a9']} rssi={FIXED_RSSI} src={path}",
-                                    flush=True,
-                                )
+                    pump(fds, bufs, 0.05)
+                    row, path = newest_row(fds, bufs, last_n)
+                    if row:
+                        pending = row
+                        pending_path = path
+                    if not pending:
+                        continue
+                    sig = (
+                        pending["n"],
+                        pending["t"],
+                        pending["mq9"],
+                        pending["a8"],
+                        pending["a9"],
+                    )
+                    if sig == last_sig:
+                        pending = None
+                        continue
+                    code = post_row(url, anon, pending)
+                    if code in (200, 201):
+                        last_n = pending["n"]
+                        last_sig = sig
+                        posted += 1
+                        print(
+                            f"yazildi #{posted} n={pending['n']} t={pending['t']} mq9={pending['mq9']} a8={pending['a8']} a9={pending['a9']} rssi={FIXED_RSSI} src={pending_path}",
+                            flush=True,
+                        )
+                        pending = None
             except OSError as e:
                 print(f"kopuk {e}, yeniden denenecek", flush=True)
                 time.sleep(1)

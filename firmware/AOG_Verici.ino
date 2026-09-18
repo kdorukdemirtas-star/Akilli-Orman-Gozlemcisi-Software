@@ -97,7 +97,6 @@ uint16_t maxOku16(int cs, int sck, int so, bool onceYuksek) {
   pinMode(sck, OUTPUT);
   pinMode(so, INPUT_PULLUP);
   digitalWrite(sck, LOW);
-  bekle(220);
   digitalWrite(cs, LOW);
   delayMicroseconds(5);
   uint16_t v = 0;
@@ -273,6 +272,7 @@ void setup() {
   maxCs = D1;
   maxSck = A0;
   maxSo = A1;
+  bekle(220);
   for (int k = 0; k < 2 && !maxVar; k++) {
     maxKenar = (k == 0);
     uint16_t ham = maxOku16(maxCs, maxSck, maxSo, maxKenar);
@@ -283,6 +283,8 @@ void setup() {
     if (ok) {
       maxVar = true;
       Serial.printf("MAX kilit t=%.2f\n", (ham >> 3) * 0.25f);
+    } else {
+      bekle(220);
     }
   }
   if (!maxVar) Serial.println("MAX yok  CS=D1 SCK=A0 SO=A1  TC+/TC-");
@@ -317,5 +319,5 @@ void loop() {
 
   Serial.println(paket);
   Serial.flush();
-  bekle(300);
+  bekle(220);
 }

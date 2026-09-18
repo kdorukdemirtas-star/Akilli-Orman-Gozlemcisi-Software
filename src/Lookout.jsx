@@ -318,8 +318,11 @@ export function Lookout({ stationId, kicker, lede }) {
       return undefined;
     }
     const sinceIso = new Date(Date.now() - DAY_MS).toISOString();
-    async function load() {
-      const gen = ++loadGen;
+    let packetsBusy = false;
+    async function loadPackets() {
+      if (packetsBusy) return;
+      packetsBusy = true;
+      const gen = loadGen;
       try {
         let query = supabase
           .from("packets")
@@ -344,13 +347,22 @@ export function Lookout({ stationId, kicker, lede }) {
           setErr("");
           setRows((prev) => mergePacketRows(data || [], prev, scopedId));
         }
+      } catch {
+        if (!ignore && gen === loadGen) setErr("Paketler okunamadı.");
+      } finally {
+        packetsBusy = false;
+        if (!ignore && gen === loadGen) setLoading(false);
+      }
+    }
+    async function loadScores() {
+      try {
         const scored = await supabase
           .from("scores")
           .select("score,model")
           .eq("station_id", scopedId)
           .order("created_at", { ascending: false })
           .limit(1);
-        if (ignore || gen !== loadGen) return;
+        if (ignore) return;
         if (scored.error) {
           /* keep last score row */
         } else if (scored.data?.[0]) {
@@ -362,13 +374,13 @@ export function Lookout({ stationId, kicker, lede }) {
           setMlModel("");
         }
       } catch {
-        if (!ignore && gen === loadGen) setErr("Paketler okunamadı.");
-      } finally {
-        if (!ignore && gen === loadGen) setLoading(false);
+        /* keep last score row */
       }
     }
-    load();
-    const poll = window.setInterval(load, 1000);
+    loadPackets();
+    loadScores();
+    const poll = window.setInterval(loadPackets, 400);
+    const scorePoll = window.setInterval(loadScores, 5000);
     const ch = supabase
       .channel(`packets-live-${scopedId}`)
       .on(
@@ -390,6 +402,7 @@ export function Lookout({ stationId, kicker, lede }) {
     return () => {
       ignore = true;
       window.clearInterval(poll);
+      window.clearInterval(scorePoll);
       supabase.removeChannel(ch);
     };
   }, [stationId, reloadTick]);
