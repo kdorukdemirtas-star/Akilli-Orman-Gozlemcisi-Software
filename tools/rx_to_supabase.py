@@ -264,10 +264,17 @@ def drop_spike(row: dict, last_t: float | None, spike_n: int) -> tuple[dict | No
     return None, spike_n
 
 
-def should_post(row: dict, last_sig: tuple | None, last_post_at: float, now: float) -> bool:
-    if last_sig is None:
-        return True
-    if now - last_post_at >= POST_GAP:
+def should_post(
+    row: dict,
+    last_sig: tuple | None,
+    last_post_at: float,
+    now: float,
+    last_ok: bool,
+) -> bool:
+    in_gap = bool(last_post_at) and now - last_post_at < POST_GAP
+    if in_gap and not last_ok:
+        return False
+    if not in_gap or last_sig is None:
         return True
     _, last_t, last_mq9, last_a8, last_a9 = last_sig
     if row["a8"] != last_a8 or row["a9"] != last_a9:
@@ -277,6 +284,14 @@ def should_post(row: dict, last_sig: tuple | None, last_post_at: float, now: flo
     if abs(row["mq9"] - last_mq9) >= JUMP_MQ9:
         return True
     return False
+
+
+class NoRedirect(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        return None
+
+
+_POSTER = urllib.request.build_opener(NoRedirect())
 
 
 def post_row(url: str, anon: str, row: dict) -> int:
@@ -292,10 +307,11 @@ def post_row(url: str, anon: str, row: dict) -> int:
         },
     )
     try:
-        with urllib.request.urlopen(req, timeout=4) as resp:
+        with _POSTER.open(req, timeout=4) as resp:
             return resp.status
     except urllib.error.HTTPError as e:
-        body = e.read()[:180]
+        with e:
+            body = e.read()[:180]
         print(f"HTTP {e.code} {body!r}", flush=True)
         return e.code
     except (urllib.error.URLError, TimeoutError, OSError) as e:
@@ -313,6 +329,7 @@ def main() -> int:
     last_n = 0
     last_sig = None
     last_post_at = 0.0
+    last_ok = True
     posted = 0
     try:
         while True:
@@ -348,7 +365,7 @@ def main() -> int:
                         raise OSError(6, "Device not configured")
                     if not pending:
                         continue
-                    if not should_post(pending, last_sig, last_post_at, now):
+                    if not should_post(pending, last_sig, last_post_at, now, last_ok):
                         continue
                     sig = (
                         pending["n"],
@@ -365,6 +382,7 @@ def main() -> int:
                         last_n = pending["n"]
                         last_sig = sig
                         last_post_at = time.monotonic()
+                        last_ok = True
                         posted += 1
                         print(
                             f"yazildi #{posted} n={pending['n']} t={pending['t']} mq9={pending['mq9']} a8={pending['a8']} a9={pending['a9']} rssi={FIXED_RSSI} src={pending_path}",
@@ -373,6 +391,7 @@ def main() -> int:
                         pending = None
                     else:
                         last_post_at = time.monotonic()
+                        last_ok = False
             except OSError as e:
                 print(f"kopuk {e}, yeniden denenecek", flush=True)
                 time.sleep(1)
