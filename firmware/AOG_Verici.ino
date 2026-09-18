@@ -250,10 +250,7 @@ void setup() {
   Serial.printf("AOG VERICI  MAC %02X:%02X:%02X:%02X:%02X:%02X\n",
                 mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
 
-  uint8_t ver = oku42();
-  Serial.printf("LoRa VERSION=0x%02X\n", ver);
-  if (ver == 0x12) loraVar = loraAc();
-  Serial.println(loraVar ? "LoRa OK  433 MHz TX" : "LoRa FAIL");
+  Serial.println("USB seri  LoRa kapali");
   Serial.flush();
 
   gpsTara();
@@ -318,24 +315,7 @@ void loop() {
            40.26800f,
            mq9, a8, a9);
 
-  Serial.printf("t=%s gps=%d mq9=%d a8=%d a9=%d | ",
-                ok ? String(c, 2).c_str() : "yok",
-                gpsFix ? 1 : 0, mq9, a8, a9);
-
-  if (loraVar) {
-    digitalWrite(maxCs, HIGH);
-    digitalWrite(LORA_SS, HIGH);
-    if (LoRa.beginPacket()) {
-      LoRa.print(paket);
-      LoRa.endPacket(true);
-      bekle(160);
-      Serial.printf("gitti  %s\n", paket);
-    } else {
-      Serial.println("busy");
-    }
-  } else {
-    Serial.println("LoRa yok");
-  }
+  Serial.println(paket);
   Serial.flush();
   bekle(300);
 }

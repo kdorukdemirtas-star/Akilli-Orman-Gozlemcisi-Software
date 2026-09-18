@@ -17,8 +17,8 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
-PORT = os.environ.get("AOG_RX_PORT", "/dev/cu.usbmodem11201")
-TX_PORT = os.environ.get("AOG_TX_PORT", "/dev/cu.usbmodem11301")
+PORT = os.environ.get("AOG_RX_PORT", "/dev/cu.usbmodem21401")
+TX_PORT = os.environ.get("AOG_TX_PORT", "/dev/cu.usbmodem21401")
 STATION = os.environ.get("AOG_STATION_ID", "AOG-DEMO-1")
 ENV_PATH = Path(
     os.environ.get(
@@ -104,6 +104,8 @@ def parse_aog(line: str, fallback_n: int) -> dict | None:
 
 
 def list_usb_modems() -> list[str]:
+    if os.path.exists(PORT):
+        return [PORT]
     try:
         names = os.listdir("/dev")
     except OSError:
