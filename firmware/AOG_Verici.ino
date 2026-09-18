@@ -318,9 +318,6 @@ void loop() {
       sicra = 0;
     }
     maxVar = true;
-  } else if (isfinite(lastIyi)) {
-    c = lastIyi;
-    ok = true;
   }
   gpsPompa();
   int mq9 = analogRead(PIN_MQ9);
